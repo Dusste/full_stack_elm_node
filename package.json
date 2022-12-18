@@ -1,0 +1,24 @@
+{
+    "name": "my_elm_app",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+        "start": "elm-live src/Main.elm -- --output=index.js && elm make src/Main.elm --output=index.js"
+    },
+    "author": "Dusan Stevanovic",
+    "license": "ISC",
+    "devDependencies": {
+        "@astrajs/collections": "^0.3.4",
+        "cassandra-driver": "^4.6.4",
+        "elm-hot": "^1.0.1",
+        "netlify-cli": "^12.0.11",
+        "node-elm-compiler": "^5.0.3",
+        "parcel-bundler": "^1.12.5",
+        "prettier": "^2.2.1"
+    },
+    "dependencies": {
+        "bcrypt": "^5.0.1",
+        "jsonwebtoken": "^8.5.1",
+        "uuid": "^8.3.2"
+    }
+}

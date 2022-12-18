@@ -1,0 +1,2 @@
+-   Node > v14
+-   run: netlify dev

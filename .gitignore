@@ -1,0 +1,7 @@
+# Local Netlify folder
+.netlify
+node_modules
+elm-stuff
+.cache
+.env
+.secure-connect-elmappserverlessdb.zip
