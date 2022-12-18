@@ -24,7 +24,7 @@ buildErrorMessage httpError =
 
 
 
--- todo: probaj da nadjes nesto pouzdanije - ovo ne radi
+-- todo: try to find something better
 
 
 validEmail : Regex
