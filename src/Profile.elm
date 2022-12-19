@@ -2,7 +2,7 @@ module Profile exposing (..)
 
 import Array
 import Base64 exposing (decode)
-import Credentials exposing (Session, Token, UnwrappedTokenData, addHeader, decodeTokenData, emptyUserId, encodeToken, fromSessionToToken, fromTokenToString, logout, profileDataDecoder, profileDataEncoder, storeSession, tokenDecoder, unfoldProfileFromToken, unwrappedTokenDataEncoder)
+import Credentials exposing (Session, Token, UnwrappedTokenData, addHeader, decodeTokenData, emptyUserId, encodeToken, fromSessionToToken, fromTokenToString, guest, logout, profileDataDecoder, profileDataEncoder, storeSession, tokenDecoder, unfoldProfileFromToken, unwrappedTokenDataEncoder)
 import Debug exposing (toString)
 import File exposing (File)
 import File.Select as Select
@@ -21,7 +21,7 @@ import Task
 type alias Model =
     { profile : UnwrappedTokenData
     , errors : List CheckErrors
-    , session : Maybe Session
+    , session : Session
     , imageFile : Maybe String
     }
 
@@ -41,7 +41,7 @@ type Msg
       -- | StoreLastName String
     | StoreVerified Bool
       -- | StoreAdmin Bool
-    | ProfileSubmit (Maybe Session) UnwrappedTokenData
+    | ProfileSubmit Session UnwrappedTokenData
     | ProfileDone (Result Http.Error Token)
     | FileRequest
     | FileRequestDone File
@@ -59,18 +59,14 @@ initialModel =
         , exp = 0
         }
     , errors = []
-    , session = Nothing
+    , session = guest
     , imageFile = Nothing
     }
 
 
 init : Session -> ( Model, Cmd Msg )
 init session =
-    let
-        maybeToken =
-            fromSessionToToken session
-    in
-    case maybeToken of
+    case fromSessionToToken session of
         Just token ->
             let
                 profileFromToken =
@@ -102,7 +98,7 @@ init session =
                         Ok encodedRecord ->
                             case Decode.decodeString profileFromToken encodedRecord of
                                 Ok profileData ->
-                                    ( { initialModel | profile = profileData, session = Just session }
+                                    ( { initialModel | profile = profileData, session = session }
                                     , Cmd.none
                                     )
 
@@ -276,28 +272,19 @@ update msg model =
             ( { model | imageFile = Just imageFileString }, Cmd.none )
 
 
-submitProfile : Maybe Session -> UnwrappedTokenData -> Cmd Msg
-submitProfile maybeSession credentials =
-    case maybeSession of
-        Just session ->
-            let
-                maybeToken =
-                    fromSessionToToken session
-            in
-            case maybeToken of
-                Just token ->
-                    Http.request
-                        { method = "PUT"
-                        , headers = [ addHeader token ]
-                        , url = "/.netlify/functions/profile-put-api"
-                        , body = Http.jsonBody (unwrappedTokenDataEncoder credentials)
-                        , expect = Http.expectJson ProfileDone tokenDecoder
-                        , timeout = Nothing
-                        , tracker = Nothing
-                        }
-
-                Nothing ->
-                    Cmd.none
+submitProfile : Session -> UnwrappedTokenData -> Cmd Msg
+submitProfile session credentials =
+    case fromSessionToToken session of
+        Just token ->
+            Http.request
+                { method = "PUT"
+                , headers = [ addHeader token ]
+                , url = "/.netlify/functions/profile-put-api"
+                , body = Http.jsonBody (unwrappedTokenDataEncoder credentials)
+                , expect = Http.expectJson ProfileDone tokenDecoder
+                , timeout = Nothing
+                , tracker = Nothing
+                }
 
         Nothing ->
             Cmd.none

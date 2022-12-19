@@ -1,4 +1,4 @@
-port module Credentials exposing (ProfileData, Session, Token, UnwrappedTokenData, UserId, addHeader, decodeToSession, decodeTokenData, emptyUserId, encodeToken, fromSessionToToken, fromTokenToString, logout, onSessionChange, profileDataDecoder, profileDataEncoder, storeSession, subscriptionChanges, tokenDecoder, unfoldProfileFromToken, unwrappedTokenDataEncoder, userIdParser, userIdToString)
+port module Credentials exposing (ProfileData, Session, Token, UnwrappedTokenData, UserId, addHeader, decodeToSession, decodeTokenData, emptyUserId, encodeToken, fromSessionToToken, fromTokenToString, guest, logout, onSessionChange, profileDataDecoder, profileDataEncoder, storeSession, subscriptionChanges, tokenDecoder, unfoldProfileFromToken, unwrappedTokenDataEncoder, userIdParser, userIdToString)
 
 import Browser.Navigation as Nav
 import Http exposing (Header, header)
@@ -38,6 +38,11 @@ userIdToString (UserId id) =
 emptyUserId : UserId
 emptyUserId =
     UserId ""
+
+
+guest : Session
+guest =
+    Guest
 
 
 

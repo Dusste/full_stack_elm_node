@@ -6143,11 +6143,12 @@ var $author$project$Credentials$UserId = function (a) {
 	return {$: 'UserId', a: a};
 };
 var $author$project$Credentials$emptyUserId = $author$project$Credentials$UserId('');
+var $author$project$Credentials$guest = $author$project$Credentials$Guest;
 var $author$project$Profile$initialModel = {
 	errors: _List_Nil,
 	imageFile: $elm$core$Maybe$Nothing,
 	profile: {email: '', exp: 0, firstname: '', iat: 0, id: $author$project$Credentials$emptyUserId, isverified: false},
-	session: $elm$core$Maybe$Nothing
+	session: $author$project$Credentials$guest
 };
 var $author$project$Credentials$UnwrappedTokenData = F6(
 	function (id, isverified, email, firstname, iat, exp) {
@@ -6199,9 +6200,9 @@ var $author$project$Credentials$unfoldProfileFromToken = function (_v0) {
 	return $author$project$Credentials$decodeTokenData;
 };
 var $author$project$Profile$init = function (session) {
-	var maybeToken = $author$project$Credentials$fromSessionToToken(session);
-	if (maybeToken.$ === 'Just') {
-		var token = maybeToken.a;
+	var _v0 = $author$project$Credentials$fromSessionToToken(session);
+	if (_v0.$ === 'Just') {
+		var token = _v0.a;
 		var tokenString = $author$project$Credentials$fromTokenToString(token);
 		var profileFromToken = $author$project$Credentials$unfoldProfileFromToken(token);
 		var profile = A2($elm$core$String$split, '.', tokenString);
@@ -6223,10 +6224,7 @@ var $author$project$Profile$init = function (session) {
 					return _Utils_Tuple2(
 						_Utils_update(
 							$author$project$Profile$initialModel,
-							{
-								profile: profileData,
-								session: $elm$core$Maybe$Just(session)
-							}),
+							{profile: profileData, session: session}),
 						$elm$core$Platform$Cmd$none);
 				} else {
 					return _Utils_Tuple2($author$project$Profile$initialModel, $elm$core$Platform$Cmd$none);
@@ -7760,29 +7758,24 @@ var $author$project$Credentials$unwrappedTokenDataEncoder = function (profileDat
 			]));
 };
 var $author$project$Profile$submitProfile = F2(
-	function (maybeSession, credentials) {
-		if (maybeSession.$ === 'Just') {
-			var session = maybeSession.a;
-			var maybeToken = $author$project$Credentials$fromSessionToToken(session);
-			if (maybeToken.$ === 'Just') {
-				var token = maybeToken.a;
-				return $elm$http$Http$request(
-					{
-						body: $elm$http$Http$jsonBody(
-							$author$project$Credentials$unwrappedTokenDataEncoder(credentials)),
-						expect: A2($elm$http$Http$expectJson, $author$project$Profile$ProfileDone, $author$project$Credentials$tokenDecoder),
-						headers: _List_fromArray(
-							[
-								$author$project$Credentials$addHeader(token)
-							]),
-						method: 'PUT',
-						timeout: $elm$core$Maybe$Nothing,
-						tracker: $elm$core$Maybe$Nothing,
-						url: '/.netlify/functions/profile-put-api'
-					});
-			} else {
-				return $elm$core$Platform$Cmd$none;
-			}
+	function (session, credentials) {
+		var _v0 = $author$project$Credentials$fromSessionToToken(session);
+		if (_v0.$ === 'Just') {
+			var token = _v0.a;
+			return $elm$http$Http$request(
+				{
+					body: $elm$http$Http$jsonBody(
+						$author$project$Credentials$unwrappedTokenDataEncoder(credentials)),
+					expect: A2($elm$http$Http$expectJson, $author$project$Profile$ProfileDone, $author$project$Credentials$tokenDecoder),
+					headers: _List_fromArray(
+						[
+							$author$project$Credentials$addHeader(token)
+						]),
+					method: 'PUT',
+					timeout: $elm$core$Maybe$Nothing,
+					tracker: $elm$core$Maybe$Nothing,
+					url: '/.netlify/functions/profile-put-api'
+				});
 		} else {
 			return $elm$core$Platform$Cmd$none;
 		}
