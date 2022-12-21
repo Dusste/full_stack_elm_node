@@ -7780,6 +7780,28 @@ var $author$project$Profile$submitProfile = F2(
 			return $elm$core$Platform$Cmd$none;
 		}
 	});
+var $elm$http$Http$emptyBody = _Http_emptyBody;
+var $author$project$Profile$submitVerifyProfile = function (session) {
+	var _v0 = $author$project$Credentials$fromSessionToToken(session);
+	if (_v0.$ === 'Just') {
+		var token = _v0.a;
+		return $elm$http$Http$request(
+			{
+				body: $elm$http$Http$emptyBody,
+				expect: A2($elm$http$Http$expectJson, $author$project$Profile$ProfileDone, $author$project$Credentials$tokenDecoder),
+				headers: _List_fromArray(
+					[
+						$author$project$Credentials$addHeader(token)
+					]),
+				method: 'PUT',
+				timeout: $elm$core$Maybe$Nothing,
+				tracker: $elm$core$Maybe$Nothing,
+				url: '/.netlify/functions/verify-put-api'
+			});
+	} else {
+		return $elm$core$Platform$Cmd$none;
+	}
+};
 var $elm$file$File$toString = _File_toString;
 var $author$project$Profile$update = F2(
 	function (msg, model) {
@@ -7857,7 +7879,7 @@ var $author$project$Profile$update = F2(
 						$elm$core$Task$perform,
 						$author$project$Profile$FileRead,
 						$elm$file$File$toString(file)));
-			default:
+			case 'FileRead':
 				var imageFileString = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -7866,6 +7888,11 @@ var $author$project$Profile$update = F2(
 							imageFile: $elm$core$Maybe$Just(imageFileString)
 						}),
 					$elm$core$Platform$Cmd$none);
+			default:
+				var session = msg.a;
+				return _Utils_Tuple2(
+					model,
+					$author$project$Profile$submitVerifyProfile(session));
 		}
 	});
 var $author$project$Signup$BadRequest = function (a) {
@@ -8394,17 +8421,9 @@ var $author$project$Profile$ProfileSubmit = F2(
 var $author$project$Profile$StoreFirstName = function (a) {
 	return {$: 'StoreFirstName', a: a};
 };
-var $author$project$Profile$StoreVerified = function (a) {
-	return {$: 'StoreVerified', a: a};
+var $author$project$Profile$VerifyProfile = function (a) {
+	return {$: 'VerifyProfile', a: a};
 };
-var $elm$html$Html$Attributes$boolProperty = F2(
-	function (key, bool) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			$elm$json$Json$Encode$bool(bool));
-	});
-var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
 var $elm$html$Html$img = _VirtualDom_node('img');
 var $elm$core$Basics$not = _Basics_not;
 var $elm$html$Html$Attributes$src = function (url) {
@@ -8454,18 +8473,31 @@ var $author$project$Profile$view = function (model) {
 						_List_Nil,
 						_List_fromArray(
 							[
-								$elm$html$Html$text('Verified'),
-								A2($elm$html$Html$br, _List_Nil, _List_Nil),
-								A2(
-								$elm$html$Html$input,
+								(!model.profile.isverified) ? A2(
+								$elm$html$Html$div,
+								_List_Nil,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$type_('checkbox'),
-										$elm$html$Html$Attributes$checked(model.profile.isverified),
-										$elm$html$Html$Events$onClick(
-										$author$project$Profile$StoreVerified(!model.profile.isverified))
-									]),
-								_List_Nil)
+										A2(
+										$elm$html$Html$p,
+										_List_Nil,
+										_List_fromArray(
+											[
+												$elm$html$Html$text('Hi, you might want to verify your account.')
+											])),
+										A2(
+										$elm$html$Html$button,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$type_('button'),
+												$elm$html$Html$Events$onClick(
+												$author$project$Profile$VerifyProfile(model.session))
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('Verify it !')
+											]))
+									])) : $elm$html$Html$text('')
 							])),
 						A2($elm$html$Html$br, _List_Nil, _List_Nil),
 						A2(

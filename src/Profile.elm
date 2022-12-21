@@ -46,6 +46,7 @@ type Msg
     | FileRequest
     | FileRequestDone File
     | FileRead String
+    | VerifyProfile Session
 
 
 initialModel : Model
@@ -133,6 +134,19 @@ view model =
                     []
                 ]
             , br [] []
+            , div []
+                [ if not model.profile.isverified then
+                    div []
+                        [ p []
+                            [ text
+                                "Hi, you might want to verify your account."
+                            ]
+                        , button [ type_ "button", onClick (VerifyProfile model.session) ] [ text "Verify it !" ]
+                        ]
+
+                  else
+                    text ""
+                ]
 
             -- , div []
             --     [ text "Email"
@@ -145,16 +159,16 @@ view model =
             --         []
             --     ]
             -- , br [] []
-            , div []
-                [ text "Verified"
-                , br [] []
-                , input
-                    [ type_ "checkbox"
-                    , checked model.profile.isverified
-                    , onClick (StoreVerified <| not model.profile.isverified)
-                    ]
-                    []
-                ]
+            -- , div []
+            --     [ text "Verified"
+            --     , br [] []
+            --     , input
+            --         [ type_ "checkbox"
+            --         , checked model.profile.isverified
+            --         , onClick (StoreVerified <| not model.profile.isverified)
+            --         ]
+            --         []
+            --     ]
             , br [] []
             , div []
                 [ text "Upload a avatar"
@@ -271,6 +285,9 @@ update msg model =
         FileRead imageFileString ->
             ( { model | imageFile = Just imageFileString }, Cmd.none )
 
+        VerifyProfile session ->
+            ( model, submitVerifyProfile session )
+
 
 submitProfile : Session -> UnwrappedTokenData -> Cmd Msg
 submitProfile session credentials =
@@ -281,6 +298,24 @@ submitProfile session credentials =
                 , headers = [ addHeader token ]
                 , url = "/.netlify/functions/profile-put-api"
                 , body = Http.jsonBody (unwrappedTokenDataEncoder credentials)
+                , expect = Http.expectJson ProfileDone tokenDecoder
+                , timeout = Nothing
+                , tracker = Nothing
+                }
+
+        Nothing ->
+            Cmd.none
+
+
+submitVerifyProfile : Session -> Cmd Msg
+submitVerifyProfile session =
+    case fromSessionToToken session of
+        Just token ->
+            Http.request
+                { method = "PUT"
+                , headers = [ addHeader token ]
+                , url = "/.netlify/functions/verify-put-api"
+                , body = Http.emptyBody
                 , expect = Http.expectJson ProfileDone tokenDecoder
                 , timeout = Nothing
                 , tracker = Nothing

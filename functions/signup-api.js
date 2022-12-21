@@ -4,6 +4,14 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuid } = require('uuid');
 const { clientPromise } = require('../nodeJsProject/connect-database');
+const sendgrid = require('@sendgrid/mail');
+
+sendgrid.setApiKey(process.env.SENDGRID_API_KEY);
+
+const sendEmail = ({ to, from, subject, text, html = '' }) => {
+    const msg = { to, from, subject, text, html };
+    return sendgrid.send(msg);
+};
 
 exports.handler = async function (req, context) {
     const { body } = req;
@@ -65,6 +73,27 @@ exports.handler = async function (req, context) {
         salt,
         verificationString,
     ]);
+
+    try {
+        await sendEmail({
+            to: email,
+            from: 'dooshanstevanovic@gmail.com',
+            subject: 'Please verify your email',
+            text: `Thanks for signin up ! To verify your email click here: http://localhost:8888/verify-email/${verificationString}`,
+            html: `<div>
+            <h1>Hello !</h1>
+            <div>
+              <h2>Thanks for signin up ! </h2> 
+              <p>To verify your email click here: <a href="http://localhost:8888/verify-email/${verificationString}">http://localhost:8888/verify-email/${verificationString}</a></p>
+            </div>
+          </div>`,
+        });
+    } catch (err) {
+        console.log('Error in signUp', err.response.body.errors);
+        return {
+            statusCode: 500,
+        };
+    }
 
     // console.log('signup posle', { createdUser });
     // const { id } = createdUser;
