@@ -32,7 +32,7 @@ exports.handler = async function (req) {
     };
     const user = await findUser([email]);
 
-    if (!user.rows[0]) {
+    if (!user?.rows[0]) {
         return {
             statusCode: 401,
         };

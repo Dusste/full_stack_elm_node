@@ -1,5 +1,7 @@
-[functions]
-    directory = "functions/"
+[build]
+    command = 'npm run build'
+    functions = 'functions'
+    'publish' = 'build'
 [[redirects]]
     from = "/*"
     to = "index.html"

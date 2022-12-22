@@ -38,8 +38,8 @@ exports.handler = async function (req, context) {
     };
 
     const user = await findUser([email]);
-
-    if (user.rows[0]) {
+    console.log('dusan', user);
+    if (user?.rows[0]) {
         // conflict error code
         return {
             statusCode: 409,
