@@ -1,7 +1,5 @@
-[build]
-  
-    functions = 'functions'
-    'publish' = 'build'
+[functions]
+    directory = "functions/"
 [[redirects]]
     from = "/*"
     to = "index.html"
