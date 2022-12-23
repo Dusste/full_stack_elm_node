@@ -7,8 +7,8 @@ import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Credentials exposing (Session, UserId, decodeToSession, fromSessionToToken, fromTokenToString, logout, subscriptionChanges, unfoldProfileFromToken, userIdParser, userIdToString)
 import Home
-import Html exposing (Html, a, footer, h1, li, nav, p, text, ul)
-import Html.Attributes exposing (classList, href)
+import Html exposing (Html, a, div, footer, h1, li, nav, p, text, ul)
+import Html.Attributes exposing (classList, href, style)
 import Html.Events exposing (onClick)
 import Html.Lazy exposing (lazy)
 import Json.Decode as Decode exposing (Value)
@@ -23,6 +23,7 @@ type alias Model =
     { page : Page
     , key : Nav.Key
     , session : Session
+    , openDropdown : Bool
     }
 
 
@@ -51,6 +52,7 @@ type Msg
     | GotHomeMsg Home.Msg
     | GotSubscriptionChangeMsg Session
     | GetLogout
+    | OpenDropdown
 
 
 content : Model -> Html Msg
@@ -105,7 +107,7 @@ viewFooter =
 
 
 viewHeader : Model -> Html Msg
-viewHeader { page, session } =
+viewHeader { page, session, openDropdown, key } =
     let
         maybeToken =
             fromSessionToToken session
@@ -153,13 +155,23 @@ viewHeader { page, session } =
                                                       )
                                                     ]
                                                 ]
-                                                [ p
-                                                    []
-                                                    [ if String.isEmpty resultTokenRecord.firstname == False then
-                                                        text (resultTokenRecord.firstname ++ " ⌄")
+                                                [ div []
+                                                    [ ul
+                                                        [ if openDropdown then
+                                                            style "display" "block"
 
-                                                      else
-                                                        text (resultTokenRecord.email ++ " ⌄")
+                                                          else
+                                                            style "display" "none"
+                                                        ]
+                                                        [ li [] [ a [ href <| "/profile/" ++ userIdToString resultTokenRecord.id ] [ text "My profile" ] ], li [] [ text "option2" ], li [] [ text "option3" ] ]
+                                                    , p
+                                                        [ onClick OpenDropdown ]
+                                                        [ if String.isEmpty resultTokenRecord.firstname == False then
+                                                            text (resultTokenRecord.firstname ++ " ⌄")
+
+                                                          else
+                                                            text (resultTokenRecord.email ++ " ⌄")
+                                                        ]
                                                     ]
                                                 ]
 
@@ -357,6 +369,9 @@ update msg model =
         GetLogout ->
             ( model, logout )
 
+        OpenDropdown ->
+            ( { model | openDropdown = not model.openDropdown }, Cmd.none )
+
 
 matchRoute : Parser (Route -> a) a
 matchRoute =
@@ -440,7 +455,7 @@ init : Value -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
         model =
-            { page = urlToPage url (decodeToSession key flags), key = key, session = decodeToSession key flags }
+            { page = urlToPage url (decodeToSession key flags), key = key, session = decodeToSession key flags, openDropdown = False }
     in
     initCurrentPage ( model, Cmd.none )
 
