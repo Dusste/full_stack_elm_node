@@ -26,7 +26,11 @@ exports.handler = async function (req) {
 
     // const user = await usersCollection.findOne({ email: { $eq: email } });
     const findUser = async (parameters) => {
-        const query = `SELECT * FROM ${process.env.ASTRA_DB_KEYSPACE}.users WHERE email = ? ALLOW FILTERING;`;
+        const query = `SELECT * FROM ${
+            process.env.NODE_ENV === 'development'
+                ? process.env.ASTRA_DB_KEYSPACE
+                : process.env.ASTRA_DB_KEYSPACE_PROD
+        }.users WHERE email = ? ALLOW FILTERING;`;
         try {
             const result = await client.execute(query, parameters, { prepare: true });
 

@@ -57,7 +57,11 @@ exports.handler = async function (req, context) {
     const createdId = uuid();
 
     const createUser = async (parameters) => {
-        const query = `INSERT INTO ${process.env.ASTRA_DB_KEYSPACE}.users (id, email, firstname, isadmin, isverified, lastname, passwordhash, salt, verificationstring) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+        const query = `INSERT INTO ${
+            process.env.NODE_ENV === 'development'
+                ? process.env.ASTRA_DB_KEYSPACE
+                : ASTRA_DB_KEYSPACE_PROD
+        }.users (id, email, firstname, isadmin, isverified, lastname, passwordhash, salt, verificationstring) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`;
         try {
             const result = await client.execute(query, parameters, { prepare: true });
             //  result would be undefined but query would be executed and entery is wirtten in the DB
@@ -84,12 +88,20 @@ exports.handler = async function (req, context) {
             to: email,
             from: 'dooshanstevanovic@gmail.com',
             subject: 'Please verify your email',
-            text: `Thanks for signin up ! To verify your email click here: http://localhost:8888/verify-email/${verificationString}`,
+            text: `Thanks for signin up ! To verify your email click here: ${
+                process.env.NODE_ENV === 'development'
+                    ? 'http://localhost:8888'
+                    : 'https://my-elm-app.netlify.app'
+            }/verify-email/${verificationString}`,
             html: `<div>
             <h1>Hello !</h1>
             <div>
               <h2>Thanks for signin up ! </h2> 
-              <p>To verify your email click here: <a href="http://localhost:8888/verify-email/${verificationString}">http://localhost:8888/verify-email/${verificationString}</a></p>
+              <p>To verify your email click here: <a href="${
+                  process.env.NODE_ENV === 'development'
+                      ? 'http://localhost:8888'
+                      : 'https://my-elm-app.netlify.app'
+              }/verify-email/${verificationString}">http://localhost:8888/verify-email/${verificationString}</a></p>
             </div>
           </div>`,
         });

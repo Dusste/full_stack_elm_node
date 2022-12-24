@@ -67,7 +67,11 @@ exports.handler = async function (req) {
     //     };
 
     const updateUser = async (parameters) => {
-        const query = `UPDATE ${process.env.ASTRA_DB_KEYSPACE}.users SET email = ?, firstname = ?, isverified = ? WHERE id = ? IF EXISTS;`;
+        const query = `UPDATE ${
+            process.env.NODE_ENV === 'development'
+                ? process.env.ASTRA_DB_KEYSPACE
+                : process.env.ASTRA_DB_KEYSPACE_PROD
+        }.users SET email = ?, firstname = ?, isverified = ? WHERE id = ? IF EXISTS;`;
         try {
             const result = await client.execute(query, parameters, { prepare: true });
             //  result would be undefined but query would be executed and entery is wirtten in the DB
@@ -89,7 +93,11 @@ exports.handler = async function (req) {
     }
 
     const findUser = async (parameters) => {
-        const query = `SELECT * FROM ${process.env.ASTRA_DB_KEYSPACE}.users WHERE email = ? ALLOW FILTERING;`;
+        const query = `SELECT * FROM ${
+            process.env.NODE_ENV === 'development'
+                ? process.env.ASTRA_DB_KEYSPACE
+                : process.env.ASTRA_DB_KEYSPACE_PROD
+        }.users WHERE email = ? ALLOW FILTERING;`;
         try {
             const result = await client.execute(query, parameters, { prepare: true });
 
