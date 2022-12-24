@@ -1,11 +1,16 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuid } = require('uuid');
-const { clientPromise } = require('../nodeJsProject/connect-database');
+const { clientPromise } = require('../connect-database');
 
 exports.handler = async function (req) {
     const { authorization } = req.headers;
     const client = await clientPromise;
+
+    if (!client)
+        return {
+            statusCode: 500,
+        };
 
     if (!authorization) {
         return {

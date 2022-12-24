@@ -121,7 +121,7 @@ view : Model -> Html Msg
 view model =
     div
         []
-        [ h2 [] [ text ("Hello" ++ model.profile.firstname) ]
+        [ h2 [] [ text "Hello" ]
         , Html.form []
             [ div []
                 [ text "First Name"

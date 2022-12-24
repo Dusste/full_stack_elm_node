@@ -7162,6 +7162,7 @@ var $author$project$Main$init = F3(
 	function (flags, url, key) {
 		var model = {
 			key: key,
+			openDropdown: false,
 			page: A2(
 				$author$project$Main$urlToPage,
 				url,
@@ -7205,6 +7206,7 @@ var $author$project$Credentials$storeSession = _Platform_outgoingPort(
 		return A3($elm$core$Maybe$destruct, $elm$json$Json$Encode$null, $elm$json$Json$Encode$string, $);
 	});
 var $author$project$Credentials$logout = $author$project$Credentials$storeSession($elm$core$Maybe$Nothing);
+var $elm$core$Basics$not = _Basics_not;
 var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
 var $elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
@@ -8184,8 +8186,14 @@ var $author$project$Main$update = F2(
 							return A2($elm$browser$Browser$Navigation$pushUrl, model.key, '/login');
 						}
 					}());
-			default:
+			case 'GetLogout':
 				return _Utils_Tuple2(model, $author$project$Credentials$logout);
+			default:
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{openDropdown: !model.openDropdown}),
+					$elm$core$Platform$Cmd$none);
 		}
 	});
 var $elm$virtual_dom$VirtualDom$map = _VirtualDom_map;
@@ -8425,7 +8433,6 @@ var $author$project$Profile$VerifyProfile = function (a) {
 	return {$: 'VerifyProfile', a: a};
 };
 var $elm$html$Html$img = _VirtualDom_node('img');
-var $elm$core$Basics$not = _Basics_not;
 var $elm$html$Html$Attributes$src = function (url) {
 	return A2(
 		$elm$html$Html$Attributes$stringProperty,
@@ -8443,7 +8450,7 @@ var $author$project$Profile$view = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Hello' + model.profile.firstname)
+						$elm$html$Html$text('Hello')
 					])),
 				A2(
 				$elm$html$Html$form,
@@ -8799,6 +8806,7 @@ var $author$project$Main$viewFooter = A2(
 			$elm$html$Html$text('This is footer')
 		]));
 var $author$project$Main$GetLogout = {$: 'GetLogout'};
+var $author$project$Main$OpenDropdown = {$: 'OpenDropdown'};
 var $elm$html$Html$a = _VirtualDom_node('a');
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$core$List$filter = F2(
@@ -8874,9 +8882,13 @@ var $author$project$Main$isActive = function (_v0) {
 	}
 };
 var $elm$html$Html$nav = _VirtualDom_node('nav');
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $author$project$Main$viewHeader = function (_v0) {
 	var page = _v0.page;
 	var session = _v0.session;
+	var openDropdown = _v0.openDropdown;
+	var key = _v0.key;
 	var maybeToken = $author$project$Credentials$fromSessionToToken(session);
 	if (maybeToken.$ === 'Just') {
 		var token = maybeToken.a;
@@ -8944,11 +8956,60 @@ var $author$project$Main$viewHeader = function (_v0) {
 											_List_fromArray(
 												[
 													A2(
-													$elm$html$Html$p,
+													$elm$html$Html$div,
 													_List_Nil,
 													_List_fromArray(
 														[
-															(!$elm$core$String$isEmpty(resultTokenRecord.firstname)) ? $elm$html$Html$text(resultTokenRecord.firstname + ' ⌄') : $elm$html$Html$text(resultTokenRecord.email + ' ⌄')
+															A2(
+															$elm$html$Html$ul,
+															_List_fromArray(
+																[
+																	openDropdown ? A2($elm$html$Html$Attributes$style, 'display', 'block') : A2($elm$html$Html$Attributes$style, 'display', 'none')
+																]),
+															_List_fromArray(
+																[
+																	A2(
+																	$elm$html$Html$li,
+																	_List_Nil,
+																	_List_fromArray(
+																		[
+																			A2(
+																			$elm$html$Html$a,
+																			_List_fromArray(
+																				[
+																					$elm$html$Html$Attributes$href(
+																					'/profile/' + $author$project$Credentials$userIdToString(resultTokenRecord.id))
+																				]),
+																			_List_fromArray(
+																				[
+																					$elm$html$Html$text('My profile')
+																				]))
+																		])),
+																	A2(
+																	$elm$html$Html$li,
+																	_List_Nil,
+																	_List_fromArray(
+																		[
+																			$elm$html$Html$text('option2')
+																		])),
+																	A2(
+																	$elm$html$Html$li,
+																	_List_Nil,
+																	_List_fromArray(
+																		[
+																			$elm$html$Html$text('option3')
+																		]))
+																])),
+															A2(
+															$elm$html$Html$p,
+															_List_fromArray(
+																[
+																	$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
+																]),
+															_List_fromArray(
+																[
+																	(!$elm$core$String$isEmpty(resultTokenRecord.firstname)) ? $elm$html$Html$text(resultTokenRecord.firstname + ' ⌄') : $elm$html$Html$text(resultTokenRecord.email + ' ⌄')
+																]))
 														]))
 												]));
 									} else {

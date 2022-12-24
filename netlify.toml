@@ -1,5 +1,6 @@
 [functions]
     directory = "functions/"
+    
 [[redirects]]
     from = "/*"
     to = "index.html"
@@ -7,3 +8,9 @@
   
 [dev]
     targetPort = 8000
+
+[context.production]
+    NODE_ENV = "production"
+
+[context.dev.environment]
+    NODE_ENV = "development"

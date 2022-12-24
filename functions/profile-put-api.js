@@ -2,13 +2,18 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuid } = require('uuid');
-const { clientPromise } = require('../nodeJsProject/connect-database');
+const { clientPromise } = require('../connect-database');
 
 exports.handler = async function (req) {
     const { body } = req;
     const { authorization } = req.headers;
     const { email, isverified, firstname } = JSON.parse(body);
     const client = await clientPromise;
+
+    if (!client)
+        return {
+            statusCode: 500,
+        };
 
     // const astraClient = await createClient({
     //     astraDatabaseId: process.env.ASTRA_DB_ID,

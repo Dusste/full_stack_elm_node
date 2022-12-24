@@ -3,7 +3,7 @@ const cassandra = require('cassandra-driver');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuid } = require('uuid');
-const { clientPromise } = require('../nodeJsProject/connect-database');
+const { clientPromise } = require('../connect-database');
 const sendgrid = require('@sendgrid/mail');
 
 sendgrid.setApiKey(process.env.SENDGRID_API_KEY);
@@ -17,6 +17,11 @@ exports.handler = async function (req, context) {
     const { body } = req;
     const { email, password } = JSON.parse(body);
     const client = await clientPromise;
+
+    if (!client)
+        return {
+            statusCode: 500,
+        };
 
     // const astraClient = await createClient({
     //     astraDatabaseId: process.env.ASTRA_DB_ID,
@@ -38,7 +43,7 @@ exports.handler = async function (req, context) {
     };
 
     const user = await findUser([email]);
-    console.log('dusan', user);
+
     if (user?.rows[0]) {
         // conflict error code
         return {
