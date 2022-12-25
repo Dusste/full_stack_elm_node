@@ -21,6 +21,7 @@ exports.handler = async function (req, context) {
     if (!client)
         return {
             statusCode: 500,
+            body: 'There is no client',
         };
 
     try {
