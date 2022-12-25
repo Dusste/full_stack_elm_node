@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { v4: uuid } = require('uuid');
 const { clientPromise } = require('../connect-database');
 const sendgrid = require('@sendgrid/mail');
+const store = require('store2');
 
 sendgrid.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -15,14 +16,25 @@ const sendEmail = ({ to, from, subject, text, html = '' }) => {
 
 exports.handler = async function (req, context) {
     const { body } = req;
-    const { email, password } = JSON.parse(body);
     const client = await clientPromise;
+    let parsedBody;
+    store('env', process.env.NODE_ENV);
 
     if (!client)
         return {
             statusCode: 500,
         };
 
+    try {
+        parsedBody = JSON.parse(body);
+    } catch (error) {
+        return {
+            statusCode: 500,
+            body: error.toString(error),
+        };
+    }
+
+    const { email, password } = parsedBody;
     // const astraClient = await createClient({
     //     astraDatabaseId: process.env.ASTRA_DB_ID,
     //     astraDatabaseRegion: process.env.ASTRA_DB_REGION,
@@ -33,7 +45,11 @@ exports.handler = async function (req, context) {
     //     .namespace(process.env.ASTRA_DB_KEYSPACE)
     //     .collection('users');
     const findUser = async (parameters) => {
-        const query = `SELECT * FROM ${process.env.ASTRA_DB_KEYSPACE}.users WHERE email = ? ALLOW FILTERING;`;
+        const query = `SELECT * FROM ${
+            process.env.NODE_ENV === 'development'
+                ? process.env.ASTRA_DB_KEYSPACE
+                : process.env.ASTRA_DB_KEYSPACE_PROD
+        }.users WHERE email = ? ALLOW FILTERING;`;
         try {
             const result = await client.execute(query, parameters, { prepare: true });
             return result;
@@ -60,7 +76,7 @@ exports.handler = async function (req, context) {
         const query = `INSERT INTO ${
             process.env.NODE_ENV === 'development'
                 ? process.env.ASTRA_DB_KEYSPACE
-                : ASTRA_DB_KEYSPACE_PROD
+                : process.env.ASTRA_DB_KEYSPACE_PROD
         }.users (id, email, firstname, isadmin, isverified, lastname, passwordhash, salt, verificationstring) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`;
         try {
             const result = await client.execute(query, parameters, { prepare: true });

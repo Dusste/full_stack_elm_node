@@ -7,14 +7,24 @@ const { clientPromise } = require('../connect-database');
 exports.handler = async function (req) {
     const { body } = req;
     const { authorization } = req.headers;
-    const { email, isverified, firstname } = JSON.parse(body);
     const client = await clientPromise;
+    let parsedBody;
 
     if (!client)
         return {
             statusCode: 500,
         };
 
+    try {
+        parsedBody = JSON.parse(body);
+    } catch (error) {
+        return {
+            statusCode: 500,
+            body: error.toString(error),
+        };
+    }
+
+    const { email, isverified, firstname } = parsedBody;
     // const astraClient = await createClient({
     //     astraDatabaseId: process.env.ASTRA_DB_ID,
     //     astraDatabaseRegion: process.env.ASTRA_DB_REGION,
