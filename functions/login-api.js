@@ -3,14 +3,12 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuid } = require('uuid');
 const { clientPromise } = require('../connect-database');
-const store = require('store2');
 
 exports.handler = async function (req) {
     const { body } = req;
     const client = await clientPromise;
     let parsedBody;
-    store('env', process.env.NODE_ENV);
-    // console.log('dusan', store);
+
     if (!client)
         return {
             statusCode: 500,

@@ -5,7 +5,6 @@ const jwt = require('jsonwebtoken');
 const { v4: uuid } = require('uuid');
 const { clientPromise } = require('../connect-database');
 const sendgrid = require('@sendgrid/mail');
-const store = require('store2');
 
 sendgrid.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -18,7 +17,6 @@ exports.handler = async function (req, context) {
     const { body } = req;
     const client = await clientPromise;
     let parsedBody;
-    store('env', process.env.NODE_ENV);
 
     if (!client)
         return {
