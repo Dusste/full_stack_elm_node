@@ -1,21 +1,19 @@
 module Login exposing (Model, Msg, init, update, view)
 
-import Browser
 import Credentials exposing (Token, encodeToken, storeSession, tokenDecoder)
 import Html exposing (..)
 import Html.Attributes exposing (type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Json.Decode as Decode exposing (Decoder, string)
-import Json.Decode.Pipeline exposing (required)
-import Json.Encode as Encode exposing (Value, encode)
-import Regex exposing (Regex)
+import Json.Encode as Encode exposing (encode)
+import Regex
 import Utils exposing (buildErrorMessage, validEmail)
 
 
 type alias Model =
     { loginCredentials : Credentials
     , errors : List CheckErrors
+    , isLoading : Bool
     }
 
 
@@ -29,6 +27,7 @@ initialModel : Model
 initialModel =
     { loginCredentials = { email = "", password = "" }
     , errors = []
+    , isLoading = False
     }
 
 
@@ -43,10 +42,6 @@ type Msg
     | StorePassword String
     | LoginSubmit Credentials
     | LoginDone (Result Http.Error Token)
-
-
-
--- | GetShit (WebData Shit)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -72,28 +67,26 @@ update msg model =
             in
             ( { model | loginCredentials = updateCredentials }, Cmd.none )
 
-        -- GetShit newShit ->
-        --     ( { model | shit = newShit }, Cmd.none )
         LoginSubmit cred ->
             let
                 errorsList =
                     sumOfErrors model
             in
             if List.isEmpty errorsList then
-                ( { model | errors = [] }, submitLogin model.loginCredentials )
+                ( { model | errors = [], isLoading = True }, submitLogin model.loginCredentials )
 
             else
-                ( { model | errors = errorsList }, Cmd.none )
+                ( { model | errors = errorsList, isLoading = False }, Cmd.none )
 
         LoginDone (Ok token) ->
             let
                 tokenValue =
                     encodeToken token
             in
-            ( { model | errors = [] }, storeSession <| Just <| encode 0 tokenValue )
+            ( { model | errors = [], isLoading = False }, storeSession <| Just <| encode 0 tokenValue )
 
         LoginDone (Err error) ->
-            ( { model | errors = BadRequest (buildErrorMessage error) :: model.errors }, Cmd.none )
+            ( { model | errors = BadRequest (buildErrorMessage error) :: model.errors, isLoading = False }, Cmd.none )
 
 
 sumOfErrors : Model -> List CheckErrors
@@ -144,15 +137,6 @@ credentialsEncoder credentials =
         ]
 
 
-
--- shitDecoder : Decoder Shit
--- shitDecoder =
---     Decode.succeed Shit
---         |> required "firstName" string
---         |> required "lastName" string
---         |> required "occupation" string
-
-
 view : Model -> Html Msg
 view model =
     div
@@ -177,10 +161,12 @@ view model =
                 [ button [ type_ "button", onClick (LoginSubmit model.loginCredentials) ]
                     [ text "Sign in" ]
                 ]
-            ]
+            , if model.isLoading then
+                div [] [ text "LOADING ... " ]
 
-        -- , viewShit model.shit
-        -- , viewError model.errorMessage
+              else
+                div [] [ text "" ]
+            ]
         ]
 
 
@@ -200,13 +186,3 @@ viewError checkErrors =
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( initialModel, Cmd.none )
-
-
-main : Program () Model Msg
-main =
-    Browser.element
-        { init = init
-        , subscriptions = \_ -> Sub.none
-        , view = view
-        , update = update
-        }

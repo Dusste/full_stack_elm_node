@@ -2,15 +2,13 @@ module Profile exposing (..)
 
 import Array
 import Base64 exposing (decode)
-import Credentials exposing (Session, Token, UnwrappedTokenData, addHeader, decodeTokenData, emptyUserId, encodeToken, fromSessionToToken, fromTokenToString, guest, logout, profileDataDecoder, profileDataEncoder, storeSession, tokenDecoder, unfoldProfileFromToken, unwrappedTokenDataEncoder)
-import Debug exposing (toString)
+import Credentials exposing (Session, Token, UnwrappedTokenData, addHeader, emptyUserId, emptyVerificationString, encodeToken, fromSessionToToken, fromTokenToString, guest, logout, storeSession, tokenDecoder, unfoldProfileFromToken, unwrappedTokenDataEncoder)
 import File exposing (File)
 import File.Select as Select
 import Html exposing (..)
 import Html.Attributes exposing (alt, checked, src, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
-import HttpBuilder exposing (RequestBuilder, withHeader)
 import Json.Decode as Decode exposing (Decoder, Value, bool, list, string)
 import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode exposing (Value, encode)
@@ -46,7 +44,6 @@ type Msg
     | FileRequest
     | FileRequestDone File
     | FileRead String
-    | VerifyProfile Session
 
 
 initialModel : Model
@@ -56,6 +53,7 @@ initialModel =
         , email = ""
         , id = emptyUserId
         , isverified = False
+        , verificationstring = emptyVerificationString
         , iat = 0
         , exp = 0
         }
@@ -119,98 +117,82 @@ init session =
 
 view : Model -> Html Msg
 view model =
-    div
-        []
-        [ h2 [] [ text "Hello" ]
-        , Html.form []
-            [ div []
-                [ text "First Name"
-                , br [] []
-                , input
-                    [ type_ "text"
-                    , onInput StoreFirstName
-                    , value model.profile.firstname
-                    ]
-                    []
-                ]
-            , br [] []
-            , div []
-                [ if not model.profile.isverified then
-                    div []
-                        [ p []
-                            [ text
-                                "Hi, you might want to verify your account."
-                            ]
-                        , button [ type_ "button", onClick (VerifyProfile model.session) ] [ text "Verify it !" ]
+    if model.profile.isverified then
+        div
+            []
+            [ h2 [] [ text "Hello" ]
+            , Html.form []
+                [ div []
+                    [ text "First Name"
+                    , br [] []
+                    , input
+                        [ type_ "text"
+                        , onInput StoreFirstName
+                        , value model.profile.firstname
                         ]
-
-                  else
-                    text ""
-                ]
-
-            -- , div []
-            --     [ text "Email"
-            --     , br [] []
-            --     , input
-            --         [ type_ "text"
-            --         , onInput StoreLastName
-            --         , value model.profile.email
-            --         ]
-            --         []
-            --     ]
-            -- , br [] []
-            -- , div []
-            --     [ text "Verified"
-            --     , br [] []
-            --     , input
-            --         [ type_ "checkbox"
-            --         , checked model.profile.isverified
-            --         , onClick (StoreVerified <| not model.profile.isverified)
-            --         ]
-            --         []
-            --     ]
-            , br [] []
-            , div []
-                [ text "Upload a avatar"
-                , br [] []
-                , input [ type_ "file", onClick FileRequest ] []
-                ]
-            , br [] []
-            , div []
-                [ text "Your avatar"
-                , br [] []
-                , img
-                    [ src
-                        (case model.imageFile of
-                            Just fileString ->
-                                fileString
-
-                            Nothing ->
-                                ""
-                        )
+                        []
                     ]
-                    []
-                ]
 
-            -- , div []
-            --     [ text "Admin"
-            --     , br [] []
-            --     , input
-            --         [ type_ "checkbox"
-            --         , onClick (StoreAdmin (not model.profile.isadmin))
-            --         ]
-            --         []
-            --     ]
-            , br [] []
-            , div []
-                [ button
-                    [ type_ "button"
-                    , onClick (ProfileSubmit model.session model.profile)
+                -- , div []
+                --     [ text "Email"
+                --     , br [] []
+                --     , input
+                --         [ type_ "text"
+                --         , onInput StoreLastName
+                --         , value model.profile.email
+                --         ]
+                --         []
+                --     ]
+                -- , br [] []
+                , br [] []
+                , div []
+                    [ text "Upload a avatar"
+                    , br [] []
+                    , input [ type_ "file", onClick FileRequest ] []
                     ]
-                    [ text "Submit" ]
+                , br [] []
+                , div []
+                    [ text "Your avatar"
+                    , br [] []
+                    , img
+                        [ src
+                            (case model.imageFile of
+                                Just fileString ->
+                                    fileString
+
+                                Nothing ->
+                                    ""
+                            )
+                        ]
+                        []
+                    ]
+
+                -- , div []
+                --     [ text "Admin"
+                --     , br [] []
+                --     , input
+                --         [ type_ "checkbox"
+                --         , onClick (StoreAdmin (not model.profile.isadmin))
+                --         ]
+                --         []
+                --     ]
+                , br [] []
+                , div []
+                    [ button
+                        [ type_ "button"
+                        , onClick (ProfileSubmit model.session model.profile)
+                        ]
+                        [ text "Submit" ]
+                    ]
                 ]
             ]
-        ]
+
+    else
+        div []
+            [ h2 [] [ text "Please verify your email ! " ]
+            , p []
+                [ text "You can't access your profile until you verify your email" ]
+            ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -285,9 +267,6 @@ update msg model =
         FileRead imageFileString ->
             ( { model | imageFile = Just imageFileString }, Cmd.none )
 
-        VerifyProfile session ->
-            ( model, submitVerifyProfile session )
-
 
 submitProfile : Session -> UnwrappedTokenData -> Cmd Msg
 submitProfile session credentials =
@@ -298,24 +277,6 @@ submitProfile session credentials =
                 , headers = [ addHeader token ]
                 , url = "/.netlify/functions/profile-put-api"
                 , body = Http.jsonBody (unwrappedTokenDataEncoder credentials)
-                , expect = Http.expectJson ProfileDone tokenDecoder
-                , timeout = Nothing
-                , tracker = Nothing
-                }
-
-        Nothing ->
-            Cmd.none
-
-
-submitVerifyProfile : Session -> Cmd Msg
-submitVerifyProfile session =
-    case fromSessionToToken session of
-        Just token ->
-            Http.request
-                { method = "PUT"
-                , headers = [ addHeader token ]
-                , url = "/.netlify/functions/verify-put-api"
-                , body = Http.emptyBody
                 , expect = Http.expectJson ProfileDone tokenDecoder
                 , timeout = Nothing
                 , tracker = Nothing

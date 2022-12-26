@@ -5,7 +5,21 @@ import Base64 exposing (decode)
 import BinaryTree exposing (..)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
-import Credentials exposing (Session, UserId, decodeToSession, fromSessionToToken, fromTokenToString, logout, subscriptionChanges, unfoldProfileFromToken, userIdParser, userIdToString)
+import Credentials
+    exposing
+        ( Session
+        , UserId
+        , VerificationString
+        , decodeToSession
+        , fromSessionToToken
+        , fromTokenToString
+        , logout
+        , subscriptionChanges
+        , unfoldProfileFromToken
+        , userIdParser
+        , userIdToString
+        , verifictionStringParser
+        )
 import Home
 import Html exposing (Html, a, div, footer, h1, li, nav, p, text, ul)
 import Html.Attributes exposing (classList, href, style)
@@ -17,6 +31,7 @@ import Profile
 import Signup
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser, s)
+import Verification
 
 
 type alias Model =
@@ -32,6 +47,7 @@ type Page
     | SignupPage Signup.Model
     | ProfilePage Profile.Model
     | HomePage Home.Model
+    | VerificationPage Verification.Model
     | NotFoundPage
 
 
@@ -40,6 +56,7 @@ type Route
     | Signup
     | Profile UserId
     | Home
+    | Verification VerificationString
     | NotFound
 
 
@@ -50,6 +67,7 @@ type Msg
     | GotLoginMsg Login.Msg
     | GotProfileMsg Profile.Msg
     | GotHomeMsg Home.Msg
+    | GotVerificationMsg Verification.Msg
     | GotSubscriptionChangeMsg Session
     | GetLogout
     | OpenDropdown
@@ -74,18 +92,12 @@ content model =
             Home.view homeModel
                 |> Html.map GotHomeMsg
 
+        VerificationPage verificationModel ->
+            Verification.view verificationModel
+                |> Html.map GotVerificationMsg
+
         NotFoundPage ->
             p [] [ text "Page not found buddy -_- sorry" ]
-
-
-
--- redirectToPage : Session -> Profile.Model -> Page
--- redirectToPage session profileModel =
---     case session of
---         LoggedIn token ->
---             ProfilePage profileModel
---         Guest ->
---             NotFoundPage
 
 
 view : Model -> Document Msg
@@ -245,6 +257,12 @@ isActive { link, page } =
         ( Home, _ ) ->
             False
 
+        ( Verification _, VerificationPage _ ) ->
+            True
+
+        ( Verification _, _ ) ->
+            False
+
         ( NotFound, _ ) ->
             False
 
@@ -299,6 +317,18 @@ update msg model =
                             Home.update homeMsg homeModel
                     in
                     ( { model | page = HomePage homeModelFromHome }, Cmd.map GotHomeMsg homeMsgFromHome )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotVerificationMsg verificationMsg ->
+            case model.page of
+                VerificationPage verificationModel ->
+                    let
+                        ( verificationModelFromVerification, verificationMsgFromVerification ) =
+                            Verification.update verificationMsg verificationModel
+                    in
+                    ( { model | page = VerificationPage verificationModelFromVerification }, Cmd.map GotVerificationMsg verificationMsgFromVerification )
 
                 _ ->
                     ( model, Cmd.none )
@@ -380,6 +410,7 @@ matchRoute =
         , Parser.map Login (s "login")
         , Parser.map Profile (s "profile" </> userIdParser)
         , Parser.map Signup (s "signup")
+        , Parser.map Verification (s "verify-email" </> verifictionStringParser)
         ]
 
 
@@ -397,6 +428,12 @@ urlToPage url session =
 
         Just Home ->
             HomePage (Tuple.first (Home.init ()))
+
+        Just (Verification _) ->
+            session
+                |> Verification.init
+                |> Tuple.first
+                |> VerificationPage
 
         Just NotFound ->
             NotFoundPage
@@ -434,21 +471,19 @@ initCurrentPage ( model, existingCmds ) =
             in
             ( { model | page = HomePage pageModel }, Cmd.map GotHomeMsg pageCmds )
 
+        VerificationPage _ ->
+            let
+                ( pageModel, pageCmds ) =
+                    Verification.init model.session
+            in
+            ( { model | page = VerificationPage pageModel }, Cmd.map GotVerificationMsg pageCmds )
+
         ProfilePage _ ->
             let
-                maybeToken =
-                    fromSessionToToken model.session
+                ( pageModel, pageCmds ) =
+                    Profile.init model.session
             in
-            case maybeToken of
-                Just token ->
-                    let
-                        ( pageModel, pageCmds ) =
-                            Profile.init model.session
-                    in
-                    ( { model | page = ProfilePage pageModel }, Cmd.map GotProfileMsg pageCmds )
-
-                Nothing ->
-                    ( { model | page = NotFoundPage }, Cmd.none )
+            ( { model | page = ProfilePage pageModel }, Cmd.map GotProfileMsg pageCmds )
 
 
 init : Value -> Url -> Nav.Key -> ( Model, Cmd Msg )

@@ -32,7 +32,7 @@ exports.handler = async function (req) {
         };
     }
 
-    const { id, email } = decodedToken;
+    const { id, email, isverified } = decodedToken;
 
     const updateUser = async (parameters) => {
         const query = `UPDATE ${
@@ -48,6 +48,13 @@ exports.handler = async function (req) {
             console.log('Error in createUser', ex.toString());
         }
     };
+
+    if (isverified) {
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ token }),
+        };
+    }
 
     const {
         rows: [applied],
@@ -80,10 +87,17 @@ exports.handler = async function (req) {
         isverified: isVerified,
         email: emailFromUser,
         firstname: firstName,
+        verificationstring,
     } = user.rows[0];
 
     const newToken = jwt.sign(
-        { id: decodedId, isverified: true, email: emailFromUser, firstname: firstName },
+        {
+            id: decodedId,
+            isverified: true,
+            email: emailFromUser,
+            firstname: firstName,
+            verificationstring,
+        },
         process.env.JWT_SECRET,
         { expiresIn: '2h' },
     );

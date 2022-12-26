@@ -136,6 +136,7 @@ exports.handler = async function (req, context) {
             isverified: false,
             email,
             firstname: '',
+            verificationstring: verificationString,
         },
         process.env.JWT_SECRET,
         { expiresIn: '2h' },

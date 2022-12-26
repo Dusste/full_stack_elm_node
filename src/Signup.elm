@@ -1,27 +1,19 @@
 module Signup exposing (Model, Msg, init, update, view)
 
-import Browser
 import Credentials exposing (Token, encodeToken, storeSession, tokenDecoder)
 import Html exposing (..)
 import Html.Attributes exposing (type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Json.Decode as Decode exposing (string)
-import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode exposing (encode)
-import Regex exposing (Regex)
-import RemoteData exposing (WebData)
+import Regex
 import Utils exposing (buildErrorMessage, validEmail)
-
-
-
--- email verification
---
 
 
 type alias Model =
     { signupCredentials : Credentials
     , errors : List CheckErrors
+    , isLoading : Bool
     }
 
 
@@ -37,6 +29,7 @@ initialModel : Model
 initialModel =
     { signupCredentials = { email = "", password = "", confirmPassword = "" }
     , errors = []
+    , isLoading = False
     }
 
 
@@ -95,10 +88,10 @@ update msg model =
                     sumOfErrors model
             in
             if List.isEmpty errorsList then
-                ( { model | errors = [] }, submitSignup cred )
+                ( { model | errors = [], isLoading = True }, submitSignup cred )
 
             else
-                ( { model | errors = errorsList }, Cmd.none )
+                ( { model | errors = errorsList, isLoading = False }, Cmd.none )
 
         SignupDone (Ok token) ->
             let
@@ -106,10 +99,10 @@ update msg model =
                     encodeToken token
             in
             -- ( { model | errors = [] }, Cmd.none )
-            ( { model | errors = [] }, storeSession <| Just <| encode 0 tokenValue )
+            ( { model | errors = [], isLoading = False }, storeSession <| Just <| encode 0 tokenValue )
 
         SignupDone (Err error) ->
-            ( { model | errors = BadRequest (buildErrorMessage error) :: model.errors }, Cmd.none )
+            ( { model | errors = BadRequest (buildErrorMessage error) :: model.errors, isLoading = False }, Cmd.none )
 
 
 
@@ -231,6 +224,11 @@ view model =
                     ]
                     [ text "Sign up" ]
                 ]
+            , if model.isLoading then
+                div [] [ text "LOADING ... " ]
+
+              else
+                div [] [ text "" ]
             ]
         ]
 
@@ -281,13 +279,3 @@ viewError checkErrors =
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( initialModel, Cmd.none )
-
-
-main : Program () Model Msg
-main =
-    Browser.element
-        { init = init
-        , subscriptions = \_ -> Sub.none
-        , view = view
-        , update = update
-        }

@@ -1,16 +1,6 @@
 module Home exposing (..)
 
-import BinaryTree exposing (..)
-import Browser
 import Html exposing (..)
-import Html.Attributes exposing (type_, value)
-import Html.Events exposing (onClick, onInput)
-import Html.Lazy exposing (lazy)
-import Http
-import Json.Decode as Decode exposing (Decoder, Value, list, string)
-import Json.Decode.Pipeline exposing (required)
-import Json.Encode as Encode exposing (Value, encode)
-import RemoteData exposing (WebData)
 
 
 type alias Model =
@@ -20,14 +10,6 @@ type alias Model =
 type CheckErrors
     = BadInput String
     | BadRequest String
-
-
-type alias Data =
-    { firstName : String
-    , lastName : String
-    , isVerified : Bool
-    , isAdmin : Bool
-    }
 
 
 initialModel : Model
@@ -43,7 +25,7 @@ init _ =
 
 
 type Msg
-    = Something
+    = NoOp
 
 
 view : Model -> Html Msg
@@ -61,5 +43,5 @@ view model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Something ->
+        NoOp ->
             ( model, Cmd.none )

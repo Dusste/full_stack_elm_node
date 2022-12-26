@@ -57,15 +57,19 @@ exports.handler = async function (req) {
         };
     }
 
-    const { id, isverified, passwordhash, salt, firstname } = user.rows[0];
+    const { id, isverified, passwordhash, salt, firstname, verificationstring } = user.rows[0];
     const pepper = process.env.PEPPER_STRING;
 
     const isCorrect = await bcrypt.compare(salt + password + pepper, passwordhash);
 
     if (isCorrect) {
-        const token = jwt.sign({ id, isverified, email, firstname }, process.env.JWT_SECRET, {
-            expiresIn: '2h',
-        });
+        const token = jwt.sign(
+            { id, isverified, email, firstname, verificationstring },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: '2h',
+            },
+        );
 
         return {
             statusCode: 200,

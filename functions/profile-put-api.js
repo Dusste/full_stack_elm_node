@@ -24,7 +24,7 @@ exports.handler = async function (req) {
         };
     }
 
-    const { email, isverified, firstname } = parsedBody;
+    const { email, firstname } = parsedBody;
     // const astraClient = await createClient({
     //     astraDatabaseId: process.env.ASTRA_DB_ID,
     //     astraDatabaseRegion: process.env.ASTRA_DB_REGION,
@@ -81,7 +81,7 @@ exports.handler = async function (req) {
             process.env.NODE_ENV === 'development'
                 ? process.env.ASTRA_DB_KEYSPACE
                 : process.env.ASTRA_DB_KEYSPACE_PROD
-        }.users SET email = ?, firstname = ?, isverified = ? WHERE id = ? IF EXISTS;`;
+        }.users SET firstname = ? WHERE id = ? IF EXISTS;`;
         try {
             const result = await client.execute(query, parameters, { prepare: true });
             //  result would be undefined but query would be executed and entery is wirtten in the DB
@@ -93,7 +93,7 @@ exports.handler = async function (req) {
 
     const {
         rows: [applied],
-    } = await updateUser([email, firstname, isverified, id]);
+    } = await updateUser([firstname, id]);
 
     if (!applied['[applied]']) {
         console.log('Unsuccessfull in updating user');
@@ -123,7 +123,7 @@ exports.handler = async function (req) {
         email: emailFromUser,
         firstname: firstName,
     } = user.rows[0];
-    console.log('dusan', user.rows[0]);
+
     const newToken = jwt.sign(
         { id: decodedId, isverified: isVerified, email: emailFromUser, firstname: firstName },
         process.env.JWT_SECRET,

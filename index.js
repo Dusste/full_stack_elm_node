@@ -5741,6 +5741,9 @@ var $author$project$Main$GotProfileMsg = function (a) {
 var $author$project$Main$GotSignupMsg = function (a) {
 	return {$: 'GotSignupMsg', a: a};
 };
+var $author$project$Main$GotVerificationMsg = function (a) {
+	return {$: 'GotVerificationMsg', a: a};
+};
 var $author$project$Main$HomePage = function (a) {
 	return {$: 'HomePage', a: a};
 };
@@ -5754,13 +5757,8 @@ var $author$project$Main$ProfilePage = function (a) {
 var $author$project$Main$SignupPage = function (a) {
 	return {$: 'SignupPage', a: a};
 };
-var $author$project$Credentials$fromSessionToToken = function (session) {
-	if (session.$ === 'LoggedIn') {
-		var token = session.a;
-		return $elm$core$Maybe$Just(token);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
+var $author$project$Main$VerificationPage = function (a) {
+	return {$: 'VerificationPage', a: a};
 };
 var $author$project$Home$initialModel = {};
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
@@ -5770,6 +5768,7 @@ var $author$project$Home$init = function (_v0) {
 };
 var $author$project$Login$initialModel = {
 	errors: _List_Nil,
+	isLoading: false,
 	loginCredentials: {email: '', password: ''}
 };
 var $author$project$Login$init = function (_v0) {
@@ -6096,6 +6095,14 @@ var $elm$core$Array$fromList = function (list) {
 		return A3($elm$core$Array$fromListHelp, list, _List_Nil, 0);
 	}
 };
+var $author$project$Credentials$fromSessionToToken = function (session) {
+	if (session.$ === 'LoggedIn') {
+		var token = session.a;
+		return $elm$core$Maybe$Just(token);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
 var $author$project$Credentials$fromTokenToString = function (_v0) {
 	var string = _v0.a;
 	return string;
@@ -6143,16 +6150,20 @@ var $author$project$Credentials$UserId = function (a) {
 	return {$: 'UserId', a: a};
 };
 var $author$project$Credentials$emptyUserId = $author$project$Credentials$UserId('');
+var $author$project$Credentials$VerificationString = function (a) {
+	return {$: 'VerificationString', a: a};
+};
+var $author$project$Credentials$emptyVerificationString = $author$project$Credentials$VerificationString('');
 var $author$project$Credentials$guest = $author$project$Credentials$Guest;
 var $author$project$Profile$initialModel = {
 	errors: _List_Nil,
 	imageFile: $elm$core$Maybe$Nothing,
-	profile: {email: '', exp: 0, firstname: '', iat: 0, id: $author$project$Credentials$emptyUserId, isverified: false},
+	profile: {email: '', exp: 0, firstname: '', iat: 0, id: $author$project$Credentials$emptyUserId, isverified: false, verificationstring: $author$project$Credentials$emptyVerificationString},
 	session: $author$project$Credentials$guest
 };
-var $author$project$Credentials$UnwrappedTokenData = F6(
-	function (id, isverified, email, firstname, iat, exp) {
-		return {email: email, exp: exp, firstname: firstname, iat: iat, id: id, isverified: isverified};
+var $author$project$Credentials$UnwrappedTokenData = F7(
+	function (id, isverified, email, firstname, verificationstring, iat, exp) {
+		return {email: email, exp: exp, firstname: firstname, iat: iat, id: id, isverified: isverified, verificationstring: verificationstring};
 	});
 var $elm$json$Json$Decode$at = F2(
 	function (fields, decoder) {
@@ -6161,9 +6172,10 @@ var $elm$json$Json$Decode$at = F2(
 var $elm$json$Json$Decode$bool = _Json_decodeBool;
 var $author$project$Credentials$idDecoder = A2($elm$json$Json$Decode$map, $author$project$Credentials$UserId, $elm$json$Json$Decode$string);
 var $elm$json$Json$Decode$int = _Json_decodeInt;
-var $elm$json$Json$Decode$map6 = _Json_map6;
-var $author$project$Credentials$decodeTokenData = A7(
-	$elm$json$Json$Decode$map6,
+var $elm$json$Json$Decode$map7 = _Json_map7;
+var $author$project$Credentials$verifyStringDecoder = A2($elm$json$Json$Decode$map, $author$project$Credentials$VerificationString, $elm$json$Json$Decode$string);
+var $author$project$Credentials$decodeTokenData = A8(
+	$elm$json$Json$Decode$map7,
 	$author$project$Credentials$UnwrappedTokenData,
 	A2(
 		$elm$json$Json$Decode$at,
@@ -6185,6 +6197,11 @@ var $author$project$Credentials$decodeTokenData = A7(
 		_List_fromArray(
 			['firstname']),
 		$elm$json$Json$Decode$string),
+	A2(
+		$elm$json$Json$Decode$at,
+		_List_fromArray(
+			['verificationstring']),
+		$author$project$Credentials$verifyStringDecoder),
 	A2(
 		$elm$json$Json$Decode$at,
 		_List_fromArray(
@@ -6239,10 +6256,29 @@ var $author$project$Profile$init = function (session) {
 };
 var $author$project$Signup$initialModel = {
 	errors: _List_Nil,
+	isLoading: false,
 	signupCredentials: {confirmPassword: '', email: '', password: ''}
 };
 var $author$project$Signup$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Signup$initialModel, $elm$core$Platform$Cmd$none);
+};
+var $author$project$Verification$VerifyApiCall = function (a) {
+	return {$: 'VerifyApiCall', a: a};
+};
+var $elm$core$Process$sleep = _Process_sleep;
+var $author$project$Verification$apiCallAfterSomeTime = F2(
+	function (session, toMsg) {
+		return A2(
+			$elm$core$Task$perform,
+			function (_v0) {
+				return toMsg(session);
+			},
+			$elm$core$Process$sleep(10000));
+	});
+var $author$project$Verification$init = function (session) {
+	return _Utils_Tuple2(
+		{errorMessage: '', session: session, verificationDone: false},
+		A2($author$project$Verification$apiCallAfterSomeTime, session, $author$project$Verification$VerifyApiCall));
 };
 var $elm$core$Platform$Cmd$map = _Platform_map;
 var $author$project$Main$initCurrentPage = function (_v0) {
@@ -6289,27 +6325,28 @@ var $author$project$Main$initCurrentPage = function (_v0) {
 						page: $author$project$Main$HomePage(pageModel)
 					}),
 				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotHomeMsg, pageCmds));
+		case 'VerificationPage':
+			var _v5 = $author$project$Verification$init(model.session);
+			var pageModel = _v5.a;
+			var pageCmds = _v5.b;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{
+						page: $author$project$Main$VerificationPage(pageModel)
+					}),
+				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotVerificationMsg, pageCmds));
 		default:
-			var maybeToken = $author$project$Credentials$fromSessionToToken(model.session);
-			if (maybeToken.$ === 'Just') {
-				var token = maybeToken.a;
-				var _v6 = $author$project$Profile$init(model.session);
-				var pageModel = _v6.a;
-				var pageCmds = _v6.b;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							page: $author$project$Main$ProfilePage(pageModel)
-						}),
-					A2($elm$core$Platform$Cmd$map, $author$project$Main$GotProfileMsg, pageCmds));
-			} else {
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{page: $author$project$Main$NotFoundPage}),
-					$elm$core$Platform$Cmd$none);
-			}
+			var _v6 = $author$project$Profile$init(model.session);
+			var pageModel = _v6.a;
+			var pageCmds = _v6.b;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{
+						page: $author$project$Main$ProfilePage(pageModel)
+					}),
+				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotProfileMsg, pageCmds));
 	}
 };
 var $author$project$Main$Home = {$: 'Home'};
@@ -6318,6 +6355,9 @@ var $author$project$Main$Profile = function (a) {
 	return {$: 'Profile', a: a};
 };
 var $author$project$Main$Signup = {$: 'Signup'};
+var $author$project$Main$Verification = function (a) {
+	return {$: 'Verification', a: a};
+};
 var $elm$url$Url$Parser$Parser = function (a) {
 	return {$: 'Parser', a: a};
 };
@@ -6480,6 +6520,15 @@ var $author$project$Credentials$userIdParser = A2(
 			$author$project$Credentials$UserId,
 			$elm$core$Maybe$Just(userId));
 	});
+var $author$project$Credentials$verifictionStringParser = A2(
+	$elm$url$Url$Parser$custom,
+	'VERIFICATIONSTRING',
+	function (verificationString) {
+		return A2(
+			$elm$core$Maybe$map,
+			$author$project$Credentials$VerificationString,
+			$elm$core$Maybe$Just(verificationString));
+	});
 var $author$project$Main$matchRoute = $elm$url$Url$Parser$oneOf(
 	_List_fromArray(
 		[
@@ -6498,7 +6547,14 @@ var $author$project$Main$matchRoute = $elm$url$Url$Parser$oneOf(
 			A2(
 			$elm$url$Url$Parser$map,
 			$author$project$Main$Signup,
-			$elm$url$Url$Parser$s('signup'))
+			$elm$url$Url$Parser$s('signup')),
+			A2(
+			$elm$url$Url$Parser$map,
+			$author$project$Main$Verification,
+			A2(
+				$elm$url$Url$Parser$slash,
+				$elm$url$Url$Parser$s('verify-email'),
+				$author$project$Credentials$verifictionStringParser))
 		]));
 var $elm$url$Url$Parser$getFirstMatch = function (states) {
 	getFirstMatch:
@@ -7150,6 +7206,9 @@ var $author$project$Main$urlToPage = F2(
 					var _v3 = _v0.a;
 					return $author$project$Main$HomePage(
 						$author$project$Home$init(_Utils_Tuple0).a);
+				case 'Verification':
+					return $author$project$Main$VerificationPage(
+						$author$project$Verification$init(session).a);
 				default:
 					var _v4 = _v0.a;
 					return $author$project$Main$NotFoundPage;
@@ -7664,11 +7723,11 @@ var $author$project$Login$update = F2(
 				return $elm$core$List$isEmpty(errorsList) ? _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{errors: _List_Nil}),
+						{errors: _List_Nil, isLoading: true}),
 					$author$project$Login$submitLogin(model.loginCredentials)) : _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{errors: errorsList}),
+						{errors: errorsList, isLoading: false}),
 					$elm$core$Platform$Cmd$none);
 			default:
 				if (msg.a.$ === 'Ok') {
@@ -7677,7 +7736,7 @@ var $author$project$Login$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{errors: _List_Nil}),
+							{errors: _List_Nil, isLoading: false}),
 						$author$project$Credentials$storeSession(
 							$elm$core$Maybe$Just(
 								A2($elm$json$Json$Encode$encode, 0, tokenValue))));
@@ -7691,7 +7750,8 @@ var $author$project$Login$update = F2(
 									$elm$core$List$cons,
 									$author$project$Login$BadRequest(
 										$author$project$Utils$buildErrorMessage(error)),
-									model.errors)
+									model.errors),
+								isLoading: false
 							}),
 						$elm$core$Platform$Cmd$none);
 				}
@@ -7782,28 +7842,6 @@ var $author$project$Profile$submitProfile = F2(
 			return $elm$core$Platform$Cmd$none;
 		}
 	});
-var $elm$http$Http$emptyBody = _Http_emptyBody;
-var $author$project$Profile$submitVerifyProfile = function (session) {
-	var _v0 = $author$project$Credentials$fromSessionToToken(session);
-	if (_v0.$ === 'Just') {
-		var token = _v0.a;
-		return $elm$http$Http$request(
-			{
-				body: $elm$http$Http$emptyBody,
-				expect: A2($elm$http$Http$expectJson, $author$project$Profile$ProfileDone, $author$project$Credentials$tokenDecoder),
-				headers: _List_fromArray(
-					[
-						$author$project$Credentials$addHeader(token)
-					]),
-				method: 'PUT',
-				timeout: $elm$core$Maybe$Nothing,
-				tracker: $elm$core$Maybe$Nothing,
-				url: '/.netlify/functions/verify-put-api'
-			});
-	} else {
-		return $elm$core$Platform$Cmd$none;
-	}
-};
 var $elm$file$File$toString = _File_toString;
 var $author$project$Profile$update = F2(
 	function (msg, model) {
@@ -7881,7 +7919,7 @@ var $author$project$Profile$update = F2(
 						$elm$core$Task$perform,
 						$author$project$Profile$FileRead,
 						$elm$file$File$toString(file)));
-			case 'FileRead':
+			default:
 				var imageFileString = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -7890,11 +7928,6 @@ var $author$project$Profile$update = F2(
 							imageFile: $elm$core$Maybe$Just(imageFileString)
 						}),
 					$elm$core$Platform$Cmd$none);
-			default:
-				var session = msg.a;
-				return _Utils_Tuple2(
-					model,
-					$author$project$Profile$submitVerifyProfile(session));
 		}
 	});
 var $author$project$Signup$BadRequest = function (a) {
@@ -8007,11 +8040,11 @@ var $author$project$Signup$update = F2(
 				return $elm$core$List$isEmpty(errorsList) ? _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{errors: _List_Nil}),
+						{errors: _List_Nil, isLoading: true}),
 					$author$project$Signup$submitSignup(cred)) : _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{errors: errorsList}),
+						{errors: errorsList, isLoading: false}),
 					$elm$core$Platform$Cmd$none);
 			default:
 				if (msg.a.$ === 'Ok') {
@@ -8020,7 +8053,7 @@ var $author$project$Signup$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{errors: _List_Nil}),
+							{errors: _List_Nil, isLoading: false}),
 						$author$project$Credentials$storeSession(
 							$elm$core$Maybe$Just(
 								A2($elm$json$Json$Encode$encode, 0, tokenValue))));
@@ -8034,10 +8067,67 @@ var $author$project$Signup$update = F2(
 									$elm$core$List$cons,
 									$author$project$Signup$BadRequest(
 										$author$project$Utils$buildErrorMessage(error)),
-									model.errors)
+									model.errors),
+								isLoading: false
 							}),
 						$elm$core$Platform$Cmd$none);
 				}
+		}
+	});
+var $author$project$Verification$VerifyDone = function (a) {
+	return {$: 'VerifyDone', a: a};
+};
+var $elm$http$Http$emptyBody = _Http_emptyBody;
+var $author$project$Verification$apiCallToVerify = function (session) {
+	var _v0 = $author$project$Credentials$fromSessionToToken(session);
+	if (_v0.$ === 'Just') {
+		var token = _v0.a;
+		return $elm$http$Http$request(
+			{
+				body: $elm$http$Http$emptyBody,
+				expect: A2($elm$http$Http$expectJson, $author$project$Verification$VerifyDone, $author$project$Credentials$tokenDecoder),
+				headers: _List_fromArray(
+					[
+						$author$project$Credentials$addHeader(token)
+					]),
+				method: 'PUT',
+				timeout: $elm$core$Maybe$Nothing,
+				tracker: $elm$core$Maybe$Nothing,
+				url: '/.netlify/functions/verify-put-api'
+			});
+	} else {
+		return $elm$core$Platform$Cmd$none;
+	}
+};
+var $author$project$Verification$update = F2(
+	function (msg, model) {
+		if (msg.$ === 'VerifyApiCall') {
+			var session = msg.a;
+			return _Utils_Tuple2(
+				model,
+				$author$project$Verification$apiCallToVerify(session));
+		} else {
+			if (msg.a.$ === 'Ok') {
+				var token = msg.a.a;
+				var tokenValue = $author$project$Credentials$encodeToken(token);
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{verificationDone: true}),
+					$author$project$Credentials$storeSession(
+						$elm$core$Maybe$Just(
+							A2($elm$json$Json$Encode$encode, 0, tokenValue))));
+			} else {
+				var error = msg.a.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							errorMessage: $author$project$Utils$buildErrorMessage(error),
+							verificationDone: false
+						}),
+					$elm$core$Platform$Cmd$none);
+			}
 		}
 	});
 var $author$project$Credentials$userIdToString = function (_v0) {
@@ -8126,14 +8216,32 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
+			case 'GotVerificationMsg':
+				var verificationMsg = msg.a;
+				var _v8 = model.page;
+				if (_v8.$ === 'VerificationPage') {
+					var verificationModel = _v8.a;
+					var _v9 = A2($author$project$Verification$update, verificationMsg, verificationModel);
+					var verificationModelFromVerification = _v9.a;
+					var verificationMsgFromVerification = _v9.b;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								page: $author$project$Main$VerificationPage(verificationModelFromVerification)
+							}),
+						A2($elm$core$Platform$Cmd$map, $author$project$Main$GotVerificationMsg, verificationMsgFromVerification));
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
 			case 'GotSignupMsg':
 				var signupMsg = msg.a;
-				var _v8 = model.page;
-				if (_v8.$ === 'SignupPage') {
-					var signupModel = _v8.a;
-					var _v9 = A2($author$project$Signup$update, signupMsg, signupModel);
-					var signupModelFromSignup = _v9.a;
-					var signupMsgFromSignup = _v9.b;
+				var _v10 = model.page;
+				if (_v10.$ === 'SignupPage') {
+					var signupModel = _v10.a;
+					var _v11 = A2($author$project$Signup$update, signupMsg, signupModel);
+					var signupModelFromSignup = _v11.a;
+					var signupMsgFromSignup = _v11.b;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
@@ -8168,9 +8276,9 @@ var $author$project$Main$update = F2(
 									return A2($elm$browser$Browser$Navigation$pushUrl, model.key, '/login');
 								} else {
 									var encodedRecord = decodedTokenData.a;
-									var _v13 = A2($elm$json$Json$Decode$decodeString, profileFromToken, encodedRecord);
-									if (_v13.$ === 'Ok') {
-										var resultTokenRecord = _v13.a;
+									var _v15 = A2($elm$json$Json$Decode$decodeString, profileFromToken, encodedRecord);
+									if (_v15.$ === 'Ok') {
+										var resultTokenRecord = _v15.a;
 										return A2(
 											$elm$browser$Browser$Navigation$pushUrl,
 											model.key,
@@ -8417,6 +8525,19 @@ var $author$project$Login$view = function (model) {
 									[
 										$elm$html$Html$text('Sign in')
 									]))
+							])),
+						model.isLoading ? A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('LOADING ... ')
+							])) : A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('')
 							]))
 					]))
 			]));
@@ -8429,9 +8550,6 @@ var $author$project$Profile$ProfileSubmit = F2(
 var $author$project$Profile$StoreFirstName = function (a) {
 	return {$: 'StoreFirstName', a: a};
 };
-var $author$project$Profile$VerifyProfile = function (a) {
-	return {$: 'VerifyProfile', a: a};
-};
 var $elm$html$Html$img = _VirtualDom_node('img');
 var $elm$html$Html$Attributes$src = function (url) {
 	return A2(
@@ -8440,7 +8558,7 @@ var $elm$html$Html$Attributes$src = function (url) {
 		_VirtualDom_noJavaScriptOrHtmlUri(url));
 };
 var $author$project$Profile$view = function (model) {
-	return A2(
+	return model.profile.isverified ? A2(
 		$elm$html$Html$div,
 		_List_Nil,
 		_List_fromArray(
@@ -8473,38 +8591,6 @@ var $author$project$Profile$view = function (model) {
 										$elm$html$Html$Attributes$value(model.profile.firstname)
 									]),
 								_List_Nil)
-							])),
-						A2($elm$html$Html$br, _List_Nil, _List_Nil),
-						A2(
-						$elm$html$Html$div,
-						_List_Nil,
-						_List_fromArray(
-							[
-								(!model.profile.isverified) ? A2(
-								$elm$html$Html$div,
-								_List_Nil,
-								_List_fromArray(
-									[
-										A2(
-										$elm$html$Html$p,
-										_List_Nil,
-										_List_fromArray(
-											[
-												$elm$html$Html$text('Hi, you might want to verify your account.')
-											])),
-										A2(
-										$elm$html$Html$button,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$type_('button'),
-												$elm$html$Html$Events$onClick(
-												$author$project$Profile$VerifyProfile(model.session))
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text('Verify it !')
-											]))
-									])) : $elm$html$Html$text('')
 							])),
 						A2($elm$html$Html$br, _List_Nil, _List_Nil),
 						A2(
@@ -8567,6 +8653,25 @@ var $author$project$Profile$view = function (model) {
 										$elm$html$Html$text('Submit')
 									]))
 							]))
+					]))
+			])) : A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$h2,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Please verify your email ! ')
+					])),
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('You can\'t access your profile until you verify your email')
 					]))
 			]));
 };
@@ -8754,6 +8859,79 @@ var $author$project$Signup$view = function (model) {
 									[
 										$elm$html$Html$text('Sign up')
 									]))
+							])),
+						model.isLoading ? A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('LOADING ... ')
+							])) : A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('')
+							]))
+					]))
+			]));
+};
+var $author$project$Verification$view = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$h2,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Your profile will be verified shortly... ')
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						model.verificationDone ? A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$h2,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Thanks for verifying email ! ')
+									])),
+								A2(
+								$elm$html$Html$p,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Now you will be redirected to your profile page and have full access to all app\'s features')
+									])),
+								A2(
+								$elm$html$Html$p,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text(model.errorMessage)
+									]))
+							])) : A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$p,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Please login first')
+									]))
 							]))
 					]))
 			]));
@@ -8785,6 +8963,12 @@ var $author$project$Main$content = function (model) {
 				$elm$html$Html$map,
 				$author$project$Main$GotHomeMsg,
 				$author$project$Home$view(homeModel));
+		case 'VerificationPage':
+			var verificationModel = _v0.a;
+			return A2(
+				$elm$html$Html$map,
+				$author$project$Main$GotVerificationMsg,
+				$author$project$Verification$view(verificationModel));
 		default:
 			return A2(
 				$elm$html$Html$p,
@@ -8874,6 +9058,12 @@ var $author$project$Main$isActive = function (_v0) {
 				return true;
 			} else {
 				var _v7 = _v1.a;
+				return false;
+			}
+		case 'Verification':
+			if (_v1.b.$ === 'VerificationPage') {
+				return true;
+			} else {
 				return false;
 			}
 		default:
