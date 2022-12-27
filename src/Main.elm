@@ -14,6 +14,7 @@ import Credentials
         , fromSessionToToken
         , fromTokenToString
         , logout
+        , sessionToVerificationString
         , subscriptionChanges
         , unfoldProfileFromToken
         , userIdParser
@@ -283,7 +284,7 @@ update msg model =
                 newPage =
                     urlToPage url model.session
             in
-            initCurrentPage ( { model | page = newPage }, Cmd.none )
+            initCurrentPage ( url, { model | page = newPage }, Cmd.none )
 
         GotLoginMsg loginMsg ->
             case model.page of
@@ -347,11 +348,7 @@ update msg model =
 
         GotSubscriptionChangeMsg session ->
             ( { model | session = session }
-            , let
-                maybeToken =
-                    fromSessionToToken session
-              in
-              case maybeToken of
+            , case fromSessionToToken session of
                 Just token ->
                     let
                         -- unwrap profile data only if you have token
@@ -430,10 +427,7 @@ urlToPage url session =
             HomePage (Tuple.first (Home.init ()))
 
         Just (Verification _) ->
-            session
-                |> Verification.init
-                |> Tuple.first
-                |> VerificationPage
+            VerificationPage (Tuple.first (Verification.init session url.path))
 
         Just NotFound ->
             NotFoundPage
@@ -442,8 +436,26 @@ urlToPage url session =
             NotFoundPage
 
 
-initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
-initCurrentPage ( model, existingCmds ) =
+
+-- pageToRoute : Page -> Route
+-- pageToRoute page =
+--     case page of
+--         SignupPage _ ->
+--             Signup
+--         LoginPage _ ->
+--             Login
+--         ProfilePage _ ->
+--             Profile Nothing
+--         HomePage _ ->
+--             Home
+--         VerificationPage _ ->
+--             Verification (s "verify-email" </> verifictionStringParser)
+--         NotFoundPage ->
+--             NotFound
+
+
+initCurrentPage : ( Url, Model, Cmd Msg ) -> ( Model, Cmd Msg )
+initCurrentPage ( url, model, existingCmds ) =
     case model.page of
         NotFoundPage ->
             ( { model | page = NotFoundPage }, Cmd.none )
@@ -474,7 +486,7 @@ initCurrentPage ( model, existingCmds ) =
         VerificationPage _ ->
             let
                 ( pageModel, pageCmds ) =
-                    Verification.init model.session
+                    Verification.init model.session url.path
             in
             ( { model | page = VerificationPage pageModel }, Cmd.map GotVerificationMsg pageCmds )
 
@@ -489,10 +501,13 @@ initCurrentPage ( model, existingCmds ) =
 init : Value -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
+        session =
+            decodeToSession key flags
+
         model =
-            { page = urlToPage url (decodeToSession key flags), key = key, session = decodeToSession key flags, openDropdown = False }
+            { page = urlToPage url session, key = key, session = session, openDropdown = False }
     in
-    initCurrentPage ( model, Cmd.none )
+    initCurrentPage ( url, model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg

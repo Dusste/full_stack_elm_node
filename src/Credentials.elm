@@ -17,6 +17,7 @@ port module Credentials exposing
     , isSessionValid
     , logout
     , onSessionChange
+    , sessionToVerificationString
     , storeSession
     , subscriptionChanges
     , tokenDecoder
@@ -28,6 +29,8 @@ port module Credentials exposing
     , verifictionStringParser
     )
 
+import Array
+import Base64 exposing (decode)
 import Browser.Navigation as Nav
 import Http exposing (Header, header)
 import Json.Decode as Decode exposing (Decoder, Value, at, bool, int, map7, string)
@@ -64,6 +67,10 @@ type UserId
 userIdToString : UserId -> String
 userIdToString (UserId id) =
     id
+
+
+
+-- TODO need some vaildation ?
 
 
 verificationToString : VerificationString -> String
@@ -191,6 +198,53 @@ logout =
 
 
 port onSessionChange : (Value -> msg) -> Sub msg
+
+
+sessionToVerificationString : Session -> VerificationString
+sessionToVerificationString session =
+    case fromSessionToToken session of
+        Just token ->
+            let
+                -- unwrap profile data only if you have token
+                profileFromToken =
+                    unfoldProfileFromToken token
+
+                -- unwrap token string only if you have token
+                tokenString : String
+                tokenString =
+                    fromTokenToString token
+
+                profile : List String
+                profile =
+                    String.split "." tokenString
+
+                maybeTokenData : Maybe String
+                maybeTokenData =
+                    Array.fromList profile |> Array.get 1
+            in
+            case maybeTokenData of
+                Just tokenData ->
+                    let
+                        decodedTokenData =
+                            decode tokenData
+                    in
+                    case decodedTokenData of
+                        Err _ ->
+                            emptyVerificationString
+
+                        Ok encodedRecord ->
+                            case Decode.decodeString profileFromToken encodedRecord of
+                                Ok resultTokenRecord ->
+                                    resultTokenRecord.verificationstring
+
+                                Err _ ->
+                                    emptyVerificationString
+
+                Nothing ->
+                    emptyVerificationString
+
+        Nothing ->
+            emptyVerificationString
 
 
 decodeTokenData : Decoder UnwrappedTokenData

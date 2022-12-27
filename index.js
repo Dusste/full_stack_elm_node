@@ -6280,7 +6280,8 @@ var $author$project$Signup$initialModel = {
 var $author$project$Signup$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Signup$initialModel, $elm$core$Platform$Cmd$none);
 };
-var $author$project$Verification$Intruder = {$: 'Intruder'};
+var $author$project$Verification$Sessionless = {$: 'Sessionless'};
+var $author$project$Verification$VerificationFail = {$: 'VerificationFail'};
 var $author$project$Verification$VerificationPending = {$: 'VerificationPending'};
 var $author$project$Verification$Verified = {$: 'Verified'};
 var $author$project$Verification$VerifyApiCallStart = function (a) {
@@ -6296,56 +6297,67 @@ var $author$project$Verification$apiCallAfterSomeTime = F2(
 			},
 			$elm$core$Process$sleep(5000));
 	});
+var $elm$core$Basics$neq = _Utils_notEqual;
 var $elm$core$Basics$not = _Basics_not;
-var $author$project$Verification$init = function (session) {
-	var _v0 = $author$project$Credentials$fromSessionToToken(session);
-	if (_v0.$ === 'Just') {
-		var token = _v0.a;
-		var tokenString = $author$project$Credentials$fromTokenToString(token);
-		var profileFromToken = $author$project$Credentials$unfoldProfileFromToken(token);
-		var profile = A2($elm$core$String$split, '.', tokenString);
-		var maybeTokenData = A2(
-			$elm$core$Array$get,
-			1,
-			$elm$core$Array$fromList(profile));
-		if (maybeTokenData.$ === 'Just') {
-			var tokenData = maybeTokenData.a;
-			var decodedTokenData = $truqu$elm_base64$Base64$decode(tokenData);
-			if (decodedTokenData.$ === 'Err') {
-				return _Utils_Tuple2(
-					{userState: $author$project$Verification$Intruder},
-					$elm$core$Platform$Cmd$none);
-			} else {
-				var encodedRecord = decodedTokenData.a;
-				var _v3 = A2($elm$json$Json$Decode$decodeString, profileFromToken, encodedRecord);
-				if (_v3.$ === 'Ok') {
-					var resultTokenRecord = _v3.a;
-					return (!resultTokenRecord.isverified) ? _Utils_Tuple2(
-						{userState: $author$project$Verification$VerificationPending},
-						A2($author$project$Verification$apiCallAfterSomeTime, session, $author$project$Verification$VerifyApiCallStart)) : _Utils_Tuple2(
-						{userState: $author$project$Verification$Verified},
+var $author$project$Credentials$verificationToString = function (_v0) {
+	var verificationString = _v0.a;
+	return verificationString;
+};
+var $author$project$Verification$init = F2(
+	function (session, verificationParam) {
+		var _v0 = $author$project$Credentials$fromSessionToToken(session);
+		if (_v0.$ === 'Just') {
+			var token = _v0.a;
+			var tokenString = $author$project$Credentials$fromTokenToString(token);
+			var profileFromToken = $author$project$Credentials$unfoldProfileFromToken(token);
+			var profile = A2($elm$core$String$split, '.', tokenString);
+			var maybeTokenData = A2(
+				$elm$core$Array$get,
+				1,
+				$elm$core$Array$fromList(profile));
+			if (maybeTokenData.$ === 'Just') {
+				var tokenData = maybeTokenData.a;
+				var decodedTokenData = $truqu$elm_base64$Base64$decode(tokenData);
+				if (decodedTokenData.$ === 'Err') {
+					return _Utils_Tuple2(
+						{userState: $author$project$Verification$Sessionless},
 						$elm$core$Platform$Cmd$none);
 				} else {
-					return _Utils_Tuple2(
-						{userState: $author$project$Verification$Intruder},
-						$elm$core$Platform$Cmd$none);
+					var encodedRecord = decodedTokenData.a;
+					var _v3 = A2($elm$json$Json$Decode$decodeString, profileFromToken, encodedRecord);
+					if (_v3.$ === 'Ok') {
+						var resultTokenRecord = _v3.a;
+						return (!_Utils_eq(
+							verificationParam,
+							'/verify-email/' + $author$project$Credentials$verificationToString(resultTokenRecord.verificationstring))) ? _Utils_Tuple2(
+							{userState: $author$project$Verification$VerificationFail},
+							$elm$core$Platform$Cmd$none) : ((!resultTokenRecord.isverified) ? _Utils_Tuple2(
+							{userState: $author$project$Verification$VerificationPending},
+							A2($author$project$Verification$apiCallAfterSomeTime, session, $author$project$Verification$VerifyApiCallStart)) : _Utils_Tuple2(
+							{userState: $author$project$Verification$Verified},
+							$elm$core$Platform$Cmd$none));
+					} else {
+						return _Utils_Tuple2(
+							{userState: $author$project$Verification$Sessionless},
+							$elm$core$Platform$Cmd$none);
+					}
 				}
+			} else {
+				return _Utils_Tuple2(
+					{userState: $author$project$Verification$Sessionless},
+					$elm$core$Platform$Cmd$none);
 			}
 		} else {
 			return _Utils_Tuple2(
-				{userState: $author$project$Verification$Intruder},
+				{userState: $author$project$Verification$Sessionless},
 				$elm$core$Platform$Cmd$none);
 		}
-	} else {
-		return _Utils_Tuple2(
-			{userState: $author$project$Verification$Intruder},
-			$elm$core$Platform$Cmd$none);
-	}
-};
+	});
 var $elm$core$Platform$Cmd$map = _Platform_map;
 var $author$project$Main$initCurrentPage = function (_v0) {
-	var model = _v0.a;
-	var existingCmds = _v0.b;
+	var url = _v0.a;
+	var model = _v0.b;
+	var existingCmds = _v0.c;
 	var _v1 = model.page;
 	switch (_v1.$) {
 		case 'NotFoundPage':
@@ -6388,7 +6400,7 @@ var $author$project$Main$initCurrentPage = function (_v0) {
 					}),
 				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotHomeMsg, pageCmds));
 		case 'VerificationPage':
-			var _v5 = $author$project$Verification$init(model.session);
+			var _v5 = A2($author$project$Verification$init, model.session, url.path);
 			var pageModel = _v5.a;
 			var pageCmds = _v5.b;
 			return _Utils_Tuple2(
@@ -7270,7 +7282,7 @@ var $author$project$Main$urlToPage = F2(
 						$author$project$Home$init(_Utils_Tuple0).a);
 				case 'Verification':
 					return $author$project$Main$VerificationPage(
-						$author$project$Verification$init(session).a);
+						A2($author$project$Verification$init, session, url.path).a);
 				default:
 					var _v4 = _v0.a;
 					return $author$project$Main$NotFoundPage;
@@ -7281,17 +7293,15 @@ var $author$project$Main$urlToPage = F2(
 	});
 var $author$project$Main$init = F3(
 	function (flags, url, key) {
+		var session = A2($author$project$Credentials$decodeToSession, key, flags);
 		var model = {
 			key: key,
 			openDropdown: false,
-			page: A2(
-				$author$project$Main$urlToPage,
-				url,
-				A2($author$project$Credentials$decodeToSession, key, flags)),
-			session: A2($author$project$Credentials$decodeToSession, key, flags)
+			page: A2($author$project$Main$urlToPage, url, session),
+			session: session
 		};
 		return $author$project$Main$initCurrentPage(
-			_Utils_Tuple2(model, $elm$core$Platform$Cmd$none));
+			_Utils_Tuple3(url, model, $elm$core$Platform$Cmd$none));
 	});
 var $author$project$Main$GotSubscriptionChangeMsg = function (a) {
 	return {$: 'GotSubscriptionChangeMsg', a: a};
@@ -8027,7 +8037,6 @@ var $author$project$Signup$BadPassword = function (a) {
 var $author$project$Signup$PasswordMissmatch = function (a) {
 	return {$: 'PasswordMissmatch', a: a};
 };
-var $elm$core$Basics$neq = _Utils_notEqual;
 var $author$project$Signup$sumOfErrors = function (model) {
 	var passwordsMissmatch = !_Utils_eq(model.signupCredentials.password, model.signupCredentials.confirmPassword);
 	var isPasswordInvalid = $elm$core$String$length(model.signupCredentials.password) < 10;
@@ -8139,7 +8148,6 @@ var $author$project$Verification$TokenToLS = function (a) {
 	return {$: 'TokenToLS', a: a};
 };
 var $author$project$Verification$VerificationDone = {$: 'VerificationDone'};
-var $author$project$Verification$VerificationFail = {$: 'VerificationFail'};
 var $author$project$Verification$VerifyDone = function (a) {
 	return {$: 'VerifyDone', a: a};
 };
@@ -8230,7 +8238,8 @@ var $author$project$Main$update = F2(
 				var url = msg.a;
 				var newPage = A2($author$project$Main$urlToPage, url, model.session);
 				return $author$project$Main$initCurrentPage(
-					_Utils_Tuple2(
+					_Utils_Tuple3(
+						url,
 						_Utils_update(
 							model,
 							{page: newPage}),
@@ -8332,9 +8341,9 @@ var $author$project$Main$update = F2(
 						model,
 						{session: session}),
 					function () {
-						var maybeToken = $author$project$Credentials$fromSessionToToken(session);
-						if (maybeToken.$ === 'Just') {
-							var token = maybeToken.a;
+						var _v12 = $author$project$Credentials$fromSessionToToken(session);
+						if (_v12.$ === 'Just') {
+							var token = _v12.a;
 							var tokenString = $author$project$Credentials$fromTokenToString(token);
 							var profileFromToken = $author$project$Credentials$unfoldProfileFromToken(token);
 							var profile = A2($elm$core$String$split, '.', tokenString);

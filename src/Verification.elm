@@ -2,7 +2,7 @@ module Verification exposing (Model, Msg, init, update, view)
 
 import Array
 import Base64 exposing (decode)
-import Credentials exposing (Session, Token, addHeader, encodeToken, fromSessionToToken, fromTokenToString, isSessionValid, storeSession, tokenDecoder, unfoldProfileFromToken)
+import Credentials exposing (Session, Token, addHeader, encodeToken, fromSessionToToken, fromTokenToString, storeSession, tokenDecoder, unfoldProfileFromToken, verificationToString)
 import Html exposing (..)
 import Http
 import Json.Decode as Decode
@@ -21,7 +21,7 @@ type UserState
     | VerificationFail
     | VerificationDone
     | Verified
-    | Intruder
+    | Sessionless
 
 
 type Msg
@@ -30,8 +30,13 @@ type Msg
     | TokenToLS Token
 
 
-init : Session -> ( Model, Cmd Msg )
-init session =
+
+-- At this moment we are comfortable with VerificationParam being a string
+-- since we are comparing it with verificatinstring from cookie
+
+
+init : Session -> String -> ( Model, Cmd Msg )
+init session verificationParam =
     case fromSessionToToken session of
         Just token ->
             let
@@ -60,7 +65,7 @@ init session =
                     in
                     case decodedTokenData of
                         Err _ ->
-                            ( { userState = Intruder
+                            ( { userState = Sessionless
                               }
                             , Cmd.none
                             )
@@ -68,7 +73,13 @@ init session =
                         Ok encodedRecord ->
                             case Decode.decodeString profileFromToken encodedRecord of
                                 Ok resultTokenRecord ->
-                                    if not resultTokenRecord.isverified then
+                                    if verificationParam /= ("/verify-email/" ++ verificationToString resultTokenRecord.verificationstring) then
+                                        ( { userState = VerificationFail
+                                          }
+                                        , Cmd.none
+                                        )
+
+                                    else if not resultTokenRecord.isverified then
                                         ( { userState = VerificationPending
                                           }
                                         , apiCallAfterSomeTime session VerifyApiCallStart
@@ -81,19 +92,19 @@ init session =
                                         )
 
                                 Err _ ->
-                                    ( { userState = Intruder
+                                    ( { userState = Sessionless
                                       }
                                     , Cmd.none
                                     )
 
                 Nothing ->
-                    ( { userState = Intruder
+                    ( { userState = Sessionless
                       }
                     , Cmd.none
                     )
 
         Nothing ->
-            ( { userState = Intruder
+            ( { userState = Sessionless
               }
             , Cmd.none
             )
@@ -184,7 +195,7 @@ view model =
                 , p [] [ text "Please proceed to you profile" ]
                 ]
 
-        Intruder ->
+        Sessionless ->
             div []
                 [ h2 [] [ text "You are not logged in !" ]
                 , p [] [ text "Please proceed to login" ]
