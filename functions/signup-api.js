@@ -112,11 +112,11 @@ exports.handler = async function (req, context) {
             <h1>Hello !</h1>
             <div>
               <h2>Thanks for signin up ! </h2> 
-              <p>To verify your email click here: <a href="${
+              <p>To verify your email click <a href="${
                   process.env.NODE_ENV === 'development'
                       ? 'http://localhost:8888'
                       : 'https://my-elm-app.netlify.app'
-              }/verify-email/${verificationString}">http://localhost:8888/verify-email/${verificationString}</a></p>
+              }/verify-email/${verificationString}">here</a></p>
             </div>
           </div>`,
         });

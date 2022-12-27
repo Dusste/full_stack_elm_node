@@ -9,12 +9,10 @@ import Json.Decode as Decode
 import Json.Encode exposing (encode)
 import Process
 import Task
-import Utils exposing (buildErrorMessage)
 
 
 type alias Model =
-    { session : Session
-    , userState : UserState
+    { userState : UserState
     }
 
 
@@ -62,8 +60,7 @@ init session =
                     in
                     case decodedTokenData of
                         Err _ ->
-                            ( { session = session
-                              , userState = Intruder
+                            ( { userState = Intruder
                               }
                             , Cmd.none
                             )
@@ -72,36 +69,31 @@ init session =
                             case Decode.decodeString profileFromToken encodedRecord of
                                 Ok resultTokenRecord ->
                                     if not resultTokenRecord.isverified then
-                                        ( { session = session
-                                          , userState = VerificationPending
+                                        ( { userState = VerificationPending
                                           }
                                         , apiCallAfterSomeTime session VerifyApiCallStart
                                         )
 
                                     else
-                                        ( { session = session
-                                          , userState = Verified
+                                        ( { userState = Verified
                                           }
                                         , Cmd.none
                                         )
 
                                 Err _ ->
-                                    ( { session = session
-                                      , userState = Intruder
+                                    ( { userState = Intruder
                                       }
                                     , Cmd.none
                                     )
 
                 Nothing ->
-                    ( { session = session
-                      , userState = Intruder
+                    ( { userState = Intruder
                       }
                     , Cmd.none
                     )
 
         Nothing ->
-            ( { session = session
-              , userState = Intruder
+            ( { userState = Intruder
               }
             , Cmd.none
             )

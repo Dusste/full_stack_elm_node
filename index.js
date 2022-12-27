@@ -5776,7 +5776,9 @@ var $author$project$Login$init = function (_v0) {
 };
 var $author$project$Profile$Intruder = {$: 'Intruder'};
 var $author$project$Profile$NotVerified = {$: 'NotVerified'};
-var $author$project$Profile$Verified = {$: 'Verified'};
+var $author$project$Profile$Verified = function (a) {
+	return {$: 'Verified', a: a};
+};
 var $elm$core$Basics$composeR = F3(
 	function (f, g, x) {
 		return g(
@@ -6157,12 +6159,10 @@ var $author$project$Credentials$VerificationString = function (a) {
 	return {$: 'VerificationString', a: a};
 };
 var $author$project$Credentials$emptyVerificationString = $author$project$Credentials$VerificationString('');
-var $author$project$Credentials$guest = $author$project$Credentials$Guest;
 var $author$project$Profile$initialModel = {
 	errors: _List_Nil,
 	imageFile: $elm$core$Maybe$Nothing,
 	profile: {email: '', exp: 0, firstname: '', iat: 0, id: $author$project$Credentials$emptyUserId, isverified: false, verificationstring: $author$project$Credentials$emptyVerificationString},
-	session: $author$project$Credentials$guest,
 	userState: $author$project$Profile$NotVerified
 };
 var $author$project$Credentials$UnwrappedTokenData = F7(
@@ -6250,8 +6250,7 @@ var $author$project$Profile$init = function (session) {
 							$author$project$Profile$initialModel,
 							{
 								profile: profileData,
-								session: session,
-								userState: profileData.isverified ? $author$project$Profile$Verified : $author$project$Profile$NotVerified
+								userState: profileData.isverified ? $author$project$Profile$Verified(session) : $author$project$Profile$NotVerified
 							}),
 						$elm$core$Platform$Cmd$none);
 				} else {
@@ -6314,7 +6313,7 @@ var $author$project$Verification$init = function (session) {
 			var decodedTokenData = $truqu$elm_base64$Base64$decode(tokenData);
 			if (decodedTokenData.$ === 'Err') {
 				return _Utils_Tuple2(
-					{session: session, userState: $author$project$Verification$Intruder},
+					{userState: $author$project$Verification$Intruder},
 					$elm$core$Platform$Cmd$none);
 			} else {
 				var encodedRecord = decodedTokenData.a;
@@ -6322,24 +6321,24 @@ var $author$project$Verification$init = function (session) {
 				if (_v3.$ === 'Ok') {
 					var resultTokenRecord = _v3.a;
 					return (!resultTokenRecord.isverified) ? _Utils_Tuple2(
-						{session: session, userState: $author$project$Verification$VerificationPending},
+						{userState: $author$project$Verification$VerificationPending},
 						A2($author$project$Verification$apiCallAfterSomeTime, session, $author$project$Verification$VerifyApiCallStart)) : _Utils_Tuple2(
-						{session: session, userState: $author$project$Verification$Verified},
+						{userState: $author$project$Verification$Verified},
 						$elm$core$Platform$Cmd$none);
 				} else {
 					return _Utils_Tuple2(
-						{session: session, userState: $author$project$Verification$Intruder},
+						{userState: $author$project$Verification$Intruder},
 						$elm$core$Platform$Cmd$none);
 				}
 			}
 		} else {
 			return _Utils_Tuple2(
-				{session: session, userState: $author$project$Verification$Intruder},
+				{userState: $author$project$Verification$Intruder},
 				$elm$core$Platform$Cmd$none);
 		}
 	} else {
 		return _Utils_Tuple2(
-			{session: session, userState: $author$project$Verification$Intruder},
+			{userState: $author$project$Verification$Intruder},
 			$elm$core$Platform$Cmd$none);
 	}
 };
@@ -8635,6 +8634,7 @@ var $author$project$Profile$view = function (model) {
 	var _v0 = model.userState;
 	switch (_v0.$) {
 		case 'Verified':
+			var session = _v0.a;
 			return A2(
 				$elm$html$Html$div,
 				_List_Nil,
@@ -8723,7 +8723,7 @@ var $author$project$Profile$view = function (model) {
 											[
 												$elm$html$Html$Attributes$type_('button'),
 												$elm$html$Html$Events$onClick(
-												A2($author$project$Profile$ProfileSubmit, model.session, model.profile))
+												A2($author$project$Profile$ProfileSubmit, session, model.profile))
 											]),
 										_List_fromArray(
 											[

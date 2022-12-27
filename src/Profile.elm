@@ -12,14 +12,12 @@ import Http
 import Json.Decode as Decode exposing (Decoder, Value, bool, list, string)
 import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode exposing (Value, encode)
-import RemoteData exposing (WebData)
 import Task
 
 
 type alias Model =
     { profile : UnwrappedTokenData
     , errors : List CheckErrors
-    , session : Session
     , imageFile : Maybe String
     , userState : UserState
     }
@@ -32,13 +30,8 @@ type CheckErrors
 
 type UserState
     = NotVerified
-    | Verified
+    | Verified Session
     | Intruder
-
-
-
--- RemoteData.Failure httpError ->
---     viewError (Just (buildErrorMessage httpError))
 
 
 type Msg
@@ -65,7 +58,6 @@ initialModel =
         , exp = 0
         }
     , errors = []
-    , session = guest
     , imageFile = Nothing
     , userState = NotVerified
     }
@@ -107,10 +99,9 @@ init session =
                                 Ok profileData ->
                                     ( { initialModel
                                         | profile = profileData
-                                        , session = session
                                         , userState =
                                             if profileData.isverified then
-                                                Verified
+                                                Verified session
 
                                             else
                                                 NotVerified
@@ -135,7 +126,7 @@ init session =
 view : Model -> Html Msg
 view model =
     case model.userState of
-        Verified ->
+        Verified session ->
             div
                 []
                 [ h2 [] [ text "Hello" ]
@@ -198,7 +189,7 @@ view model =
                     , div []
                         [ button
                             [ type_ "button"
-                            , onClick (ProfileSubmit model.session model.profile)
+                            , onClick (ProfileSubmit session model.profile)
                             ]
                             [ text "Submit" ]
                         ]
