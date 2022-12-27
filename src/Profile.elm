@@ -21,12 +21,19 @@ type alias Model =
     , errors : List CheckErrors
     , session : Session
     , imageFile : Maybe String
+    , userState : UserState
     }
 
 
 type CheckErrors
     = BadInput String
     | BadRequest String
+
+
+type UserState
+    = NotVerified
+    | Verified
+    | Intruder
 
 
 
@@ -60,6 +67,7 @@ initialModel =
     , errors = []
     , session = guest
     , imageFile = Nothing
+    , userState = NotVerified
     }
 
 
@@ -89,15 +97,24 @@ init session =
                             decode tokenData
                     in
                     case resultTokenData of
-                        Err err ->
-                            ( initialModel
+                        Err _ ->
+                            ( { initialModel | userState = Intruder }
                             , Cmd.none
                             )
 
                         Ok encodedRecord ->
                             case Decode.decodeString profileFromToken encodedRecord of
                                 Ok profileData ->
-                                    ( { initialModel | profile = profileData, session = session }
+                                    ( { initialModel
+                                        | profile = profileData
+                                        , session = session
+                                        , userState =
+                                            if profileData.isverified then
+                                                Verified
+
+                                            else
+                                                NotVerified
+                                      }
                                     , Cmd.none
                                     )
 
@@ -107,92 +124,100 @@ init session =
                                     )
 
                 Nothing ->
-                    ( initialModel, Cmd.none )
+                    ( { initialModel | userState = Intruder }, Cmd.none )
 
         Nothing ->
-            ( initialModel
+            ( { initialModel | userState = Intruder }
             , Cmd.none
             )
 
 
 view : Model -> Html Msg
 view model =
-    if model.profile.isverified then
-        div
-            []
-            [ h2 [] [ text "Hello" ]
-            , Html.form []
-                [ div []
-                    [ text "First Name"
-                    , br [] []
-                    , input
-                        [ type_ "text"
-                        , onInput StoreFirstName
-                        , value model.profile.firstname
+    case model.userState of
+        Verified ->
+            div
+                []
+                [ h2 [] [ text "Hello" ]
+                , Html.form []
+                    [ div []
+                        [ text "First Name"
+                        , br [] []
+                        , input
+                            [ type_ "text"
+                            , onInput StoreFirstName
+                            , value model.profile.firstname
+                            ]
+                            []
                         ]
-                        []
-                    ]
 
-                -- , div []
-                --     [ text "Email"
-                --     , br [] []
-                --     , input
-                --         [ type_ "text"
-                --         , onInput StoreLastName
-                --         , value model.profile.email
-                --         ]
-                --         []
-                --     ]
-                -- , br [] []
-                , br [] []
-                , div []
-                    [ text "Upload a avatar"
+                    -- , div []
+                    --     [ text "Email"
+                    --     , br [] []
+                    --     , input
+                    --         [ type_ "text"
+                    --         , onInput StoreLastName
+                    --         , value model.profile.email
+                    --         ]
+                    --         []
+                    --     ]
+                    -- , br [] []
                     , br [] []
-                    , input [ type_ "file", onClick FileRequest ] []
-                    ]
-                , br [] []
-                , div []
-                    [ text "Your avatar"
+                    , div []
+                        [ text "Upload a avatar"
+                        , br [] []
+                        , input [ type_ "file", onClick FileRequest ] []
+                        ]
                     , br [] []
-                    , img
-                        [ src
-                            (case model.imageFile of
-                                Just fileString ->
-                                    fileString
+                    , div []
+                        [ text "Your avatar"
+                        , br [] []
+                        , img
+                            [ src
+                                (case model.imageFile of
+                                    Just fileString ->
+                                        fileString
 
-                                Nothing ->
-                                    ""
-                            )
+                                    Nothing ->
+                                        ""
+                                )
+                            ]
+                            []
                         ]
-                        []
-                    ]
 
-                -- , div []
-                --     [ text "Admin"
-                --     , br [] []
-                --     , input
-                --         [ type_ "checkbox"
-                --         , onClick (StoreAdmin (not model.profile.isadmin))
-                --         ]
-                --         []
-                --     ]
-                , br [] []
-                , div []
-                    [ button
-                        [ type_ "button"
-                        , onClick (ProfileSubmit model.session model.profile)
+                    -- , div []
+                    --     [ text "Admin"
+                    --     , br [] []
+                    --     , input
+                    --         [ type_ "checkbox"
+                    --         , onClick (StoreAdmin (not model.profile.isadmin))
+                    --         ]
+                    --         []
+                    --     ]
+                    , br [] []
+                    , div []
+                        [ button
+                            [ type_ "button"
+                            , onClick (ProfileSubmit model.session model.profile)
+                            ]
+                            [ text "Submit" ]
                         ]
-                        [ text "Submit" ]
                     ]
                 ]
-            ]
 
-    else
-        div []
-            [ h2 [] [ text "Please verify your email ! " ]
-            , p []
-                [ text "You can't access your profile until you verify your email" ]
-            ]
+        NotVerified ->
+            div []
+                [ h2 [] [ text "Please verify your email ! " ]
+                , p []
+                    [ text "You can't access your profile until you verify your email" ]
+                ]
+
+        Intruder ->
+            div []
+                [ h2 [] [ text "Hmm seems you are not logged in" ]
+                , p []
+                    [ text "Please create account or login" ]
+                ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -259,7 +284,7 @@ update msg model =
             )
 
         FileRequest ->
-            ( model, Select.file [ "image/png" ] FileRequestDone )
+            ( model, Select.file [ "image/*" ] FileRequestDone )
 
         FileRequestDone file ->
             ( model, Task.perform FileRead (File.toString file) )

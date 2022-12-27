@@ -5774,6 +5774,9 @@ var $author$project$Login$initialModel = {
 var $author$project$Login$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Login$initialModel, $elm$core$Platform$Cmd$none);
 };
+var $author$project$Profile$Intruder = {$: 'Intruder'};
+var $author$project$Profile$NotVerified = {$: 'NotVerified'};
+var $author$project$Profile$Verified = {$: 'Verified'};
 var $elm$core$Basics$composeR = F3(
 	function (f, g, x) {
 		return g(
@@ -6159,7 +6162,8 @@ var $author$project$Profile$initialModel = {
 	errors: _List_Nil,
 	imageFile: $elm$core$Maybe$Nothing,
 	profile: {email: '', exp: 0, firstname: '', iat: 0, id: $author$project$Credentials$emptyUserId, isverified: false, verificationstring: $author$project$Credentials$emptyVerificationString},
-	session: $author$project$Credentials$guest
+	session: $author$project$Credentials$guest,
+	userState: $author$project$Profile$NotVerified
 };
 var $author$project$Credentials$UnwrappedTokenData = F7(
 	function (id, isverified, email, firstname, verificationstring, iat, exp) {
@@ -6231,8 +6235,11 @@ var $author$project$Profile$init = function (session) {
 			var tokenData = maybeTokenData.a;
 			var resultTokenData = $truqu$elm_base64$Base64$decode(tokenData);
 			if (resultTokenData.$ === 'Err') {
-				var err = resultTokenData.a;
-				return _Utils_Tuple2($author$project$Profile$initialModel, $elm$core$Platform$Cmd$none);
+				return _Utils_Tuple2(
+					_Utils_update(
+						$author$project$Profile$initialModel,
+						{userState: $author$project$Profile$Intruder}),
+					$elm$core$Platform$Cmd$none);
 			} else {
 				var encodedRecord = resultTokenData.a;
 				var _v3 = A2($elm$json$Json$Decode$decodeString, profileFromToken, encodedRecord);
@@ -6241,17 +6248,29 @@ var $author$project$Profile$init = function (session) {
 					return _Utils_Tuple2(
 						_Utils_update(
 							$author$project$Profile$initialModel,
-							{profile: profileData, session: session}),
+							{
+								profile: profileData,
+								session: session,
+								userState: profileData.isverified ? $author$project$Profile$Verified : $author$project$Profile$NotVerified
+							}),
 						$elm$core$Platform$Cmd$none);
 				} else {
 					return _Utils_Tuple2($author$project$Profile$initialModel, $elm$core$Platform$Cmd$none);
 				}
 			}
 		} else {
-			return _Utils_Tuple2($author$project$Profile$initialModel, $elm$core$Platform$Cmd$none);
+			return _Utils_Tuple2(
+				_Utils_update(
+					$author$project$Profile$initialModel,
+					{userState: $author$project$Profile$Intruder}),
+				$elm$core$Platform$Cmd$none);
 		}
 	} else {
-		return _Utils_Tuple2($author$project$Profile$initialModel, $elm$core$Platform$Cmd$none);
+		return _Utils_Tuple2(
+			_Utils_update(
+				$author$project$Profile$initialModel,
+				{userState: $author$project$Profile$Intruder}),
+			$elm$core$Platform$Cmd$none);
 	}
 };
 var $author$project$Signup$initialModel = {
@@ -6262,8 +6281,11 @@ var $author$project$Signup$initialModel = {
 var $author$project$Signup$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Signup$initialModel, $elm$core$Platform$Cmd$none);
 };
-var $author$project$Verification$VerifyApiCall = function (a) {
-	return {$: 'VerifyApiCall', a: a};
+var $author$project$Verification$Intruder = {$: 'Intruder'};
+var $author$project$Verification$VerificationPending = {$: 'VerificationPending'};
+var $author$project$Verification$Verified = {$: 'Verified'};
+var $author$project$Verification$VerifyApiCallStart = function (a) {
+	return {$: 'VerifyApiCallStart', a: a};
 };
 var $elm$core$Process$sleep = _Process_sleep;
 var $author$project$Verification$apiCallAfterSomeTime = F2(
@@ -6273,12 +6295,53 @@ var $author$project$Verification$apiCallAfterSomeTime = F2(
 			function (_v0) {
 				return toMsg(session);
 			},
-			$elm$core$Process$sleep(10000));
+			$elm$core$Process$sleep(5000));
 	});
+var $elm$core$Basics$not = _Basics_not;
 var $author$project$Verification$init = function (session) {
-	return _Utils_Tuple2(
-		{errorMessage: '', session: session, verificationDone: false},
-		A2($author$project$Verification$apiCallAfterSomeTime, session, $author$project$Verification$VerifyApiCall));
+	var _v0 = $author$project$Credentials$fromSessionToToken(session);
+	if (_v0.$ === 'Just') {
+		var token = _v0.a;
+		var tokenString = $author$project$Credentials$fromTokenToString(token);
+		var profileFromToken = $author$project$Credentials$unfoldProfileFromToken(token);
+		var profile = A2($elm$core$String$split, '.', tokenString);
+		var maybeTokenData = A2(
+			$elm$core$Array$get,
+			1,
+			$elm$core$Array$fromList(profile));
+		if (maybeTokenData.$ === 'Just') {
+			var tokenData = maybeTokenData.a;
+			var decodedTokenData = $truqu$elm_base64$Base64$decode(tokenData);
+			if (decodedTokenData.$ === 'Err') {
+				return _Utils_Tuple2(
+					{session: session, userState: $author$project$Verification$Intruder},
+					$elm$core$Platform$Cmd$none);
+			} else {
+				var encodedRecord = decodedTokenData.a;
+				var _v3 = A2($elm$json$Json$Decode$decodeString, profileFromToken, encodedRecord);
+				if (_v3.$ === 'Ok') {
+					var resultTokenRecord = _v3.a;
+					return (!resultTokenRecord.isverified) ? _Utils_Tuple2(
+						{session: session, userState: $author$project$Verification$VerificationPending},
+						A2($author$project$Verification$apiCallAfterSomeTime, session, $author$project$Verification$VerifyApiCallStart)) : _Utils_Tuple2(
+						{session: session, userState: $author$project$Verification$Verified},
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(
+						{session: session, userState: $author$project$Verification$Intruder},
+						$elm$core$Platform$Cmd$none);
+				}
+			}
+		} else {
+			return _Utils_Tuple2(
+				{session: session, userState: $author$project$Verification$Intruder},
+				$elm$core$Platform$Cmd$none);
+		}
+	} else {
+		return _Utils_Tuple2(
+			{session: session, userState: $author$project$Verification$Intruder},
+			$elm$core$Platform$Cmd$none);
+	}
 };
 var $elm$core$Platform$Cmd$map = _Platform_map;
 var $author$project$Main$initCurrentPage = function (_v0) {
@@ -7265,7 +7328,6 @@ var $author$project$Credentials$storeSession = _Platform_outgoingPort(
 		return A3($elm$core$Maybe$destruct, $elm$json$Json$Encode$null, $elm$json$Json$Encode$string, $);
 	});
 var $author$project$Credentials$logout = $author$project$Credentials$storeSession($elm$core$Maybe$Nothing);
-var $elm$core$Basics$not = _Basics_not;
 var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
 var $elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
@@ -7909,7 +7971,7 @@ var $author$project$Profile$update = F2(
 					A2(
 						$elm$file$File$Select$file,
 						_List_fromArray(
-							['image/png']),
+							['image/*']),
 						$author$project$Profile$FileRequestDone));
 			case 'FileRequestDone':
 				var file = msg.a;
@@ -8074,6 +8136,11 @@ var $author$project$Signup$update = F2(
 				}
 		}
 	});
+var $author$project$Verification$TokenToLS = function (a) {
+	return {$: 'TokenToLS', a: a};
+};
+var $author$project$Verification$VerificationDone = {$: 'VerificationDone'};
+var $author$project$Verification$VerificationFail = {$: 'VerificationFail'};
 var $author$project$Verification$VerifyDone = function (a) {
 	return {$: 'VerifyDone', a: a};
 };
@@ -8101,33 +8168,40 @@ var $author$project$Verification$apiCallToVerify = function (session) {
 };
 var $author$project$Verification$update = F2(
 	function (msg, model) {
-		if (msg.$ === 'VerifyApiCall') {
-			var session = msg.a;
-			return _Utils_Tuple2(
-				model,
-				$author$project$Verification$apiCallToVerify(session));
-		} else {
-			if (msg.a.$ === 'Ok') {
-				var token = msg.a.a;
+		switch (msg.$) {
+			case 'VerifyApiCallStart':
+				var session = msg.a;
+				return _Utils_Tuple2(
+					model,
+					$author$project$Verification$apiCallToVerify(session));
+			case 'VerifyDone':
+				if (msg.a.$ === 'Ok') {
+					var token = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{userState: $author$project$Verification$VerificationDone}),
+						A2(
+							$elm$core$Task$perform,
+							function (_v1) {
+								return $author$project$Verification$TokenToLS(token);
+							},
+							$elm$core$Process$sleep(5000)));
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{userState: $author$project$Verification$VerificationFail}),
+						$elm$core$Platform$Cmd$none);
+				}
+			default:
+				var token = msg.a;
 				var tokenValue = $author$project$Credentials$encodeToken(token);
 				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{verificationDone: true}),
+					model,
 					$author$project$Credentials$storeSession(
 						$elm$core$Maybe$Just(
 							A2($elm$json$Json$Encode$encode, 0, tokenValue))));
-			} else {
-				var error = msg.a.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							errorMessage: $author$project$Utils$buildErrorMessage(error),
-							verificationDone: false
-						}),
-					$elm$core$Platform$Cmd$none);
-			}
 		}
 	});
 var $author$project$Credentials$userIdToString = function (_v0) {
@@ -8558,122 +8632,149 @@ var $elm$html$Html$Attributes$src = function (url) {
 		_VirtualDom_noJavaScriptOrHtmlUri(url));
 };
 var $author$project$Profile$view = function (model) {
-	return model.profile.isverified ? A2(
-		$elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$h2,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Hello')
-					])),
-				A2(
-				$elm$html$Html$form,
+	var _v0 = model.userState;
+	switch (_v0.$) {
+		case 'Verified':
+			return A2(
+				$elm$html$Html$div,
 				_List_Nil,
 				_List_fromArray(
 					[
 						A2(
-						$elm$html$Html$div,
+						$elm$html$Html$h2,
 						_List_Nil,
 						_List_fromArray(
 							[
-								$elm$html$Html$text('First Name'),
+								$elm$html$Html$text('Hello')
+							])),
+						A2(
+						$elm$html$Html$form,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$div,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text('First Name'),
+										A2($elm$html$Html$br, _List_Nil, _List_Nil),
+										A2(
+										$elm$html$Html$input,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$type_('text'),
+												$elm$html$Html$Events$onInput($author$project$Profile$StoreFirstName),
+												$elm$html$Html$Attributes$value(model.profile.firstname)
+											]),
+										_List_Nil)
+									])),
 								A2($elm$html$Html$br, _List_Nil, _List_Nil),
 								A2(
-								$elm$html$Html$input,
+								$elm$html$Html$div,
+								_List_Nil,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$type_('text'),
-										$elm$html$Html$Events$onInput($author$project$Profile$StoreFirstName),
-										$elm$html$Html$Attributes$value(model.profile.firstname)
-									]),
-								_List_Nil)
-							])),
-						A2($elm$html$Html$br, _List_Nil, _List_Nil),
-						A2(
-						$elm$html$Html$div,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$elm$html$Html$text('Upload a avatar'),
+										$elm$html$Html$text('Upload a avatar'),
+										A2($elm$html$Html$br, _List_Nil, _List_Nil),
+										A2(
+										$elm$html$Html$input,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$type_('file'),
+												$elm$html$Html$Events$onClick($author$project$Profile$FileRequest)
+											]),
+										_List_Nil)
+									])),
 								A2($elm$html$Html$br, _List_Nil, _List_Nil),
 								A2(
-								$elm$html$Html$input,
+								$elm$html$Html$div,
+								_List_Nil,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$type_('file'),
-										$elm$html$Html$Events$onClick($author$project$Profile$FileRequest)
-									]),
-								_List_Nil)
-							])),
-						A2($elm$html$Html$br, _List_Nil, _List_Nil),
-						A2(
-						$elm$html$Html$div,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$elm$html$Html$text('Your avatar'),
+										$elm$html$Html$text('Your avatar'),
+										A2($elm$html$Html$br, _List_Nil, _List_Nil),
+										A2(
+										$elm$html$Html$img,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$src(
+												function () {
+													var _v1 = model.imageFile;
+													if (_v1.$ === 'Just') {
+														var fileString = _v1.a;
+														return fileString;
+													} else {
+														return '';
+													}
+												}())
+											]),
+										_List_Nil)
+									])),
 								A2($elm$html$Html$br, _List_Nil, _List_Nil),
 								A2(
-								$elm$html$Html$img,
+								$elm$html$Html$div,
+								_List_Nil,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$src(
-										function () {
-											var _v0 = model.imageFile;
-											if (_v0.$ === 'Just') {
-												var fileString = _v0.a;
-												return fileString;
-											} else {
-												return '';
-											}
-										}())
-									]),
-								_List_Nil)
-							])),
-						A2($elm$html$Html$br, _List_Nil, _List_Nil),
-						A2(
-						$elm$html$Html$div,
-						_List_Nil,
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$button,
-								_List_fromArray(
-									[
-										$elm$html$Html$Attributes$type_('button'),
-										$elm$html$Html$Events$onClick(
-										A2($author$project$Profile$ProfileSubmit, model.session, model.profile))
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text('Submit')
+										A2(
+										$elm$html$Html$button,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$type_('button'),
+												$elm$html$Html$Events$onClick(
+												A2($author$project$Profile$ProfileSubmit, model.session, model.profile))
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('Submit')
+											]))
 									]))
 							]))
-					]))
-			])) : A2(
-		$elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$h2,
+					]));
+		case 'NotVerified':
+			return A2(
+				$elm$html$Html$div,
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Please verify your email ! ')
-					])),
-				A2(
-				$elm$html$Html$p,
+						A2(
+						$elm$html$Html$h2,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Please verify your email ! ')
+							])),
+						A2(
+						$elm$html$Html$p,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('You can\'t access your profile until you verify your email')
+							]))
+					]));
+		default:
+			return A2(
+				$elm$html$Html$div,
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('You can\'t access your profile until you verify your email')
-					]))
-			]));
+						A2(
+						$elm$html$Html$h2,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Hmm seems you are not logged in')
+							])),
+						A2(
+						$elm$html$Html$p,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Please create account or login')
+							]))
+					]));
+	}
 };
 var $author$project$Signup$SignupSubmit = function (a) {
 	return {$: 'SignupSubmit', a: a};
@@ -8877,64 +8978,128 @@ var $author$project$Signup$view = function (model) {
 			]));
 };
 var $author$project$Verification$view = function (model) {
-	return A2(
-		$elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$h2,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Your profile will be verified shortly... ')
-					])),
-				A2(
+	var _v0 = model.userState;
+	switch (_v0.$) {
+		case 'VerificationPending':
+			return A2(
 				$elm$html$Html$div,
 				_List_Nil,
 				_List_fromArray(
 					[
-						model.verificationDone ? A2(
-						$elm$html$Html$div,
+						A2(
+						$elm$html$Html$h2,
 						_List_Nil,
 						_List_fromArray(
 							[
-								A2(
-								$elm$html$Html$h2,
-								_List_Nil,
-								_List_fromArray(
-									[
-										$elm$html$Html$text('Thanks for verifying email ! ')
-									])),
-								A2(
-								$elm$html$Html$p,
-								_List_Nil,
-								_List_fromArray(
-									[
-										$elm$html$Html$text('Now you will be redirected to your profile page and have full access to all app\'s features')
-									])),
-								A2(
-								$elm$html$Html$p,
-								_List_Nil,
-								_List_fromArray(
-									[
-										$elm$html$Html$text(model.errorMessage)
-									]))
-							])) : A2(
-						$elm$html$Html$div,
+								$elm$html$Html$text('Give us a moment to verify your account ! ')
+							])),
+						A2(
+						$elm$html$Html$p,
 						_List_Nil,
 						_List_fromArray(
 							[
-								A2(
-								$elm$html$Html$p,
-								_List_Nil,
-								_List_fromArray(
-									[
-										$elm$html$Html$text('Please login first')
-									]))
+								$elm$html$Html$text('Soon you will have access to a all profile features')
+							])),
+						A2(
+						$elm$html$Html$p,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('LOADING...')
 							]))
-					]))
-			]));
+					]));
+		case 'VerificationDone':
+			return A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$h2,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Thanks for verifying your email ! ')
+							])),
+						A2(
+						$elm$html$Html$p,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Now you will be redirected to your profile page and have full access to all app\'s features')
+							])),
+						A2(
+						$elm$html$Html$p,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('LOADING...')
+							]))
+					]));
+		case 'VerificationFail':
+			return A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$h2,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('UPS seems that something is off !')
+							])),
+						A2(
+						$elm$html$Html$p,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Try to re-login or refresh the page')
+							]))
+					]));
+		case 'Verified':
+			return A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$h2,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('HMMm seems that you\'re already verified !')
+							])),
+						A2(
+						$elm$html$Html$p,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Please proceed to you profile')
+							]))
+					]));
+		default:
+			return A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$h2,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('You are not logged in !')
+							])),
+						A2(
+						$elm$html$Html$p,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Please proceed to login')
+							]))
+					]));
+	}
 };
 var $author$project$Main$content = function (model) {
 	var _v0 = model.page;
