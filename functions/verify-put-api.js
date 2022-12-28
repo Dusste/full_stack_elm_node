@@ -4,8 +4,14 @@ const { v4: uuid } = require('uuid');
 const { clientPromise } = require('../connect-database');
 
 exports.handler = async function (req) {
+    const { httpMethod } = req;
     const { authorization } = req.headers;
     const client = await clientPromise;
+
+    if (httpMethod !== 'PUT')
+        return {
+            statusCode: 403,
+        };
 
     if (!client)
         return {
@@ -27,7 +33,7 @@ exports.handler = async function (req) {
         decodedToken = await jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
         return {
-            statusCode: 401,
+            statusCode: 403,
             body: err.toString(),
         };
     }
@@ -101,6 +107,11 @@ exports.handler = async function (req) {
         process.env.JWT_SECRET,
         { expiresIn: '2h' },
     );
+
+    if (!newToken)
+        return {
+            statusCode: 403,
+        };
 
     return {
         statusCode: 200,

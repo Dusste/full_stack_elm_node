@@ -9199,6 +9199,73 @@ var $elm$html$Html$Attributes$href = function (url) {
 		'href',
 		_VirtualDom_noJavaScriptUri(url));
 };
+var $laurentpayot$minidenticons_elm$Minidenticons$colorsNb = 18;
+var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
+var $laurentpayot$minidenticons_elm$Minidenticons$fnvPrime = 16777619;
+var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
+var $elm$core$Basics$modBy = _Basics_modBy;
+var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
+var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
+var $laurentpayot$minidenticons_elm$Minidenticons$offsetBasis = 2166136261;
+var $elm$core$String$foldr = _String_foldr;
+var $elm$core$String$toList = function (string) {
+	return A3($elm$core$String$foldr, $elm$core$List$cons, _List_Nil, string);
+};
+var $elm$core$Bitwise$xor = _Bitwise_xor;
+var $laurentpayot$minidenticons_elm$Minidenticons$simpleHash = function (str) {
+	return A3(
+		$elm$core$List$foldl,
+		F2(
+			function (_char, hash) {
+				return $laurentpayot$minidenticons_elm$Minidenticons$fnvPrime * ((hash ^ $elm$core$Char$toCode(_char)) >>> 0);
+			}),
+		$laurentpayot$minidenticons_elm$Minidenticons$offsetBasis,
+		$elm$core$String$toList(str));
+};
+var $laurentpayot$minidenticons_elm$Minidenticons$squareDensity = 4;
+var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
+var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
+var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
+var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
+var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
+var $laurentpayot$minidenticons_elm$Minidenticons$identicon = F3(
+	function (saturation, lightness, username) {
+		var hash = $laurentpayot$minidenticons_elm$Minidenticons$simpleHash(username);
+		var hue = ((360 / $laurentpayot$minidenticons_elm$Minidenticons$colorsNb) | 0) * A2($elm$core$Basics$modBy, $laurentpayot$minidenticons_elm$Minidenticons$colorsNb, ((hash / $laurentpayot$minidenticons_elm$Minidenticons$fnvPrime) | 0) >>> 0);
+		return A2(
+			$elm$svg$Svg$svg,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$viewBox('-1.5 -1.5 8 8'),
+					$elm$svg$Svg$Attributes$fill(
+					'hsl(' + ($elm$core$String$fromInt(hue) + (' ' + ($elm$core$String$fromInt(saturation) + ('% ' + ($elm$core$String$fromInt(lightness) + '%)'))))))
+				]),
+			A2(
+				$elm$core$List$filterMap,
+				function (i) {
+					return (_Utils_cmp(
+						A2(
+							$elm$core$Basics$modBy,
+							16 - A2($elm$core$Basics$modBy, 15, i),
+							hash),
+						$laurentpayot$minidenticons_elm$Minidenticons$squareDensity) < 0) ? $elm$core$Maybe$Just(
+						A2(
+							$elm$svg$Svg$rect,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$x(
+									$elm$core$String$fromInt(
+										(i > 14) ? (7 - ((i / 5) | 0)) : ((i / 5) | 0))),
+									$elm$svg$Svg$Attributes$y(
+									$elm$core$String$fromInt(
+										A2($elm$core$Basics$modBy, 5, i))),
+									$elm$svg$Svg$Attributes$width('1'),
+									$elm$svg$Svg$Attributes$height('1')
+								]),
+							_List_Nil)) : $elm$core$Maybe$Nothing;
+				},
+				(username === '') ? _List_Nil : A2($elm$core$List$range, 0, 24)));
+	});
 var $author$project$Main$isActive = function (_v0) {
 	var link = _v0.link;
 	var page = _v0.page;
@@ -9253,9 +9320,9 @@ var $author$project$Main$viewHeader = function (_v0) {
 	var session = _v0.session;
 	var openDropdown = _v0.openDropdown;
 	var key = _v0.key;
-	var maybeToken = $author$project$Credentials$fromSessionToToken(session);
-	if (maybeToken.$ === 'Just') {
-		var token = maybeToken.a;
+	var _v1 = $author$project$Credentials$fromSessionToToken(session);
+	if (_v1.$ === 'Just') {
+		var token = _v1.a;
 		var tokenString = $author$project$Credentials$fromTokenToString(token);
 		var profileFromToken = $author$project$Credentials$unfoldProfileFromToken(token);
 		var profile = A2($elm$core$String$split, '.', tokenString);
@@ -9364,7 +9431,7 @@ var $author$project$Main$viewHeader = function (_v0) {
 																			$elm$html$Html$text('option3')
 																		]))
 																])),
-															A2(
+															(!$elm$core$String$isEmpty(resultTokenRecord.firstname)) ? A2(
 															$elm$html$Html$p,
 															_List_fromArray(
 																[
@@ -9372,7 +9439,36 @@ var $author$project$Main$viewHeader = function (_v0) {
 																]),
 															_List_fromArray(
 																[
-																	(!$elm$core$String$isEmpty(resultTokenRecord.firstname)) ? $elm$html$Html$text(resultTokenRecord.firstname + ' ⌄') : $elm$html$Html$text(resultTokenRecord.email + ' ⌄')
+																	$elm$html$Html$text(resultTokenRecord.firstname + ' ⌄'),
+																	A2(
+																	$elm$html$Html$div,
+																	_List_fromArray(
+																		[
+																			A2($elm$html$Html$Attributes$style, 'width', '60px')
+																		]),
+																	_List_fromArray(
+																		[
+																			A3($laurentpayot$minidenticons_elm$Minidenticons$identicon, 50, 50, resultTokenRecord.firstname)
+																		]))
+																])) : A2(
+															$elm$html$Html$p,
+															_List_fromArray(
+																[
+																	$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
+																]),
+															_List_fromArray(
+																[
+																	$elm$html$Html$text(resultTokenRecord.email + ' ⌄'),
+																	A2(
+																	$elm$html$Html$div,
+																	_List_fromArray(
+																		[
+																			A2($elm$html$Html$Attributes$style, 'width', '60px')
+																		]),
+																	_List_fromArray(
+																		[
+																			A3($laurentpayot$minidenticons_elm$Minidenticons$identicon, 50, 50, resultTokenRecord.email)
+																		]))
 																]))
 														]))
 												]));

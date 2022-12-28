@@ -5,10 +5,15 @@ const { v4: uuid } = require('uuid');
 const { clientPromise } = require('../connect-database');
 
 exports.handler = async function (req) {
-    const { body } = req;
+    const { body, httpMethod } = req;
     const { authorization } = req.headers;
     const client = await clientPromise;
     let parsedBody;
+
+    if (httpMethod !== 'PUT')
+        return {
+            statusCode: 403,
+        };
 
     if (!client)
         return {
@@ -51,30 +56,12 @@ exports.handler = async function (req) {
         decodedToken = await jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
         return {
-            statusCode: 401,
+            statusCode: 403,
             body: err.toString(),
         };
     }
-    // async (err, decoded) => {
-    //     if (err)
-    //         return {
-    //             statusCode: 401,
-    //             body: 'Unable to verify token',
-    //         };
 
     const { id } = decodedToken;
-    // if (id !== userId) {
-    //     return {
-    //         statusCode: 403,
-    //         body: 'Not allowed to update that users data',
-    //     };
-    // }
-
-    // if (!isverified)
-    //     return {
-    //         statusCode: 403,
-    //         body: 'You need to verify your email before you can update your data',
-    //     };
 
     const updateUser = async (parameters) => {
         const query = `UPDATE ${
@@ -129,6 +116,11 @@ exports.handler = async function (req) {
         process.env.JWT_SECRET,
         { expiresIn: '2h' },
     );
+
+    if (!newToken)
+        return {
+            statusCode: 403,
+        };
 
     return {
         statusCode: 200,

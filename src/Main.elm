@@ -14,7 +14,6 @@ import Credentials
         , fromSessionToToken
         , fromTokenToString
         , logout
-        , sessionToVerificationString
         , subscriptionChanges
         , unfoldProfileFromToken
         , userIdParser
@@ -28,6 +27,7 @@ import Html.Events exposing (onClick)
 import Html.Lazy exposing (lazy)
 import Json.Decode as Decode exposing (Value)
 import Login
+import Minidenticons exposing (identicon)
 import Profile
 import Signup
 import Url exposing (Url)
@@ -121,11 +121,7 @@ viewFooter =
 
 viewHeader : Model -> Html Msg
 viewHeader { page, session, openDropdown, key } =
-    let
-        maybeToken =
-            fromSessionToToken session
-    in
-    case maybeToken of
+    case fromSessionToToken session of
         Just token ->
             let
                 -- unwrap profile data only if you have token
@@ -177,14 +173,20 @@ viewHeader { page, session, openDropdown, key } =
                                                             style "display" "none"
                                                         ]
                                                         [ li [] [ a [ href <| "/profile/" ++ userIdToString resultTokenRecord.id ] [ text "My profile" ] ], li [] [ text "option2" ], li [] [ text "option3" ] ]
-                                                    , p
-                                                        [ onClick OpenDropdown ]
-                                                        [ if String.isEmpty resultTokenRecord.firstname == False then
-                                                            text (resultTokenRecord.firstname ++ " ⌄")
+                                                    , if String.isEmpty resultTokenRecord.firstname == False then
+                                                        p
+                                                            [ onClick OpenDropdown ]
+                                                            [ text (resultTokenRecord.firstname ++ " ⌄")
+                                                            , div [ style "width" "60px" ] [ identicon 50 50 resultTokenRecord.firstname ]
+                                                            ]
 
-                                                          else
-                                                            text (resultTokenRecord.email ++ " ⌄")
-                                                        ]
+                                                      else
+                                                        p
+                                                            [ onClick OpenDropdown ]
+                                                            [ text
+                                                                (resultTokenRecord.email ++ " ⌄")
+                                                            , div [ style "width" "60px" ] [ identicon 50 50 resultTokenRecord.email ]
+                                                            ]
                                                     ]
                                                 ]
 

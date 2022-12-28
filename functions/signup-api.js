@@ -14,9 +14,14 @@ const sendEmail = ({ to, from, subject, text, html = '' }) => {
 };
 
 exports.handler = async function (req, context) {
-    const { body } = req;
+    const { body, httpMethod } = req;
     const client = await clientPromise;
     let parsedBody;
+
+    if (httpMethod !== 'POST')
+        return {
+            statusCode: 403,
+        };
 
     if (!client)
         return {
@@ -127,9 +132,6 @@ exports.handler = async function (req, context) {
         };
     }
 
-    // console.log('signup posle', { createdUser });
-    // const { id } = createdUser;
-
     const token = jwt.sign(
         {
             id: createdId,
@@ -142,22 +144,13 @@ exports.handler = async function (req, context) {
         { expiresIn: '2h' },
     );
 
+    if (!token)
+        return {
+            statusCode: 403,
+        };
+
     return {
         statusCode: 200,
         body: JSON.stringify({ token }),
     };
-
-    // (err, token) => {
-    //     if (err) {
-    //         return {
-    //             statusCode: 500,
-    //             body: JSON.stringify({ err }),
-    //         };
-    //     }
-    //     return {
-    //         statusCode: 200,
-    //         body: JSON.stringify({ token }),
-    //     };
-    // },
-    // );
 };

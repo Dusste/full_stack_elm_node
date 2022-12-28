@@ -2,7 +2,19 @@ module Verification exposing (Model, Msg, init, update, view)
 
 import Array
 import Base64 exposing (decode)
-import Credentials exposing (Session, Token, addHeader, encodeToken, fromSessionToToken, fromTokenToString, storeSession, tokenDecoder, unfoldProfileFromToken, verificationToString)
+import Credentials
+    exposing
+        ( Session
+        , Token
+        , addHeader
+        , encodeToken
+        , fromSessionToToken
+        , fromTokenToString
+        , storeSession
+        , tokenDecoder
+        , unfoldProfileFromToken
+        , verificationToString
+        )
 import Html exposing (..)
 import Http
 import Json.Decode as Decode

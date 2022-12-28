@@ -2,7 +2,23 @@ module Profile exposing (..)
 
 import Array
 import Base64 exposing (decode)
-import Credentials exposing (Session, Token, UnwrappedTokenData, addHeader, emptyUserId, emptyVerificationString, encodeToken, fromSessionToToken, fromTokenToString, guest, logout, storeSession, tokenDecoder, unfoldProfileFromToken, unwrappedTokenDataEncoder)
+import Credentials
+    exposing
+        ( Session
+        , Token
+        , UnwrappedTokenData
+        , addHeader
+        , emptyUserId
+        , emptyVerificationString
+        , encodeToken
+        , fromSessionToToken
+        , fromTokenToString
+        , logout
+        , storeSession
+        , tokenDecoder
+        , unfoldProfileFromToken
+        , unwrappedTokenDataEncoder
+        )
 import File exposing (File)
 import File.Select as Select
 import Html exposing (..)

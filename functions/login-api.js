@@ -5,9 +5,14 @@ const { v4: uuid } = require('uuid');
 const { clientPromise } = require('../connect-database');
 
 exports.handler = async function (req) {
-    const { body } = req;
+    const { body, httpMethod } = req;
     const client = await clientPromise;
     let parsedBody;
+
+    if (httpMethod !== 'POST')
+        return {
+            statusCode: 403,
+        };
 
     if (!client)
         return {
@@ -70,6 +75,11 @@ exports.handler = async function (req) {
                 expiresIn: '2h',
             },
         );
+
+        if (!token)
+            return {
+                statusCode: 403,
+            };
 
         return {
             statusCode: 200,
