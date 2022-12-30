@@ -81,7 +81,7 @@ exports.handler = async function (req, context) {
             process.env.NODE_ENV === 'development'
                 ? process.env.ASTRA_DB_KEYSPACE
                 : process.env.ASTRA_DB_KEYSPACE_PROD
-        }.users (id, email, firstname, isadmin, isverified, lastname, passwordhash, salt, verificationstring) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+        }.users (id, email, firstname, isadmin, isverified, lastname, passwordhash, salt, verificationstring, avatarurl) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
         try {
             const result = await client.execute(query, parameters, { prepare: true });
             //  result would be undefined but query would be executed and entery is wirtten in the DB
@@ -101,6 +101,7 @@ exports.handler = async function (req, context) {
         passwordHash,
         salt,
         verificationString,
+        '',
     ]);
 
     try {
@@ -139,6 +140,7 @@ exports.handler = async function (req, context) {
             email,
             firstname: '',
             verificationstring: verificationString,
+            profilepicurl: '',
         },
         process.env.JWT_SECRET,
         { expiresIn: '2h' },

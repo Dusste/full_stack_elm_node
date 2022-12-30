@@ -33,7 +33,7 @@ import Array
 import Base64 exposing (decode)
 import Browser.Navigation as Nav
 import Http exposing (Header, header)
-import Json.Decode as Decode exposing (Decoder, Value, at, bool, int, map7, string)
+import Json.Decode as Decode exposing (Decoder, Value, at, bool, map6, string)
 import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode exposing (Value)
 import Url.Parser exposing (Parser, custom)
@@ -128,8 +128,7 @@ type alias UnwrappedTokenData =
     , email : String
     , firstname : String
     , verificationstring : VerificationString
-    , iat : Int
-    , exp : Int
+    , profilepicurl : String
     }
 
 
@@ -172,8 +171,7 @@ unwrappedTokenDataEncoder profileData =
         , ( "firstname", Encode.string profileData.firstname )
         , ( "email", Encode.string profileData.email )
         , ( "isverified", Encode.bool profileData.isverified )
-        , ( "iat", Encode.int profileData.iat )
-        , ( "exp", Encode.int profileData.exp )
+        , ( "profilepicurl", Encode.string profileData.profilepicurl )
         ]
 
 
@@ -249,14 +247,13 @@ sessionToVerificationString session =
 
 decodeTokenData : Decoder UnwrappedTokenData
 decodeTokenData =
-    map7 UnwrappedTokenData
+    map6 UnwrappedTokenData
         (at [ "id" ] idDecoder)
         (at [ "isverified" ] bool)
         (at [ "email" ] string)
         (at [ "firstname" ] string)
         (at [ "verificationstring" ] verifyStringDecoder)
-        (at [ "iat" ] int)
-        (at [ "exp" ] int)
+        (at [ "profilepicurl" ] string)
 
 
 unfoldProfileFromToken : Token -> Decoder UnwrappedTokenData

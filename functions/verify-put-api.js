@@ -33,7 +33,7 @@ exports.handler = async function (req) {
         decodedToken = await jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
         return {
-            statusCode: 403,
+            statusCode: 401,
             body: err.toString(),
         };
     }
@@ -94,6 +94,7 @@ exports.handler = async function (req) {
         email: emailFromUser,
         firstname: firstName,
         verificationstring,
+        avatarurl,
     } = user.rows[0];
 
     const newToken = jwt.sign(
@@ -103,6 +104,7 @@ exports.handler = async function (req) {
             email: emailFromUser,
             firstname: firstName,
             verificationstring,
+            profilepicurl: avatarurl || '',
         },
         process.env.JWT_SECRET,
         { expiresIn: '2h' },

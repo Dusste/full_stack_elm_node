@@ -34,7 +34,7 @@ import Task
 type alias Model =
     { profile : UnwrappedTokenData
     , errors : List CheckErrors
-    , imageFile : Maybe String
+    , imageFile : String
     , userState : UserState
     }
 
@@ -58,7 +58,7 @@ type Msg
     | ProfileSubmit Session UnwrappedTokenData
     | ProfileDone (Result Http.Error Token)
     | FileRequest
-    | FileRequestDone File
+    | FileRequestProceed File
     | FileRead String
 
 
@@ -70,11 +70,10 @@ initialModel =
         , id = emptyUserId
         , isverified = False
         , verificationstring = emptyVerificationString
-        , iat = 0
-        , exp = 0
+        , profilepicurl = ""
         }
     , errors = []
-    , imageFile = Nothing
+    , imageFile = ""
     , userState = NotVerified
     }
 
@@ -177,18 +176,10 @@ view model =
                         ]
                     , br [] []
                     , div []
-                        [ text "Your avatar"
+                        [ text "Your avatar preview"
                         , br [] []
                         , img
-                            [ src
-                                (case model.imageFile of
-                                    Just fileString ->
-                                        fileString
-
-                                    Nothing ->
-                                        ""
-                                )
-                            ]
+                            [ Html.Attributes.style "height" "40px", src model.imageFile ]
                             []
                         ]
 
@@ -291,13 +282,20 @@ update msg model =
             )
 
         FileRequest ->
-            ( model, Select.file [ "image/*" ] FileRequestDone )
+            ( model, Select.file [ "image/*" ] FileRequestProceed )
 
-        FileRequestDone file ->
-            ( model, Task.perform FileRead (File.toString file) )
+        FileRequestProceed file ->
+            ( model, Task.perform FileRead (File.toUrl file) )
 
         FileRead imageFileString ->
-            ( { model | imageFile = Just imageFileString }, Cmd.none )
+            let
+                oldProfile =
+                    model.profile
+
+                updateProfile =
+                    { oldProfile | profilepicurl = imageFileString }
+            in
+            ( { model | profile = updateProfile, imageFile = imageFileString }, Cmd.none )
 
 
 submitProfile : Session -> UnwrappedTokenData -> Cmd Msg

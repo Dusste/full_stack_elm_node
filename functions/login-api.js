@@ -62,14 +62,22 @@ exports.handler = async function (req) {
         };
     }
 
-    const { id, isverified, passwordhash, salt, firstname, verificationstring } = user.rows[0];
+    const { id, isverified, passwordhash, salt, firstname, verificationstring, avatarurl } =
+        user.rows[0];
     const pepper = process.env.PEPPER_STRING;
 
     const isCorrect = await bcrypt.compare(salt + password + pepper, passwordhash);
 
     if (isCorrect) {
         const token = jwt.sign(
-            { id, isverified, email, firstname, verificationstring },
+            {
+                id,
+                isverified,
+                email,
+                firstname,
+                verificationstring,
+                profilepicurl: avatarurl || '',
+            },
             process.env.JWT_SECRET,
             {
                 expiresIn: '2h',

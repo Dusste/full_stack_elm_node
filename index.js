@@ -6161,13 +6161,13 @@ var $author$project$Credentials$VerificationString = function (a) {
 var $author$project$Credentials$emptyVerificationString = $author$project$Credentials$VerificationString('');
 var $author$project$Profile$initialModel = {
 	errors: _List_Nil,
-	imageFile: $elm$core$Maybe$Nothing,
-	profile: {email: '', exp: 0, firstname: '', iat: 0, id: $author$project$Credentials$emptyUserId, isverified: false, verificationstring: $author$project$Credentials$emptyVerificationString},
+	imageFile: '',
+	profile: {email: '', firstname: '', id: $author$project$Credentials$emptyUserId, isverified: false, profilepicurl: '', verificationstring: $author$project$Credentials$emptyVerificationString},
 	userState: $author$project$Profile$NotVerified
 };
-var $author$project$Credentials$UnwrappedTokenData = F7(
-	function (id, isverified, email, firstname, verificationstring, iat, exp) {
-		return {email: email, exp: exp, firstname: firstname, iat: iat, id: id, isverified: isverified, verificationstring: verificationstring};
+var $author$project$Credentials$UnwrappedTokenData = F6(
+	function (id, isverified, email, firstname, verificationstring, profilepicurl) {
+		return {email: email, firstname: firstname, id: id, isverified: isverified, profilepicurl: profilepicurl, verificationstring: verificationstring};
 	});
 var $elm$json$Json$Decode$at = F2(
 	function (fields, decoder) {
@@ -6175,11 +6175,10 @@ var $elm$json$Json$Decode$at = F2(
 	});
 var $elm$json$Json$Decode$bool = _Json_decodeBool;
 var $author$project$Credentials$idDecoder = A2($elm$json$Json$Decode$map, $author$project$Credentials$UserId, $elm$json$Json$Decode$string);
-var $elm$json$Json$Decode$int = _Json_decodeInt;
-var $elm$json$Json$Decode$map7 = _Json_map7;
+var $elm$json$Json$Decode$map6 = _Json_map6;
 var $author$project$Credentials$verifyStringDecoder = A2($elm$json$Json$Decode$map, $author$project$Credentials$VerificationString, $elm$json$Json$Decode$string);
-var $author$project$Credentials$decodeTokenData = A8(
-	$elm$json$Json$Decode$map7,
+var $author$project$Credentials$decodeTokenData = A7(
+	$elm$json$Json$Decode$map6,
 	$author$project$Credentials$UnwrappedTokenData,
 	A2(
 		$elm$json$Json$Decode$at,
@@ -6209,13 +6208,8 @@ var $author$project$Credentials$decodeTokenData = A8(
 	A2(
 		$elm$json$Json$Decode$at,
 		_List_fromArray(
-			['iat']),
-		$elm$json$Json$Decode$int),
-	A2(
-		$elm$json$Json$Decode$at,
-		_List_fromArray(
-			['exp']),
-		$elm$json$Json$Decode$int));
+			['profilepicurl']),
+		$elm$json$Json$Decode$string));
 var $author$project$Credentials$unfoldProfileFromToken = function (_v0) {
 	var tokenData = _v0.a;
 	return $author$project$Credentials$decodeTokenData;
@@ -7834,8 +7828,8 @@ var $author$project$Profile$BadRequest = function (a) {
 var $author$project$Profile$FileRead = function (a) {
 	return {$: 'FileRead', a: a};
 };
-var $author$project$Profile$FileRequestDone = function (a) {
-	return {$: 'FileRequestDone', a: a};
+var $author$project$Profile$FileRequestProceed = function (a) {
+	return {$: 'FileRequestProceed', a: a};
 };
 var $elm$time$Time$Posix = function (a) {
 	return {$: 'Posix', a: a};
@@ -7865,7 +7859,6 @@ var $author$project$Credentials$encodeUserId = function (_v0) {
 	var id = _v0.a;
 	return $elm$json$Json$Encode$string(id);
 };
-var $elm$json$Json$Encode$int = _Json_wrap;
 var $author$project$Credentials$unwrappedTokenDataEncoder = function (profileData) {
 	return $elm$json$Json$Encode$object(
 		_List_fromArray(
@@ -7883,11 +7876,8 @@ var $author$project$Credentials$unwrappedTokenDataEncoder = function (profileDat
 				'isverified',
 				$elm$json$Json$Encode$bool(profileData.isverified)),
 				_Utils_Tuple2(
-				'iat',
-				$elm$json$Json$Encode$int(profileData.iat)),
-				_Utils_Tuple2(
-				'exp',
-				$elm$json$Json$Encode$int(profileData.exp))
+				'profilepicurl',
+				$elm$json$Json$Encode$string(profileData.profilepicurl))
 			]));
 };
 var $author$project$Profile$submitProfile = F2(
@@ -7913,7 +7903,7 @@ var $author$project$Profile$submitProfile = F2(
 			return $elm$core$Platform$Cmd$none;
 		}
 	});
-var $elm$file$File$toString = _File_toString;
+var $elm$file$File$toUrl = _File_toUrl;
 var $author$project$Profile$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -7981,23 +7971,25 @@ var $author$project$Profile$update = F2(
 						$elm$file$File$Select$file,
 						_List_fromArray(
 							['image/*']),
-						$author$project$Profile$FileRequestDone));
-			case 'FileRequestDone':
+						$author$project$Profile$FileRequestProceed));
+			case 'FileRequestProceed':
 				var file = msg.a;
 				return _Utils_Tuple2(
 					model,
 					A2(
 						$elm$core$Task$perform,
 						$author$project$Profile$FileRead,
-						$elm$file$File$toString(file)));
+						$elm$file$File$toUrl(file)));
 			default:
 				var imageFileString = msg.a;
+				var oldProfile = model.profile;
+				var updateProfile = _Utils_update(
+					oldProfile,
+					{profilepicurl: imageFileString});
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{
-							imageFile: $elm$core$Maybe$Just(imageFileString)
-						}),
+						{imageFile: imageFileString, profile: updateProfile}),
 					$elm$core$Platform$Cmd$none);
 		}
 	});
@@ -8639,6 +8631,8 @@ var $elm$html$Html$Attributes$src = function (url) {
 		'src',
 		_VirtualDom_noJavaScriptOrHtmlUri(url));
 };
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $author$project$Profile$view = function (model) {
 	var _v0 = model.userState;
 	switch (_v0.$) {
@@ -8701,22 +8695,14 @@ var $author$project$Profile$view = function (model) {
 								_List_Nil,
 								_List_fromArray(
 									[
-										$elm$html$Html$text('Your avatar'),
+										$elm$html$Html$text('Your avatar preview'),
 										A2($elm$html$Html$br, _List_Nil, _List_Nil),
 										A2(
 										$elm$html$Html$img,
 										_List_fromArray(
 											[
-												$elm$html$Html$Attributes$src(
-												function () {
-													var _v1 = model.imageFile;
-													if (_v1.$ === 'Just') {
-														var fileString = _v1.a;
-														return fileString;
-													} else {
-														return '';
-													}
-												}())
+												A2($elm$html$Html$Attributes$style, 'height', '40px'),
+												$elm$html$Html$Attributes$src(model.imageFile)
 											]),
 										_List_Nil)
 									])),
@@ -9313,8 +9299,13 @@ var $author$project$Main$isActive = function (_v0) {
 	}
 };
 var $elm$html$Html$nav = _VirtualDom_node('nav');
-var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
+var $elm$html$Html$span = _VirtualDom_node('span');
+var $elm$html$Html$Attributes$width = function (n) {
+	return A2(
+		_VirtualDom_attribute,
+		'width',
+		$elm$core$String$fromInt(n));
+};
 var $author$project$Main$viewHeader = function (_v0) {
 	var page = _v0.page;
 	var session = _v0.session;
@@ -9391,17 +9382,88 @@ var $author$project$Main$viewHeader = function (_v0) {
 													_List_Nil,
 													_List_fromArray(
 														[
+															(!$elm$core$String$isEmpty(resultTokenRecord.firstname)) ? A2(
+															$elm$html$Html$div,
+															_List_fromArray(
+																[
+																	$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
+																]),
+															_List_fromArray(
+																[
+																	A2(
+																	$elm$html$Html$span,
+																	_List_Nil,
+																	_List_fromArray(
+																		[
+																			$elm$html$Html$text(resultTokenRecord.firstname + ' ⌄')
+																		])),
+																	A2(
+																	$elm$html$Html$div,
+																	_List_fromArray(
+																		[
+																			A2($elm$html$Html$Attributes$style, 'width', '60px')
+																		]),
+																	_List_fromArray(
+																		[
+																			(resultTokenRecord.profilepicurl !== '') ? A2(
+																			$elm$html$Html$img,
+																			_List_fromArray(
+																				[
+																					$elm$html$Html$Attributes$src(resultTokenRecord.profilepicurl),
+																					$elm$html$Html$Attributes$width(60)
+																				]),
+																			_List_Nil) : A3($laurentpayot$minidenticons_elm$Minidenticons$identicon, 50, 50, resultTokenRecord.firstname)
+																		]))
+																])) : A2(
+															$elm$html$Html$div,
+															_List_fromArray(
+																[
+																	$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
+																]),
+															_List_fromArray(
+																[
+																	A2(
+																	$elm$html$Html$span,
+																	_List_Nil,
+																	_List_fromArray(
+																		[
+																			$elm$html$Html$text(resultTokenRecord.email + ' ⌄')
+																		])),
+																	A2(
+																	$elm$html$Html$div,
+																	_List_fromArray(
+																		[
+																			A2($elm$html$Html$Attributes$style, 'width', '60px')
+																		]),
+																	_List_fromArray(
+																		[
+																			(resultTokenRecord.profilepicurl !== '') ? A2(
+																			$elm$html$Html$img,
+																			_List_fromArray(
+																				[
+																					$elm$html$Html$Attributes$src(resultTokenRecord.profilepicurl),
+																					$elm$html$Html$Attributes$width(60)
+																				]),
+																			_List_Nil) : A3($laurentpayot$minidenticons_elm$Minidenticons$identicon, 50, 50, resultTokenRecord.email)
+																		]))
+																])),
 															A2(
 															$elm$html$Html$ul,
 															_List_fromArray(
 																[
-																	openDropdown ? A2($elm$html$Html$Attributes$style, 'display', 'block') : A2($elm$html$Html$Attributes$style, 'display', 'none')
+																	A2(
+																	$elm$html$Html$Attributes$style,
+																	'display',
+																	openDropdown ? 'block' : 'none')
 																]),
 															_List_fromArray(
 																[
 																	A2(
 																	$elm$html$Html$li,
-																	_List_Nil,
+																	_List_fromArray(
+																		[
+																			$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
+																		]),
 																	_List_fromArray(
 																		[
 																			A2(
@@ -9418,56 +9480,23 @@ var $author$project$Main$viewHeader = function (_v0) {
 																		])),
 																	A2(
 																	$elm$html$Html$li,
-																	_List_Nil,
+																	_List_fromArray(
+																		[
+																			$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
+																		]),
 																	_List_fromArray(
 																		[
 																			$elm$html$Html$text('option2')
 																		])),
 																	A2(
 																	$elm$html$Html$li,
-																	_List_Nil,
+																	_List_fromArray(
+																		[
+																			$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
+																		]),
 																	_List_fromArray(
 																		[
 																			$elm$html$Html$text('option3')
-																		]))
-																])),
-															(!$elm$core$String$isEmpty(resultTokenRecord.firstname)) ? A2(
-															$elm$html$Html$p,
-															_List_fromArray(
-																[
-																	$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
-																]),
-															_List_fromArray(
-																[
-																	$elm$html$Html$text(resultTokenRecord.firstname + ' ⌄'),
-																	A2(
-																	$elm$html$Html$div,
-																	_List_fromArray(
-																		[
-																			A2($elm$html$Html$Attributes$style, 'width', '60px')
-																		]),
-																	_List_fromArray(
-																		[
-																			A3($laurentpayot$minidenticons_elm$Minidenticons$identicon, 50, 50, resultTokenRecord.firstname)
-																		]))
-																])) : A2(
-															$elm$html$Html$p,
-															_List_fromArray(
-																[
-																	$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
-																]),
-															_List_fromArray(
-																[
-																	$elm$html$Html$text(resultTokenRecord.email + ' ⌄'),
-																	A2(
-																	$elm$html$Html$div,
-																	_List_fromArray(
-																		[
-																			A2($elm$html$Html$Attributes$style, 'width', '60px')
-																		]),
-																	_List_fromArray(
-																		[
-																			A3($laurentpayot$minidenticons_elm$Minidenticons$identicon, 50, 50, resultTokenRecord.email)
 																		]))
 																]))
 														]))
@@ -9478,7 +9507,7 @@ var $author$project$Main$viewHeader = function (_v0) {
 											_List_Nil,
 											_List_fromArray(
 												[
-													$elm$html$Html$text('Profile')
+													$elm$html$Html$text('Home')
 												]));
 									}
 								}

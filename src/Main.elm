@@ -21,8 +21,8 @@ import Credentials
         , verifictionStringParser
         )
 import Home
-import Html exposing (Html, a, div, footer, h1, li, nav, p, text, ul)
-import Html.Attributes exposing (classList, href, style)
+import Html exposing (Html, a, div, footer, h1, img, li, nav, p, span, text, ul)
+import Html.Attributes exposing (classList, href, src, style, width)
 import Html.Events exposing (onClick)
 import Html.Lazy exposing (lazy)
 import Json.Decode as Decode exposing (Value)
@@ -165,33 +165,52 @@ viewHeader { page, session, openDropdown, key } =
                                                     ]
                                                 ]
                                                 [ div []
-                                                    [ ul
-                                                        [ if openDropdown then
-                                                            style "display" "block"
-
-                                                          else
-                                                            style "display" "none"
-                                                        ]
-                                                        [ li [] [ a [ href <| "/profile/" ++ userIdToString resultTokenRecord.id ] [ text "My profile" ] ], li [] [ text "option2" ], li [] [ text "option3" ] ]
-                                                    , if String.isEmpty resultTokenRecord.firstname == False then
-                                                        p
+                                                    [ if String.isEmpty resultTokenRecord.firstname == False then
+                                                        div
                                                             [ onClick OpenDropdown ]
-                                                            [ text (resultTokenRecord.firstname ++ " ⌄")
-                                                            , div [ style "width" "60px" ] [ identicon 50 50 resultTokenRecord.firstname ]
+                                                            [ span [] [ text (resultTokenRecord.firstname ++ " ⌄") ]
+                                                            , div [ style "width" "60px" ]
+                                                                [ if resultTokenRecord.profilepicurl /= "" then
+                                                                    img [ src resultTokenRecord.profilepicurl, width 60 ] []
+
+                                                                  else
+                                                                    identicon 50 50 resultTokenRecord.firstname
+                                                                ]
                                                             ]
 
                                                       else
-                                                        p
+                                                        div
                                                             [ onClick OpenDropdown ]
-                                                            [ text
-                                                                (resultTokenRecord.email ++ " ⌄")
-                                                            , div [ style "width" "60px" ] [ identicon 50 50 resultTokenRecord.email ]
+                                                            [ span []
+                                                                [ text
+                                                                    (resultTokenRecord.email ++ " ⌄")
+                                                                ]
+                                                            , div [ style "width" "60px" ]
+                                                                [ if resultTokenRecord.profilepicurl /= "" then
+                                                                    img [ src resultTokenRecord.profilepicurl, width 60 ] []
+
+                                                                  else
+                                                                    identicon 50 50 resultTokenRecord.email
+                                                                ]
                                                             ]
+                                                    , ul
+                                                        [ style "display"
+                                                            (if openDropdown then
+                                                                "block"
+
+                                                             else
+                                                                "none"
+                                                            )
+                                                        ]
+                                                        [ li [ onClick OpenDropdown ] [ a [ href <| "/profile/" ++ userIdToString resultTokenRecord.id ] [ text "My profile" ] ]
+                                                        , li [ onClick OpenDropdown ] [ text "option2" ]
+                                                        , li [ onClick OpenDropdown ] [ text "option3" ]
+                                                        ]
                                                     ]
                                                 ]
 
                                         Err _ ->
-                                            li [] [ text "Profile" ]
+                                            li [] [ text "Home" ]
 
                         Nothing ->
                             li [] [ a [ href "/" ] [ text "Home" ] ]
