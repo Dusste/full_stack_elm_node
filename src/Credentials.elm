@@ -1,5 +1,5 @@
 port module Credentials exposing
-    ( ProfileData
+    ( ImageString
     , Session
     , Token
     , UnwrappedTokenData
@@ -8,29 +8,27 @@ port module Credentials exposing
     , addHeader
     , decodeToSession
     , decodeTokenData
+    , emptyImageString
     , emptyUserId
     , emptyVerificationString
+    , encodeImageString
     , encodeToken
     , fromSessionToToken
     , fromTokenToString
     , guest
-    , isSessionValid
+    , imageStringToMaybeString
     , logout
     , onSessionChange
-    , sessionToVerificationString
     , storeSession
+    , stringToImageString
     , subscriptionChanges
     , tokenDecoder
-    , unfoldProfileFromToken
-    , unwrappedTokenDataEncoder
     , userIdParser
     , userIdToString
     , verificationToString
     , verifictionStringParser
     )
 
-import Array
-import Base64 exposing (decode)
 import Browser.Navigation as Nav
 import Http exposing (Header, header)
 import Json.Decode as Decode exposing (Decoder, Value, at, bool, map6, string)
@@ -50,14 +48,6 @@ type Session
 
 type VerificationString
     = VerificationString String
-
-
-type alias ProfileData =
-    { firstName : String
-    , lastName : String
-    , isVerified : Bool
-    , isAdmin : Bool
-    }
 
 
 type UserId
@@ -112,6 +102,16 @@ encodeUserId (UserId id) =
     Encode.string id
 
 
+encodeImageString : ImageString -> Encode.Value
+encodeImageString (ImageString maybeImageString) =
+    case ImageString maybeImageString of
+        ImageString (Just imageString) ->
+            Encode.string imageString
+
+        ImageString Nothing ->
+            Encode.string ""
+
+
 idDecoder : Decoder UserId
 idDecoder =
     Decode.map UserId string
@@ -122,14 +122,46 @@ verifyStringDecoder =
     Decode.map VerificationString string
 
 
+type ImageString
+    = ImageString (Maybe String)
+
+
 type alias UnwrappedTokenData =
     { id : UserId
     , isverified : Bool
     , email : String
     , firstname : String
     , verificationstring : VerificationString
-    , profilepicurl : String
+    , profilepicurl : ImageString
     }
+
+
+stringToImageString : String -> ImageString
+stringToImageString str =
+    if String.isEmpty str then
+        ImageString Nothing
+
+    else
+        ImageString (Just str)
+
+
+imageStringToMaybeString : ImageString -> Maybe String
+imageStringToMaybeString (ImageString maybeImageString) =
+    case ImageString maybeImageString of
+        ImageString (Just imageString) ->
+            if String.isEmpty imageString then
+                Nothing
+
+            else
+                Just imageString
+
+        ImageString Nothing ->
+            Nothing
+
+
+emptyImageString : ImageString
+emptyImageString =
+    ImageString Nothing
 
 
 fromSessionToToken : Session -> Maybe Token
@@ -142,16 +174,6 @@ fromSessionToToken session =
             Nothing
 
 
-isSessionValid : Session -> Bool
-isSessionValid session =
-    case session of
-        LoggedIn _ ->
-            True
-
-        Guest ->
-            False
-
-
 
 -- skontaj kako da validirsas da je string token
 -- fromStringToToken : String -> Token
@@ -162,17 +184,6 @@ isSessionValid session =
 fromTokenToString : Token -> String
 fromTokenToString (Token string) =
     string
-
-
-unwrappedTokenDataEncoder : UnwrappedTokenData -> Encode.Value
-unwrappedTokenDataEncoder profileData =
-    Encode.object
-        [ ( "id", encodeUserId profileData.id )
-        , ( "firstname", Encode.string profileData.firstname )
-        , ( "email", Encode.string profileData.email )
-        , ( "isverified", Encode.bool profileData.isverified )
-        , ( "profilepicurl", Encode.string profileData.profilepicurl )
-        ]
 
 
 tokenDecoder : Decoder Token
@@ -198,53 +209,6 @@ logout =
 port onSessionChange : (Value -> msg) -> Sub msg
 
 
-sessionToVerificationString : Session -> VerificationString
-sessionToVerificationString session =
-    case fromSessionToToken session of
-        Just token ->
-            let
-                -- unwrap profile data only if you have token
-                profileFromToken =
-                    unfoldProfileFromToken token
-
-                -- unwrap token string only if you have token
-                tokenString : String
-                tokenString =
-                    fromTokenToString token
-
-                profile : List String
-                profile =
-                    String.split "." tokenString
-
-                maybeTokenData : Maybe String
-                maybeTokenData =
-                    Array.fromList profile |> Array.get 1
-            in
-            case maybeTokenData of
-                Just tokenData ->
-                    let
-                        decodedTokenData =
-                            decode tokenData
-                    in
-                    case decodedTokenData of
-                        Err _ ->
-                            emptyVerificationString
-
-                        Ok encodedRecord ->
-                            case Decode.decodeString profileFromToken encodedRecord of
-                                Ok resultTokenRecord ->
-                                    resultTokenRecord.verificationstring
-
-                                Err _ ->
-                                    emptyVerificationString
-
-                Nothing ->
-                    emptyVerificationString
-
-        Nothing ->
-            emptyVerificationString
-
-
 decodeTokenData : Decoder UnwrappedTokenData
 decodeTokenData =
     map6 UnwrappedTokenData
@@ -253,12 +217,12 @@ decodeTokenData =
         (at [ "email" ] string)
         (at [ "firstname" ] string)
         (at [ "verificationstring" ] verifyStringDecoder)
-        (at [ "profilepicurl" ] string)
+        (at [ "profilepicurl" ] imageStringDecoder)
 
 
-unfoldProfileFromToken : Token -> Decoder UnwrappedTokenData
-unfoldProfileFromToken (Token tokenData) =
-    decodeTokenData
+imageStringDecoder : Decoder ImageString
+imageStringDecoder =
+    Decode.map (\maybeImageString -> ImageString maybeImageString) (Decode.maybe string)
 
 
 decodeToSession : Nav.Key -> Value -> Session

@@ -73,7 +73,7 @@ update msg model =
                     sumOfErrors model
             in
             if List.isEmpty errorsList then
-                ( { model | errors = [], isLoading = True }, submitLogin model.loginCredentials )
+                ( { model | errors = [], isLoading = True }, submitLogin cred )
 
             else
                 ( { model | errors = errorsList, isLoading = False }, Cmd.none )

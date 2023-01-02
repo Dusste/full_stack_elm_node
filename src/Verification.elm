@@ -1,24 +1,22 @@
 module Verification exposing (Model, Msg, init, update, view)
 
-import Array
-import Base64 exposing (decode)
 import Credentials
     exposing
         ( Session
         , Token
         , addHeader
+        , decodeTokenData
         , encodeToken
         , fromSessionToToken
         , fromTokenToString
         , storeSession
         , tokenDecoder
-        , unfoldProfileFromToken
         , verificationToString
         )
 import Html exposing (..)
 import Http
-import Json.Decode as Decode
 import Json.Encode exposing (encode)
+import Jwt
 import Process
 import Task
 
@@ -51,65 +49,27 @@ init : Session -> String -> ( Model, Cmd Msg )
 init session verificationParam =
     case fromSessionToToken session of
         Just token ->
-            let
-                -- unwrap profile data only if you have token
-                profileFromToken =
-                    unfoldProfileFromToken token
+            case Jwt.decodeToken decodeTokenData <| fromTokenToString token of
+                Ok resultTokenRecord ->
+                    if verificationParam /= ("/verify-email/" ++ verificationToString resultTokenRecord.verificationstring) then
+                        ( { userState = VerificationFail
+                          }
+                        , Cmd.none
+                        )
 
-                -- unwrap token string only if you have token
-                tokenString : String
-                tokenString =
-                    fromTokenToString token
+                    else if not resultTokenRecord.isverified then
+                        ( { userState = VerificationPending
+                          }
+                        , apiCallAfterSomeTime session VerifyApiCallStart
+                        )
 
-                profile : List String
-                profile =
-                    String.split "." tokenString
+                    else
+                        ( { userState = Verified
+                          }
+                        , Cmd.none
+                        )
 
-                maybeTokenData : Maybe String
-                maybeTokenData =
-                    Array.fromList profile |> Array.get 1
-            in
-            case maybeTokenData of
-                Just tokenData ->
-                    let
-                        decodedTokenData =
-                            decode tokenData
-                    in
-                    case decodedTokenData of
-                        Err _ ->
-                            ( { userState = Sessionless
-                              }
-                            , Cmd.none
-                            )
-
-                        Ok encodedRecord ->
-                            case Decode.decodeString profileFromToken encodedRecord of
-                                Ok resultTokenRecord ->
-                                    if verificationParam /= ("/verify-email/" ++ verificationToString resultTokenRecord.verificationstring) then
-                                        ( { userState = VerificationFail
-                                          }
-                                        , Cmd.none
-                                        )
-
-                                    else if not resultTokenRecord.isverified then
-                                        ( { userState = VerificationPending
-                                          }
-                                        , apiCallAfterSomeTime session VerifyApiCallStart
-                                        )
-
-                                    else
-                                        ( { userState = Verified
-                                          }
-                                        , Cmd.none
-                                        )
-
-                                Err _ ->
-                                    ( { userState = Sessionless
-                                      }
-                                    , Cmd.none
-                                    )
-
-                Nothing ->
+                Err _ ->
                     ( { userState = Sessionless
                       }
                     , Cmd.none

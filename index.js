@@ -4372,6 +4372,184 @@ function _Browser_load(url)
 }
 
 
+// BYTES
+
+function _Bytes_width(bytes)
+{
+	return bytes.byteLength;
+}
+
+var _Bytes_getHostEndianness = F2(function(le, be)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		callback(_Scheduler_succeed(new Uint8Array(new Uint32Array([1]))[0] === 1 ? le : be));
+	});
+});
+
+
+// ENCODERS
+
+function _Bytes_encode(encoder)
+{
+	var mutableBytes = new DataView(new ArrayBuffer($elm$bytes$Bytes$Encode$getWidth(encoder)));
+	$elm$bytes$Bytes$Encode$write(encoder)(mutableBytes)(0);
+	return mutableBytes;
+}
+
+
+// SIGNED INTEGERS
+
+var _Bytes_write_i8  = F3(function(mb, i, n) { mb.setInt8(i, n); return i + 1; });
+var _Bytes_write_i16 = F4(function(mb, i, n, isLE) { mb.setInt16(i, n, isLE); return i + 2; });
+var _Bytes_write_i32 = F4(function(mb, i, n, isLE) { mb.setInt32(i, n, isLE); return i + 4; });
+
+
+// UNSIGNED INTEGERS
+
+var _Bytes_write_u8  = F3(function(mb, i, n) { mb.setUint8(i, n); return i + 1 ;});
+var _Bytes_write_u16 = F4(function(mb, i, n, isLE) { mb.setUint16(i, n, isLE); return i + 2; });
+var _Bytes_write_u32 = F4(function(mb, i, n, isLE) { mb.setUint32(i, n, isLE); return i + 4; });
+
+
+// FLOATS
+
+var _Bytes_write_f32 = F4(function(mb, i, n, isLE) { mb.setFloat32(i, n, isLE); return i + 4; });
+var _Bytes_write_f64 = F4(function(mb, i, n, isLE) { mb.setFloat64(i, n, isLE); return i + 8; });
+
+
+// BYTES
+
+var _Bytes_write_bytes = F3(function(mb, offset, bytes)
+{
+	for (var i = 0, len = bytes.byteLength, limit = len - 4; i <= limit; i += 4)
+	{
+		mb.setUint32(offset + i, bytes.getUint32(i));
+	}
+	for (; i < len; i++)
+	{
+		mb.setUint8(offset + i, bytes.getUint8(i));
+	}
+	return offset + len;
+});
+
+
+// STRINGS
+
+function _Bytes_getStringWidth(string)
+{
+	for (var width = 0, i = 0; i < string.length; i++)
+	{
+		var code = string.charCodeAt(i);
+		width +=
+			(code < 0x80) ? 1 :
+			(code < 0x800) ? 2 :
+			(code < 0xD800 || 0xDBFF < code) ? 3 : (i++, 4);
+	}
+	return width;
+}
+
+var _Bytes_write_string = F3(function(mb, offset, string)
+{
+	for (var i = 0; i < string.length; i++)
+	{
+		var code = string.charCodeAt(i);
+		offset +=
+			(code < 0x80)
+				? (mb.setUint8(offset, code)
+				, 1
+				)
+				:
+			(code < 0x800)
+				? (mb.setUint16(offset, 0xC080 /* 0b1100000010000000 */
+					| (code >>> 6 & 0x1F /* 0b00011111 */) << 8
+					| code & 0x3F /* 0b00111111 */)
+				, 2
+				)
+				:
+			(code < 0xD800 || 0xDBFF < code)
+				? (mb.setUint16(offset, 0xE080 /* 0b1110000010000000 */
+					| (code >>> 12 & 0xF /* 0b00001111 */) << 8
+					| code >>> 6 & 0x3F /* 0b00111111 */)
+				, mb.setUint8(offset + 2, 0x80 /* 0b10000000 */
+					| code & 0x3F /* 0b00111111 */)
+				, 3
+				)
+				:
+			(code = (code - 0xD800) * 0x400 + string.charCodeAt(++i) - 0xDC00 + 0x10000
+			, mb.setUint32(offset, 0xF0808080 /* 0b11110000100000001000000010000000 */
+				| (code >>> 18 & 0x7 /* 0b00000111 */) << 24
+				| (code >>> 12 & 0x3F /* 0b00111111 */) << 16
+				| (code >>> 6 & 0x3F /* 0b00111111 */) << 8
+				| code & 0x3F /* 0b00111111 */)
+			, 4
+			);
+	}
+	return offset;
+});
+
+
+// DECODER
+
+var _Bytes_decode = F2(function(decoder, bytes)
+{
+	try {
+		return $elm$core$Maybe$Just(A2(decoder, bytes, 0).b);
+	} catch(e) {
+		return $elm$core$Maybe$Nothing;
+	}
+});
+
+var _Bytes_read_i8  = F2(function(      bytes, offset) { return _Utils_Tuple2(offset + 1, bytes.getInt8(offset)); });
+var _Bytes_read_i16 = F3(function(isLE, bytes, offset) { return _Utils_Tuple2(offset + 2, bytes.getInt16(offset, isLE)); });
+var _Bytes_read_i32 = F3(function(isLE, bytes, offset) { return _Utils_Tuple2(offset + 4, bytes.getInt32(offset, isLE)); });
+var _Bytes_read_u8  = F2(function(      bytes, offset) { return _Utils_Tuple2(offset + 1, bytes.getUint8(offset)); });
+var _Bytes_read_u16 = F3(function(isLE, bytes, offset) { return _Utils_Tuple2(offset + 2, bytes.getUint16(offset, isLE)); });
+var _Bytes_read_u32 = F3(function(isLE, bytes, offset) { return _Utils_Tuple2(offset + 4, bytes.getUint32(offset, isLE)); });
+var _Bytes_read_f32 = F3(function(isLE, bytes, offset) { return _Utils_Tuple2(offset + 4, bytes.getFloat32(offset, isLE)); });
+var _Bytes_read_f64 = F3(function(isLE, bytes, offset) { return _Utils_Tuple2(offset + 8, bytes.getFloat64(offset, isLE)); });
+
+var _Bytes_read_bytes = F3(function(len, bytes, offset)
+{
+	return _Utils_Tuple2(offset + len, new DataView(bytes.buffer, bytes.byteOffset + offset, len));
+});
+
+var _Bytes_read_string = F3(function(len, bytes, offset)
+{
+	var string = '';
+	var end = offset + len;
+	for (; offset < end;)
+	{
+		var byte = bytes.getUint8(offset++);
+		string +=
+			(byte < 128)
+				? String.fromCharCode(byte)
+				:
+			((byte & 0xE0 /* 0b11100000 */) === 0xC0 /* 0b11000000 */)
+				? String.fromCharCode((byte & 0x1F /* 0b00011111 */) << 6 | bytes.getUint8(offset++) & 0x3F /* 0b00111111 */)
+				:
+			((byte & 0xF0 /* 0b11110000 */) === 0xE0 /* 0b11100000 */)
+				? String.fromCharCode(
+					(byte & 0xF /* 0b00001111 */) << 12
+					| (bytes.getUint8(offset++) & 0x3F /* 0b00111111 */) << 6
+					| bytes.getUint8(offset++) & 0x3F /* 0b00111111 */
+				)
+				:
+				(byte =
+					((byte & 0x7 /* 0b00000111 */) << 18
+						| (bytes.getUint8(offset++) & 0x3F /* 0b00111111 */) << 12
+						| (bytes.getUint8(offset++) & 0x3F /* 0b00111111 */) << 6
+						| bytes.getUint8(offset++) & 0x3F /* 0b00111111 */
+					) - 0x10000
+				, String.fromCharCode(Math.floor(byte / 0x400) + 0xD800, byte % 0x400 + 0xDC00)
+				);
+	}
+	return _Utils_Tuple2(offset, string);
+});
+
+var _Bytes_decodeFailure = F2(function() { throw 0; });
+
+
 
 var _Bitwise_and = F2(function(a, b)
 {
@@ -4407,107 +4585,6 @@ var _Bitwise_shiftRightZfBy = F2(function(offset, a)
 {
 	return a >>> offset;
 });
-
-
-// CREATE
-
-var _Regex_never = /.^/;
-
-var _Regex_fromStringWith = F2(function(options, string)
-{
-	var flags = 'g';
-	if (options.multiline) { flags += 'm'; }
-	if (options.caseInsensitive) { flags += 'i'; }
-
-	try
-	{
-		return $elm$core$Maybe$Just(new RegExp(string, flags));
-	}
-	catch(error)
-	{
-		return $elm$core$Maybe$Nothing;
-	}
-});
-
-
-// USE
-
-var _Regex_contains = F2(function(re, string)
-{
-	return string.match(re) !== null;
-});
-
-
-var _Regex_findAtMost = F3(function(n, re, str)
-{
-	var out = [];
-	var number = 0;
-	var string = str;
-	var lastIndex = re.lastIndex;
-	var prevLastIndex = -1;
-	var result;
-	while (number++ < n && (result = re.exec(string)))
-	{
-		if (prevLastIndex == re.lastIndex) break;
-		var i = result.length - 1;
-		var subs = new Array(i);
-		while (i > 0)
-		{
-			var submatch = result[i];
-			subs[--i] = submatch
-				? $elm$core$Maybe$Just(submatch)
-				: $elm$core$Maybe$Nothing;
-		}
-		out.push(A4($elm$regex$Regex$Match, result[0], result.index, number, _List_fromArray(subs)));
-		prevLastIndex = re.lastIndex;
-	}
-	re.lastIndex = lastIndex;
-	return _List_fromArray(out);
-});
-
-
-var _Regex_replaceAtMost = F4(function(n, re, replacer, string)
-{
-	var count = 0;
-	function jsReplacer(match)
-	{
-		if (count++ >= n)
-		{
-			return match;
-		}
-		var i = arguments.length - 3;
-		var submatches = new Array(i);
-		while (i > 0)
-		{
-			var submatch = arguments[i];
-			submatches[--i] = submatch
-				? $elm$core$Maybe$Just(submatch)
-				: $elm$core$Maybe$Nothing;
-		}
-		return replacer(A4($elm$regex$Regex$Match, match, arguments[arguments.length - 2], count, _List_fromArray(submatches)));
-	}
-	return string.replace(re, jsReplacer);
-});
-
-var _Regex_splitAtMost = F3(function(n, re, str)
-{
-	var string = str;
-	var out = [];
-	var start = re.lastIndex;
-	var restoreLastIndex = re.lastIndex;
-	while (n--)
-	{
-		var result = re.exec(string);
-		if (!result) break;
-		out.push(string.slice(start, result.index));
-		start = re.lastIndex;
-	}
-	out.push(string.slice(start));
-	re.lastIndex = restoreLastIndex;
-	return _List_fromArray(out);
-});
-
-var _Regex_infinity = Infinity;
 
 
 function _Url_percentEncode(string)
@@ -4701,6 +4778,107 @@ function _Http_track(router, xhr, tracker)
 		}))));
 	});
 }
+
+// CREATE
+
+var _Regex_never = /.^/;
+
+var _Regex_fromStringWith = F2(function(options, string)
+{
+	var flags = 'g';
+	if (options.multiline) { flags += 'm'; }
+	if (options.caseInsensitive) { flags += 'i'; }
+
+	try
+	{
+		return $elm$core$Maybe$Just(new RegExp(string, flags));
+	}
+	catch(error)
+	{
+		return $elm$core$Maybe$Nothing;
+	}
+});
+
+
+// USE
+
+var _Regex_contains = F2(function(re, string)
+{
+	return string.match(re) !== null;
+});
+
+
+var _Regex_findAtMost = F3(function(n, re, str)
+{
+	var out = [];
+	var number = 0;
+	var string = str;
+	var lastIndex = re.lastIndex;
+	var prevLastIndex = -1;
+	var result;
+	while (number++ < n && (result = re.exec(string)))
+	{
+		if (prevLastIndex == re.lastIndex) break;
+		var i = result.length - 1;
+		var subs = new Array(i);
+		while (i > 0)
+		{
+			var submatch = result[i];
+			subs[--i] = submatch
+				? $elm$core$Maybe$Just(submatch)
+				: $elm$core$Maybe$Nothing;
+		}
+		out.push(A4($elm$regex$Regex$Match, result[0], result.index, number, _List_fromArray(subs)));
+		prevLastIndex = re.lastIndex;
+	}
+	re.lastIndex = lastIndex;
+	return _List_fromArray(out);
+});
+
+
+var _Regex_replaceAtMost = F4(function(n, re, replacer, string)
+{
+	var count = 0;
+	function jsReplacer(match)
+	{
+		if (count++ >= n)
+		{
+			return match;
+		}
+		var i = arguments.length - 3;
+		var submatches = new Array(i);
+		while (i > 0)
+		{
+			var submatch = arguments[i];
+			submatches[--i] = submatch
+				? $elm$core$Maybe$Just(submatch)
+				: $elm$core$Maybe$Nothing;
+		}
+		return replacer(A4($elm$regex$Regex$Match, match, arguments[arguments.length - 2], count, _List_fromArray(submatches)));
+	}
+	return string.replace(re, jsReplacer);
+});
+
+var _Regex_splitAtMost = F3(function(n, re, str)
+{
+	var string = str;
+	var out = [];
+	var start = re.lastIndex;
+	var restoreLastIndex = re.lastIndex;
+	while (n--)
+	{
+		var result = re.exec(string);
+		if (!result) break;
+		out.push(string.slice(start, result.index));
+		start = re.lastIndex;
+	}
+	out.push(string.slice(start));
+	re.lastIndex = restoreLastIndex;
+	return _List_fromArray(out);
+});
+
+var _Regex_infinity = Infinity;
+
 
 
 // DECODER
@@ -5779,220 +5957,54 @@ var $author$project$Profile$NotVerified = {$: 'NotVerified'};
 var $author$project$Profile$Verified = function (a) {
 	return {$: 'Verified', a: a};
 };
+var $simonh1000$elm_jwt$Jwt$TokenDecodeError = function (a) {
+	return {$: 'TokenDecodeError', a: a};
+};
 var $elm$core$Basics$composeR = F3(
 	function (f, g, x) {
 		return g(
 			f(x));
 	});
-var $truqu$elm_base64$Base64$Decode$pad = function (input) {
-	var _v0 = $elm$core$String$length(input) % 4;
+var $simonh1000$elm_jwt$Jwt$TokenHeaderError = {$: 'TokenHeaderError'};
+var $simonh1000$elm_jwt$Jwt$TokenProcessingError = function (a) {
+	return {$: 'TokenProcessingError', a: a};
+};
+var $elm$core$String$concat = function (strings) {
+	return A2($elm$core$String$join, '', strings);
+};
+var $elm$core$Basics$modBy = _Basics_modBy;
+var $simonh1000$elm_jwt$Jwt$fixlength = function (s) {
+	var _v0 = A2(
+		$elm$core$Basics$modBy,
+		4,
+		$elm$core$String$length(s));
 	switch (_v0) {
-		case 3:
-			return input + '=';
+		case 0:
+			return $elm$core$Result$Ok(s);
 		case 2:
-			return input + '==';
+			return $elm$core$Result$Ok(
+				$elm$core$String$concat(
+					_List_fromArray(
+						[s, '=='])));
+		case 3:
+			return $elm$core$Result$Ok(
+				$elm$core$String$concat(
+					_List_fromArray(
+						[s, '='])));
 		default:
-			return input;
+			return $elm$core$Result$Err(
+				$simonh1000$elm_jwt$Jwt$TokenProcessingError('Wrong length'));
 	}
 };
-var $truqu$elm_base64$Base64$Decode$charToInt = function (_char) {
-	switch (_char.valueOf()) {
-		case 'A':
-			return 0;
-		case 'B':
-			return 1;
-		case 'C':
-			return 2;
-		case 'D':
-			return 3;
-		case 'E':
-			return 4;
-		case 'F':
-			return 5;
-		case 'G':
-			return 6;
-		case 'H':
-			return 7;
-		case 'I':
-			return 8;
-		case 'J':
-			return 9;
-		case 'K':
-			return 10;
-		case 'L':
-			return 11;
-		case 'M':
-			return 12;
-		case 'N':
-			return 13;
-		case 'O':
-			return 14;
-		case 'P':
-			return 15;
-		case 'Q':
-			return 16;
-		case 'R':
-			return 17;
-		case 'S':
-			return 18;
-		case 'T':
-			return 19;
-		case 'U':
-			return 20;
-		case 'V':
-			return 21;
-		case 'W':
-			return 22;
-		case 'X':
-			return 23;
-		case 'Y':
-			return 24;
-		case 'Z':
-			return 25;
-		case 'a':
-			return 26;
-		case 'b':
-			return 27;
-		case 'c':
-			return 28;
-		case 'd':
-			return 29;
-		case 'e':
-			return 30;
-		case 'f':
-			return 31;
-		case 'g':
-			return 32;
-		case 'h':
-			return 33;
-		case 'i':
-			return 34;
-		case 'j':
-			return 35;
-		case 'k':
-			return 36;
-		case 'l':
-			return 37;
-		case 'm':
-			return 38;
-		case 'n':
-			return 39;
-		case 'o':
-			return 40;
-		case 'p':
-			return 41;
-		case 'q':
-			return 42;
-		case 'r':
-			return 43;
-		case 's':
-			return 44;
-		case 't':
-			return 45;
-		case 'u':
-			return 46;
-		case 'v':
-			return 47;
-		case 'w':
-			return 48;
-		case 'x':
-			return 49;
-		case 'y':
-			return 50;
-		case 'z':
-			return 51;
-		case '0':
-			return 52;
-		case '1':
-			return 53;
-		case '2':
-			return 54;
-		case '3':
-			return 55;
-		case '4':
-			return 56;
-		case '5':
-			return 57;
-		case '6':
-			return 58;
-		case '7':
-			return 59;
-		case '8':
-			return 60;
-		case '9':
-			return 61;
-		case '+':
-			return 62;
-		case '/':
-			return 63;
-		default:
-			return 0;
-	}
-};
-var $elm$core$Bitwise$or = _Bitwise_or;
-var $elm$core$Bitwise$shiftLeftBy = _Bitwise_shiftLeftBy;
-var $elm$core$Bitwise$and = _Bitwise_and;
-var $elm$core$String$cons = _String_cons;
-var $elm$core$String$fromChar = function (_char) {
-	return A2($elm$core$String$cons, _char, '');
-};
-var $elm$core$Char$fromCode = _Char_fromCode;
-var $truqu$elm_base64$Base64$Decode$intToString = A2($elm$core$Basics$composeR, $elm$core$Char$fromCode, $elm$core$String$fromChar);
-var $truqu$elm_base64$Base64$Decode$add = F2(
-	function (_char, _v0) {
-		var curr = _v0.a;
-		var need = _v0.b;
-		var res = _v0.c;
-		var shiftAndAdd = function (_int) {
-			return (63 & _int) | (curr << 6);
-		};
-		return (!need) ? ((!(128 & _char)) ? _Utils_Tuple3(
-			0,
-			0,
-			_Utils_ap(
-				res,
-				$truqu$elm_base64$Base64$Decode$intToString(_char))) : (((224 & _char) === 192) ? _Utils_Tuple3(31 & _char, 1, res) : (((240 & _char) === 224) ? _Utils_Tuple3(15 & _char, 2, res) : _Utils_Tuple3(7 & _char, 3, res)))) : ((need === 1) ? _Utils_Tuple3(
-			0,
-			0,
-			_Utils_ap(
-				res,
-				$truqu$elm_base64$Base64$Decode$intToString(
-					shiftAndAdd(_char)))) : _Utils_Tuple3(
-			shiftAndAdd(_char),
-			need - 1,
-			res));
-	});
-var $elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
-var $truqu$elm_base64$Base64$Decode$toUTF16 = F2(
-	function (_char, acc) {
-		return _Utils_Tuple3(
-			0,
-			0,
-			A2(
-				$truqu$elm_base64$Base64$Decode$add,
-				255 & (_char >>> 0),
-				A2(
-					$truqu$elm_base64$Base64$Decode$add,
-					255 & (_char >>> 8),
-					A2($truqu$elm_base64$Base64$Decode$add, 255 & (_char >>> 16), acc))));
-	});
-var $truqu$elm_base64$Base64$Decode$chomp = F2(
-	function (char_, _v0) {
-		var curr = _v0.a;
-		var cnt = _v0.b;
-		var utf8ToUtf16 = _v0.c;
-		var _char = $truqu$elm_base64$Base64$Decode$charToInt(char_);
-		if (cnt === 3) {
-			return A2($truqu$elm_base64$Base64$Decode$toUTF16, curr | _char, utf8ToUtf16);
+var $elm$core$Result$fromMaybe = F2(
+	function (err, maybe) {
+		if (maybe.$ === 'Just') {
+			var v = maybe.a;
+			return $elm$core$Result$Ok(v);
 		} else {
-			return _Utils_Tuple3((_char << ((3 - cnt) * 6)) | curr, cnt + 1, utf8ToUtf16);
+			return $elm$core$Result$Err(err);
 		}
 	});
-var $elm$core$String$foldl = _String_foldl;
-var $truqu$elm_base64$Base64$Decode$initial = _Utils_Tuple3(
-	0,
-	0,
-	_Utils_Tuple3(0, 0, ''));
 var $elm$core$Result$map = F2(
 	function (func, ra) {
 		if (ra.$ === 'Ok') {
@@ -6004,167 +6016,528 @@ var $elm$core$Result$map = F2(
 			return $elm$core$Result$Err(e);
 		}
 	});
+var $elm$core$Result$map2 = F3(
+	function (func, ra, rb) {
+		if (ra.$ === 'Err') {
+			var x = ra.a;
+			return $elm$core$Result$Err(x);
+		} else {
+			var a = ra.a;
+			if (rb.$ === 'Err') {
+				var x = rb.a;
+				return $elm$core$Result$Err(x);
+			} else {
+				var b = rb.a;
+				return $elm$core$Result$Ok(
+					A2(func, a, b));
+			}
+		}
+	});
+var $elm$core$Result$mapError = F2(
+	function (f, result) {
+		if (result.$ === 'Ok') {
+			var v = result.a;
+			return $elm$core$Result$Ok(v);
+		} else {
+			var e = result.a;
+			return $elm$core$Result$Err(
+				f(e));
+		}
+	});
+var $elm$bytes$Bytes$Encode$getWidth = function (builder) {
+	switch (builder.$) {
+		case 'I8':
+			return 1;
+		case 'I16':
+			return 2;
+		case 'I32':
+			return 4;
+		case 'U8':
+			return 1;
+		case 'U16':
+			return 2;
+		case 'U32':
+			return 4;
+		case 'F32':
+			return 4;
+		case 'F64':
+			return 8;
+		case 'Seq':
+			var w = builder.a;
+			return w;
+		case 'Utf8':
+			var w = builder.a;
+			return w;
+		default:
+			var bs = builder.a;
+			return _Bytes_width(bs);
+	}
+};
+var $elm$bytes$Bytes$LE = {$: 'LE'};
+var $elm$bytes$Bytes$Encode$write = F3(
+	function (builder, mb, offset) {
+		switch (builder.$) {
+			case 'I8':
+				var n = builder.a;
+				return A3(_Bytes_write_i8, mb, offset, n);
+			case 'I16':
+				var e = builder.a;
+				var n = builder.b;
+				return A4(
+					_Bytes_write_i16,
+					mb,
+					offset,
+					n,
+					_Utils_eq(e, $elm$bytes$Bytes$LE));
+			case 'I32':
+				var e = builder.a;
+				var n = builder.b;
+				return A4(
+					_Bytes_write_i32,
+					mb,
+					offset,
+					n,
+					_Utils_eq(e, $elm$bytes$Bytes$LE));
+			case 'U8':
+				var n = builder.a;
+				return A3(_Bytes_write_u8, mb, offset, n);
+			case 'U16':
+				var e = builder.a;
+				var n = builder.b;
+				return A4(
+					_Bytes_write_u16,
+					mb,
+					offset,
+					n,
+					_Utils_eq(e, $elm$bytes$Bytes$LE));
+			case 'U32':
+				var e = builder.a;
+				var n = builder.b;
+				return A4(
+					_Bytes_write_u32,
+					mb,
+					offset,
+					n,
+					_Utils_eq(e, $elm$bytes$Bytes$LE));
+			case 'F32':
+				var e = builder.a;
+				var n = builder.b;
+				return A4(
+					_Bytes_write_f32,
+					mb,
+					offset,
+					n,
+					_Utils_eq(e, $elm$bytes$Bytes$LE));
+			case 'F64':
+				var e = builder.a;
+				var n = builder.b;
+				return A4(
+					_Bytes_write_f64,
+					mb,
+					offset,
+					n,
+					_Utils_eq(e, $elm$bytes$Bytes$LE));
+			case 'Seq':
+				var bs = builder.b;
+				return A3($elm$bytes$Bytes$Encode$writeSequence, bs, mb, offset);
+			case 'Utf8':
+				var s = builder.b;
+				return A3(_Bytes_write_string, mb, offset, s);
+			default:
+				var bs = builder.a;
+				return A3(_Bytes_write_bytes, mb, offset, bs);
+		}
+	});
+var $elm$bytes$Bytes$Encode$writeSequence = F3(
+	function (builders, mb, offset) {
+		writeSequence:
+		while (true) {
+			if (!builders.b) {
+				return offset;
+			} else {
+				var b = builders.a;
+				var bs = builders.b;
+				var $temp$builders = bs,
+					$temp$mb = mb,
+					$temp$offset = A3($elm$bytes$Bytes$Encode$write, b, mb, offset);
+				builders = $temp$builders;
+				mb = $temp$mb;
+				offset = $temp$offset;
+				continue writeSequence;
+			}
+		}
+	});
+var $elm$bytes$Bytes$Decode$decode = F2(
+	function (_v0, bs) {
+		var decoder = _v0.a;
+		return A2(_Bytes_decode, decoder, bs);
+	});
+var $elm$bytes$Bytes$Decode$Decoder = function (a) {
+	return {$: 'Decoder', a: a};
+};
+var $elm$bytes$Bytes$Decode$string = function (n) {
+	return $elm$bytes$Bytes$Decode$Decoder(
+		_Bytes_read_string(n));
+};
+var $elm$bytes$Bytes$Encode$encode = _Bytes_encode;
+var $elm$bytes$Bytes$BE = {$: 'BE'};
+var $danfishgold$base64_bytes$Encode$isValidChar = function (c) {
+	if ($elm$core$Char$isAlphaNum(c)) {
+		return true;
+	} else {
+		switch (c.valueOf()) {
+			case '+':
+				return true;
+			case '/':
+				return true;
+			default:
+				return false;
+		}
+	}
+};
+var $elm$core$Bitwise$or = _Bitwise_or;
+var $elm$bytes$Bytes$Encode$Seq = F2(
+	function (a, b) {
+		return {$: 'Seq', a: a, b: b};
+	});
+var $elm$bytes$Bytes$Encode$getWidths = F2(
+	function (width, builders) {
+		getWidths:
+		while (true) {
+			if (!builders.b) {
+				return width;
+			} else {
+				var b = builders.a;
+				var bs = builders.b;
+				var $temp$width = width + $elm$bytes$Bytes$Encode$getWidth(b),
+					$temp$builders = bs;
+				width = $temp$width;
+				builders = $temp$builders;
+				continue getWidths;
+			}
+		}
+	});
+var $elm$bytes$Bytes$Encode$sequence = function (builders) {
+	return A2(
+		$elm$bytes$Bytes$Encode$Seq,
+		A2($elm$bytes$Bytes$Encode$getWidths, 0, builders),
+		builders);
+};
+var $elm$core$Bitwise$shiftLeftBy = _Bitwise_shiftLeftBy;
+var $elm$core$Bitwise$shiftRightBy = _Bitwise_shiftRightBy;
+var $elm$core$Basics$ge = _Utils_ge;
 var $elm$core$Basics$negate = function (n) {
 	return -n;
 };
-var $elm$core$String$dropRight = F2(
-	function (n, string) {
-		return (n < 1) ? string : A3($elm$core$String$slice, 0, -n, string);
-	});
-var $elm$core$String$endsWith = _String_endsWith;
-var $truqu$elm_base64$Base64$Decode$stripNulls = F2(
-	function (input, output) {
-		return A2($elm$core$String$endsWith, '==', input) ? A2($elm$core$String$dropRight, 2, output) : (A2($elm$core$String$endsWith, '=', input) ? A2($elm$core$String$dropRight, 1, output) : output);
-	});
-var $elm$regex$Regex$Match = F4(
-	function (match, index, number, submatches) {
-		return {index: index, match: match, number: number, submatches: submatches};
-	});
-var $elm$regex$Regex$contains = _Regex_contains;
-var $elm$regex$Regex$fromStringWith = _Regex_fromStringWith;
-var $elm$regex$Regex$fromString = function (string) {
-	return A2(
-		$elm$regex$Regex$fromStringWith,
-		{caseInsensitive: false, multiline: false},
-		string);
-};
-var $elm$regex$Regex$never = _Regex_never;
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
+var $danfishgold$base64_bytes$Encode$unsafeConvertChar = function (_char) {
+	var key = $elm$core$Char$toCode(_char);
+	if ((key >= 65) && (key <= 90)) {
+		return key - 65;
+	} else {
+		if ((key >= 97) && (key <= 122)) {
+			return (key - 97) + 26;
 		} else {
-			return _default;
+			if ((key >= 48) && (key <= 57)) {
+				return ((key - 48) + 26) + 26;
+			} else {
+				switch (_char.valueOf()) {
+					case '+':
+						return 62;
+					case '/':
+						return 63;
+					default:
+						return -1;
+				}
+			}
+		}
+	}
+};
+var $elm$bytes$Bytes$Encode$U16 = F2(
+	function (a, b) {
+		return {$: 'U16', a: a, b: b};
+	});
+var $elm$bytes$Bytes$Encode$unsignedInt16 = $elm$bytes$Bytes$Encode$U16;
+var $elm$bytes$Bytes$Encode$U8 = function (a) {
+	return {$: 'U8', a: a};
+};
+var $elm$bytes$Bytes$Encode$unsignedInt8 = $elm$bytes$Bytes$Encode$U8;
+var $danfishgold$base64_bytes$Encode$encodeCharacters = F4(
+	function (a, b, c, d) {
+		if ($danfishgold$base64_bytes$Encode$isValidChar(a) && $danfishgold$base64_bytes$Encode$isValidChar(b)) {
+			var n2 = $danfishgold$base64_bytes$Encode$unsafeConvertChar(b);
+			var n1 = $danfishgold$base64_bytes$Encode$unsafeConvertChar(a);
+			if ('=' === d.valueOf()) {
+				if ('=' === c.valueOf()) {
+					var n = (n1 << 18) | (n2 << 12);
+					var b1 = n >> 16;
+					return $elm$core$Maybe$Just(
+						$elm$bytes$Bytes$Encode$unsignedInt8(b1));
+				} else {
+					if ($danfishgold$base64_bytes$Encode$isValidChar(c)) {
+						var n3 = $danfishgold$base64_bytes$Encode$unsafeConvertChar(c);
+						var n = ((n1 << 18) | (n2 << 12)) | (n3 << 6);
+						var combined = n >> 8;
+						return $elm$core$Maybe$Just(
+							A2($elm$bytes$Bytes$Encode$unsignedInt16, $elm$bytes$Bytes$BE, combined));
+					} else {
+						return $elm$core$Maybe$Nothing;
+					}
+				}
+			} else {
+				if ($danfishgold$base64_bytes$Encode$isValidChar(c) && $danfishgold$base64_bytes$Encode$isValidChar(d)) {
+					var n4 = $danfishgold$base64_bytes$Encode$unsafeConvertChar(d);
+					var n3 = $danfishgold$base64_bytes$Encode$unsafeConvertChar(c);
+					var n = ((n1 << 18) | (n2 << 12)) | ((n3 << 6) | n4);
+					var combined = n >> 8;
+					var b3 = n;
+					return $elm$core$Maybe$Just(
+						$elm$bytes$Bytes$Encode$sequence(
+							_List_fromArray(
+								[
+									A2($elm$bytes$Bytes$Encode$unsignedInt16, $elm$bytes$Bytes$BE, combined),
+									$elm$bytes$Bytes$Encode$unsignedInt8(b3)
+								])));
+				} else {
+					return $elm$core$Maybe$Nothing;
+				}
+			}
+		} else {
+			return $elm$core$Maybe$Nothing;
 		}
 	});
-var $truqu$elm_base64$Base64$Decode$validBase64Regex = A2(
-	$elm$core$Maybe$withDefault,
-	$elm$regex$Regex$never,
-	$elm$regex$Regex$fromString('^([A-Za-z0-9\\/+]{4})*([A-Za-z0-9\\/+]{2}[A-Za-z0-9\\/+=]{2})?$'));
-var $truqu$elm_base64$Base64$Decode$validate = function (input) {
-	return A2($elm$regex$Regex$contains, $truqu$elm_base64$Base64$Decode$validBase64Regex, input) ? $elm$core$Result$Ok(input) : $elm$core$Result$Err('Invalid base64');
+var $elm$core$String$foldr = _String_foldr;
+var $elm$core$String$toList = function (string) {
+	return A3($elm$core$String$foldr, $elm$core$List$cons, _List_Nil, string);
 };
-var $truqu$elm_base64$Base64$Decode$wrapUp = function (_v0) {
-	var _v1 = _v0.c;
-	var need = _v1.b;
-	var res = _v1.c;
-	return (need > 0) ? $elm$core$Result$Err('Invalid UTF-16') : $elm$core$Result$Ok(res);
-};
-var $truqu$elm_base64$Base64$Decode$validateAndDecode = function (input) {
+var $danfishgold$base64_bytes$Encode$encodeChunks = F2(
+	function (input, accum) {
+		encodeChunks:
+		while (true) {
+			var _v0 = $elm$core$String$toList(
+				A2($elm$core$String$left, 4, input));
+			_v0$4:
+			while (true) {
+				if (!_v0.b) {
+					return $elm$core$Maybe$Just(accum);
+				} else {
+					if (_v0.b.b) {
+						if (_v0.b.b.b) {
+							if (_v0.b.b.b.b) {
+								if (!_v0.b.b.b.b.b) {
+									var a = _v0.a;
+									var _v1 = _v0.b;
+									var b = _v1.a;
+									var _v2 = _v1.b;
+									var c = _v2.a;
+									var _v3 = _v2.b;
+									var d = _v3.a;
+									var _v4 = A4($danfishgold$base64_bytes$Encode$encodeCharacters, a, b, c, d);
+									if (_v4.$ === 'Just') {
+										var enc = _v4.a;
+										var $temp$input = A2($elm$core$String$dropLeft, 4, input),
+											$temp$accum = A2($elm$core$List$cons, enc, accum);
+										input = $temp$input;
+										accum = $temp$accum;
+										continue encodeChunks;
+									} else {
+										return $elm$core$Maybe$Nothing;
+									}
+								} else {
+									break _v0$4;
+								}
+							} else {
+								var a = _v0.a;
+								var _v5 = _v0.b;
+								var b = _v5.a;
+								var _v6 = _v5.b;
+								var c = _v6.a;
+								var _v7 = A4(
+									$danfishgold$base64_bytes$Encode$encodeCharacters,
+									a,
+									b,
+									c,
+									_Utils_chr('='));
+								if (_v7.$ === 'Nothing') {
+									return $elm$core$Maybe$Nothing;
+								} else {
+									var enc = _v7.a;
+									return $elm$core$Maybe$Just(
+										A2($elm$core$List$cons, enc, accum));
+								}
+							}
+						} else {
+							var a = _v0.a;
+							var _v8 = _v0.b;
+							var b = _v8.a;
+							var _v9 = A4(
+								$danfishgold$base64_bytes$Encode$encodeCharacters,
+								a,
+								b,
+								_Utils_chr('='),
+								_Utils_chr('='));
+							if (_v9.$ === 'Nothing') {
+								return $elm$core$Maybe$Nothing;
+							} else {
+								var enc = _v9.a;
+								return $elm$core$Maybe$Just(
+									A2($elm$core$List$cons, enc, accum));
+							}
+						}
+					} else {
+						break _v0$4;
+					}
+				}
+			}
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $danfishgold$base64_bytes$Encode$encoder = function (string) {
 	return A2(
-		$elm$core$Result$map,
-		$truqu$elm_base64$Base64$Decode$stripNulls(input),
+		$elm$core$Maybe$map,
+		A2($elm$core$Basics$composeR, $elm$core$List$reverse, $elm$bytes$Bytes$Encode$sequence),
+		A2($danfishgold$base64_bytes$Encode$encodeChunks, string, _List_Nil));
+};
+var $danfishgold$base64_bytes$Encode$toBytes = function (string) {
+	return A2(
+		$elm$core$Maybe$map,
+		$elm$bytes$Bytes$Encode$encode,
+		$danfishgold$base64_bytes$Encode$encoder(string));
+};
+var $danfishgold$base64_bytes$Base64$toBytes = $danfishgold$base64_bytes$Encode$toBytes;
+var $elm$bytes$Bytes$width = _Bytes_width;
+var $danfishgold$base64_bytes$Base64$toString = function (b64String) {
+	var _v0 = $danfishgold$base64_bytes$Base64$toBytes(b64String);
+	if (_v0.$ === 'Nothing') {
+		return $elm$core$Maybe$Nothing;
+	} else {
+		var b64Bytes = _v0.a;
+		return A2(
+			$elm$bytes$Bytes$Decode$decode,
+			$elm$bytes$Bytes$Decode$string(
+				$elm$bytes$Bytes$width(b64Bytes)),
+			b64Bytes);
+	}
+};
+var $elm$core$String$map = _String_map;
+var $simonh1000$elm_jwt$Jwt$unurl = function () {
+	var fix = function (c) {
+		switch (c.valueOf()) {
+			case '-':
+				return _Utils_chr('+');
+			case '_':
+				return _Utils_chr('/');
+			default:
+				return c;
+		}
+	};
+	return $elm$core$String$map(fix);
+}();
+var $elm$json$Json$Decode$value = _Json_decodeValue;
+var $simonh1000$elm_jwt$Jwt$getTokenParts = function (token) {
+	var verifyJson = F2(
+		function (errorHandler, str) {
+			return A2(
+				$elm$core$Result$mapError,
+				errorHandler,
+				A2(
+					$elm$core$Result$map,
+					function (_v8) {
+						return str;
+					},
+					A2($elm$json$Json$Decode$decodeString, $elm$json$Json$Decode$value, str)));
+		});
+	var processor = A2(
+		$elm$core$Basics$composeR,
+		$simonh1000$elm_jwt$Jwt$unurl,
 		A2(
+			$elm$core$Basics$composeR,
+			$elm$core$String$split('.'),
+			$elm$core$List$map($simonh1000$elm_jwt$Jwt$fixlength)));
+	var _v0 = processor(token);
+	_v0$1:
+	while (true) {
+		if (((_v0.b && _v0.b.b) && _v0.b.b.b) && (!_v0.b.b.b.b)) {
+			if (_v0.a.$ === 'Ok') {
+				if (_v0.b.a.$ === 'Ok') {
+					var header = _v0.a.a;
+					var _v1 = _v0.b;
+					var body = _v1.a.a;
+					var _v2 = _v1.b;
+					var header_ = A2(
+						$elm$core$Result$andThen,
+						verifyJson(
+							function (_v3) {
+								return $simonh1000$elm_jwt$Jwt$TokenHeaderError;
+							}),
+						A2(
+							$elm$core$Result$fromMaybe,
+							$simonh1000$elm_jwt$Jwt$TokenHeaderError,
+							$danfishgold$base64_bytes$Base64$toString(header)));
+					var body_ = A2(
+						$elm$core$Result$andThen,
+						verifyJson($simonh1000$elm_jwt$Jwt$TokenDecodeError),
+						A2(
+							$elm$core$Result$fromMaybe,
+							$simonh1000$elm_jwt$Jwt$TokenProcessingError('Invalid UTF-16'),
+							$danfishgold$base64_bytes$Base64$toString(body)));
+					return A3(
+						$elm$core$Result$map2,
+						F2(
+							function (a, b) {
+								return _Utils_Tuple2(a, b);
+							}),
+						header_,
+						body_);
+				} else {
+					break _v0$1;
+				}
+			} else {
+				if (_v0.b.a.$ === 'Err') {
+					break _v0$1;
+				} else {
+					var err = _v0.a.a;
+					var _v6 = _v0.b;
+					var _v7 = _v6.b;
+					return $elm$core$Result$Err(err);
+				}
+			}
+		} else {
+			return $elm$core$Result$Err(
+				$simonh1000$elm_jwt$Jwt$TokenProcessingError('Token has invalid shape'));
+		}
+	}
+	var _v4 = _v0.b;
+	var err = _v4.a.a;
+	var _v5 = _v4.b;
+	return $elm$core$Result$Err(err);
+};
+var $elm$core$Tuple$second = function (_v0) {
+	var y = _v0.b;
+	return y;
+};
+var $simonh1000$elm_jwt$Jwt$decodeToken = F2(
+	function (dec, token) {
+		return A2(
 			$elm$core$Result$andThen,
 			A2(
 				$elm$core$Basics$composeR,
-				A2($elm$core$String$foldl, $truqu$elm_base64$Base64$Decode$chomp, $truqu$elm_base64$Base64$Decode$initial),
-				$truqu$elm_base64$Base64$Decode$wrapUp),
-			$truqu$elm_base64$Base64$Decode$validate(input)));
-};
-var $truqu$elm_base64$Base64$Decode$decode = A2($elm$core$Basics$composeR, $truqu$elm_base64$Base64$Decode$pad, $truqu$elm_base64$Base64$Decode$validateAndDecode);
-var $truqu$elm_base64$Base64$decode = $truqu$elm_base64$Base64$Decode$decode;
-var $elm$core$Array$fromListHelp = F3(
-	function (list, nodeList, nodeListSize) {
-		fromListHelp:
-		while (true) {
-			var _v0 = A2($elm$core$Elm$JsArray$initializeFromList, $elm$core$Array$branchFactor, list);
-			var jsArray = _v0.a;
-			var remainingItems = _v0.b;
-			if (_Utils_cmp(
-				$elm$core$Elm$JsArray$length(jsArray),
-				$elm$core$Array$branchFactor) < 0) {
-				return A2(
-					$elm$core$Array$builderToArray,
-					true,
-					{nodeList: nodeList, nodeListSize: nodeListSize, tail: jsArray});
-			} else {
-				var $temp$list = remainingItems,
-					$temp$nodeList = A2(
-					$elm$core$List$cons,
-					$elm$core$Array$Leaf(jsArray),
-					nodeList),
-					$temp$nodeListSize = nodeListSize + 1;
-				list = $temp$list;
-				nodeList = $temp$nodeList;
-				nodeListSize = $temp$nodeListSize;
-				continue fromListHelp;
-			}
-		}
+				$elm$json$Json$Decode$decodeString(dec),
+				$elm$core$Result$mapError($simonh1000$elm_jwt$Jwt$TokenDecodeError)),
+			A2(
+				$elm$core$Result$map,
+				$elm$core$Tuple$second,
+				$simonh1000$elm_jwt$Jwt$getTokenParts(token)));
 	});
-var $elm$core$Array$fromList = function (list) {
-	if (!list.b) {
-		return $elm$core$Array$empty;
-	} else {
-		return A3($elm$core$Array$fromListHelp, list, _List_Nil, 0);
-	}
-};
-var $author$project$Credentials$fromSessionToToken = function (session) {
-	if (session.$ === 'LoggedIn') {
-		var token = session.a;
-		return $elm$core$Maybe$Just(token);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
-var $author$project$Credentials$fromTokenToString = function (_v0) {
-	var string = _v0.a;
-	return string;
-};
-var $elm$core$Array$bitMask = 4294967295 >>> (32 - $elm$core$Array$shiftStep);
-var $elm$core$Basics$ge = _Utils_ge;
-var $elm$core$Elm$JsArray$unsafeGet = _JsArray_unsafeGet;
-var $elm$core$Array$getHelp = F3(
-	function (shift, index, tree) {
-		getHelp:
-		while (true) {
-			var pos = $elm$core$Array$bitMask & (index >>> shift);
-			var _v0 = A2($elm$core$Elm$JsArray$unsafeGet, pos, tree);
-			if (_v0.$ === 'SubTree') {
-				var subTree = _v0.a;
-				var $temp$shift = shift - $elm$core$Array$shiftStep,
-					$temp$index = index,
-					$temp$tree = subTree;
-				shift = $temp$shift;
-				index = $temp$index;
-				tree = $temp$tree;
-				continue getHelp;
-			} else {
-				var values = _v0.a;
-				return A2($elm$core$Elm$JsArray$unsafeGet, $elm$core$Array$bitMask & index, values);
-			}
-		}
-	});
-var $elm$core$Array$tailIndex = function (len) {
-	return (len >>> 5) << 5;
-};
-var $elm$core$Array$get = F2(
-	function (index, _v0) {
-		var len = _v0.a;
-		var startShift = _v0.b;
-		var tree = _v0.c;
-		var tail = _v0.d;
-		return ((index < 0) || (_Utils_cmp(index, len) > -1)) ? $elm$core$Maybe$Nothing : ((_Utils_cmp(
-			index,
-			$elm$core$Array$tailIndex(len)) > -1) ? $elm$core$Maybe$Just(
-			A2($elm$core$Elm$JsArray$unsafeGet, $elm$core$Array$bitMask & index, tail)) : $elm$core$Maybe$Just(
-			A3($elm$core$Array$getHelp, startShift, index, tree)));
-	});
-var $author$project$Credentials$UserId = function (a) {
-	return {$: 'UserId', a: a};
-};
-var $author$project$Credentials$emptyUserId = $author$project$Credentials$UserId('');
-var $author$project$Credentials$VerificationString = function (a) {
-	return {$: 'VerificationString', a: a};
-};
-var $author$project$Credentials$emptyVerificationString = $author$project$Credentials$VerificationString('');
-var $author$project$Profile$initialModel = {
-	errors: _List_Nil,
-	imageFile: '',
-	profile: {email: '', firstname: '', id: $author$project$Credentials$emptyUserId, isverified: false, profilepicurl: '', verificationstring: $author$project$Credentials$emptyVerificationString},
-	userState: $author$project$Profile$NotVerified
-};
 var $author$project$Credentials$UnwrappedTokenData = F6(
 	function (id, isverified, email, firstname, verificationstring, profilepicurl) {
 		return {email: email, firstname: firstname, id: id, isverified: isverified, profilepicurl: profilepicurl, verificationstring: verificationstring};
@@ -6174,8 +6547,32 @@ var $elm$json$Json$Decode$at = F2(
 		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
 	});
 var $elm$json$Json$Decode$bool = _Json_decodeBool;
+var $author$project$Credentials$UserId = function (a) {
+	return {$: 'UserId', a: a};
+};
 var $author$project$Credentials$idDecoder = A2($elm$json$Json$Decode$map, $author$project$Credentials$UserId, $elm$json$Json$Decode$string);
+var $author$project$Credentials$ImageString = function (a) {
+	return {$: 'ImageString', a: a};
+};
+var $elm$json$Json$Decode$oneOf = _Json_oneOf;
+var $elm$json$Json$Decode$maybe = function (decoder) {
+	return $elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder),
+				$elm$json$Json$Decode$succeed($elm$core$Maybe$Nothing)
+			]));
+};
+var $author$project$Credentials$imageStringDecoder = A2(
+	$elm$json$Json$Decode$map,
+	function (maybeImageString) {
+		return $author$project$Credentials$ImageString(maybeImageString);
+	},
+	$elm$json$Json$Decode$maybe($elm$json$Json$Decode$string));
 var $elm$json$Json$Decode$map6 = _Json_map6;
+var $author$project$Credentials$VerificationString = function (a) {
+	return {$: 'VerificationString', a: a};
+};
 var $author$project$Credentials$verifyStringDecoder = A2($elm$json$Json$Decode$map, $author$project$Credentials$VerificationString, $elm$json$Json$Decode$string);
 var $author$project$Credentials$decodeTokenData = A7(
 	$elm$json$Json$Decode$map6,
@@ -6209,48 +6606,46 @@ var $author$project$Credentials$decodeTokenData = A7(
 		$elm$json$Json$Decode$at,
 		_List_fromArray(
 			['profilepicurl']),
-		$elm$json$Json$Decode$string));
-var $author$project$Credentials$unfoldProfileFromToken = function (_v0) {
-	var tokenData = _v0.a;
-	return $author$project$Credentials$decodeTokenData;
+		$author$project$Credentials$imageStringDecoder));
+var $author$project$Credentials$fromSessionToToken = function (session) {
+	if (session.$ === 'LoggedIn') {
+		var token = session.a;
+		return $elm$core$Maybe$Just(token);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Credentials$fromTokenToString = function (_v0) {
+	var string = _v0.a;
+	return string;
+};
+var $author$project$Credentials$emptyImageString = $author$project$Credentials$ImageString($elm$core$Maybe$Nothing);
+var $author$project$Credentials$emptyUserId = $author$project$Credentials$UserId('');
+var $author$project$Credentials$emptyVerificationString = $author$project$Credentials$VerificationString('');
+var $author$project$Profile$initialModel = {
+	errors: _List_Nil,
+	imageFile: $author$project$Credentials$emptyImageString,
+	profile: {email: '', firstname: '', id: $author$project$Credentials$emptyUserId, isverified: false, profilepicurl: $author$project$Credentials$emptyImageString, verificationstring: $author$project$Credentials$emptyVerificationString},
+	userState: $author$project$Profile$NotVerified
 };
 var $author$project$Profile$init = function (session) {
 	var _v0 = $author$project$Credentials$fromSessionToToken(session);
 	if (_v0.$ === 'Just') {
 		var token = _v0.a;
-		var tokenString = $author$project$Credentials$fromTokenToString(token);
-		var profileFromToken = $author$project$Credentials$unfoldProfileFromToken(token);
-		var profile = A2($elm$core$String$split, '.', tokenString);
-		var maybeTokenData = A2(
-			$elm$core$Array$get,
-			1,
-			$elm$core$Array$fromList(profile));
-		if (maybeTokenData.$ === 'Just') {
-			var tokenData = maybeTokenData.a;
-			var resultTokenData = $truqu$elm_base64$Base64$decode(tokenData);
-			if (resultTokenData.$ === 'Err') {
-				return _Utils_Tuple2(
-					_Utils_update(
-						$author$project$Profile$initialModel,
-						{userState: $author$project$Profile$Intruder}),
-					$elm$core$Platform$Cmd$none);
-			} else {
-				var encodedRecord = resultTokenData.a;
-				var _v3 = A2($elm$json$Json$Decode$decodeString, profileFromToken, encodedRecord);
-				if (_v3.$ === 'Ok') {
-					var profileData = _v3.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							$author$project$Profile$initialModel,
-							{
-								profile: profileData,
-								userState: profileData.isverified ? $author$project$Profile$Verified(session) : $author$project$Profile$NotVerified
-							}),
-						$elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2($author$project$Profile$initialModel, $elm$core$Platform$Cmd$none);
-				}
-			}
+		var _v1 = A2(
+			$simonh1000$elm_jwt$Jwt$decodeToken,
+			$author$project$Credentials$decodeTokenData,
+			$author$project$Credentials$fromTokenToString(token));
+		if (_v1.$ === 'Ok') {
+			var profileData = _v1.a;
+			return _Utils_Tuple2(
+				_Utils_update(
+					$author$project$Profile$initialModel,
+					{
+						profile: profileData,
+						userState: profileData.isverified ? $author$project$Profile$Verified(session) : $author$project$Profile$NotVerified
+					}),
+				$elm$core$Platform$Cmd$none);
 		} else {
 			return _Utils_Tuple2(
 				_Utils_update(
@@ -6302,40 +6697,21 @@ var $author$project$Verification$init = F2(
 		var _v0 = $author$project$Credentials$fromSessionToToken(session);
 		if (_v0.$ === 'Just') {
 			var token = _v0.a;
-			var tokenString = $author$project$Credentials$fromTokenToString(token);
-			var profileFromToken = $author$project$Credentials$unfoldProfileFromToken(token);
-			var profile = A2($elm$core$String$split, '.', tokenString);
-			var maybeTokenData = A2(
-				$elm$core$Array$get,
-				1,
-				$elm$core$Array$fromList(profile));
-			if (maybeTokenData.$ === 'Just') {
-				var tokenData = maybeTokenData.a;
-				var decodedTokenData = $truqu$elm_base64$Base64$decode(tokenData);
-				if (decodedTokenData.$ === 'Err') {
-					return _Utils_Tuple2(
-						{userState: $author$project$Verification$Sessionless},
-						$elm$core$Platform$Cmd$none);
-				} else {
-					var encodedRecord = decodedTokenData.a;
-					var _v3 = A2($elm$json$Json$Decode$decodeString, profileFromToken, encodedRecord);
-					if (_v3.$ === 'Ok') {
-						var resultTokenRecord = _v3.a;
-						return (!_Utils_eq(
-							verificationParam,
-							'/verify-email/' + $author$project$Credentials$verificationToString(resultTokenRecord.verificationstring))) ? _Utils_Tuple2(
-							{userState: $author$project$Verification$VerificationFail},
-							$elm$core$Platform$Cmd$none) : ((!resultTokenRecord.isverified) ? _Utils_Tuple2(
-							{userState: $author$project$Verification$VerificationPending},
-							A2($author$project$Verification$apiCallAfterSomeTime, session, $author$project$Verification$VerifyApiCallStart)) : _Utils_Tuple2(
-							{userState: $author$project$Verification$Verified},
-							$elm$core$Platform$Cmd$none));
-					} else {
-						return _Utils_Tuple2(
-							{userState: $author$project$Verification$Sessionless},
-							$elm$core$Platform$Cmd$none);
-					}
-				}
+			var _v1 = A2(
+				$simonh1000$elm_jwt$Jwt$decodeToken,
+				$author$project$Credentials$decodeTokenData,
+				$author$project$Credentials$fromTokenToString(token));
+			if (_v1.$ === 'Ok') {
+				var resultTokenRecord = _v1.a;
+				return (!_Utils_eq(
+					verificationParam,
+					'/verify-email/' + $author$project$Credentials$verificationToString(resultTokenRecord.verificationstring))) ? _Utils_Tuple2(
+					{userState: $author$project$Verification$VerificationFail},
+					$elm$core$Platform$Cmd$none) : ((!resultTokenRecord.isverified) ? _Utils_Tuple2(
+					{userState: $author$project$Verification$VerificationPending},
+					A2($author$project$Verification$apiCallAfterSomeTime, session, $author$project$Verification$VerifyApiCallStart)) : _Utils_Tuple2(
+					{userState: $author$project$Verification$Verified},
+					$elm$core$Platform$Cmd$none));
 			} else {
 				return _Utils_Tuple2(
 					{userState: $author$project$Verification$Sessionless},
@@ -6568,16 +6944,6 @@ var $elm$url$Url$Parser$custom = F2(
 					}
 				}
 			});
-	});
-var $elm$core$Maybe$map = F2(
-	function (f, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return $elm$core$Maybe$Just(
-				f(value));
-		} else {
-			return $elm$core$Maybe$Nothing;
-		}
 	});
 var $author$project$Credentials$userIdParser = A2(
 	$elm$url$Url$Parser$custom,
@@ -7300,7 +7666,6 @@ var $author$project$Main$init = F3(
 var $author$project$Main$GotSubscriptionChangeMsg = function (a) {
 	return {$: 'GotSubscriptionChangeMsg', a: a};
 };
-var $elm$json$Json$Decode$value = _Json_decodeValue;
 var $author$project$Credentials$onSessionChange = _Platform_incomingPort('onSessionChange', $elm$json$Json$Decode$value);
 var $author$project$Credentials$subscriptionChanges = F2(
 	function (toMsg, key) {
@@ -7479,17 +7844,6 @@ var $elm$http$Http$expectStringResponse = F2(
 			'',
 			$elm$core$Basics$identity,
 			A2($elm$core$Basics$composeR, toResult, toMsg));
-	});
-var $elm$core$Result$mapError = F2(
-	function (f, result) {
-		if (result.$ === 'Ok') {
-			var v = result.a;
-			return $elm$core$Result$Ok(v);
-		} else {
-			var e = result.a;
-			return $elm$core$Result$Err(
-				f(e));
-		}
 	});
 var $elm$http$Http$BadBody = function (a) {
 	return {$: 'BadBody', a: a};
@@ -7731,6 +8085,22 @@ var $author$project$Login$BadEmail = function (a) {
 var $author$project$Login$BadPassword = function (a) {
 	return {$: 'BadPassword', a: a};
 };
+var $elm$regex$Regex$Match = F4(
+	function (match, index, number, submatches) {
+		return {index: index, match: match, number: number, submatches: submatches};
+	});
+var $elm$regex$Regex$contains = _Regex_contains;
+var $elm$regex$Regex$fromStringWith = _Regex_fromStringWith;
+var $elm$regex$Regex$never = _Regex_never;
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
 var $author$project$Utils$validEmail = A2(
 	$elm$core$Maybe$withDefault,
 	$elm$regex$Regex$never,
@@ -7789,7 +8159,7 @@ var $author$project$Login$update = F2(
 					_Utils_update(
 						model,
 						{errors: _List_Nil, isLoading: true}),
-					$author$project$Login$submitLogin(model.loginCredentials)) : _Utils_Tuple2(
+					$author$project$Login$submitLogin(cred)) : _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{errors: errorsList, isLoading: false}),
@@ -7842,6 +8212,10 @@ var $elm$file$File$Select$file = F2(
 			toMsg,
 			_File_uploadOne(mimes));
 	});
+var $author$project$Credentials$stringToImageString = function (str) {
+	return $elm$core$String$isEmpty(str) ? $author$project$Credentials$ImageString($elm$core$Maybe$Nothing) : $author$project$Credentials$ImageString(
+		$elm$core$Maybe$Just(str));
+};
 var $author$project$Profile$ProfileDone = function (a) {
 	return {$: 'ProfileDone', a: a};
 };
@@ -7854,41 +8228,41 @@ var $author$project$Credentials$addHeader = function (_v0) {
 	var tokenString = _v0.a;
 	return A2($elm$http$Http$header, 'authorization', 'Token ' + tokenString);
 };
-var $elm$json$Json$Encode$bool = _Json_wrap;
-var $author$project$Credentials$encodeUserId = function (_v0) {
-	var id = _v0.a;
-	return $elm$json$Json$Encode$string(id);
+var $author$project$Credentials$encodeImageString = function (_v0) {
+	var maybeImageString = _v0.a;
+	var _v1 = $author$project$Credentials$ImageString(maybeImageString);
+	if (_v1.a.$ === 'Just') {
+		var imageString = _v1.a.a;
+		return $elm$json$Json$Encode$string(imageString);
+	} else {
+		var _v2 = _v1.a;
+		return $elm$json$Json$Encode$string('');
+	}
 };
-var $author$project$Credentials$unwrappedTokenDataEncoder = function (profileData) {
+var $author$project$Profile$profileSubmitDataEncoder = function (profileData) {
 	return $elm$json$Json$Encode$object(
 		_List_fromArray(
 			[
 				_Utils_Tuple2(
-				'id',
-				$author$project$Credentials$encodeUserId(profileData.id)),
+				'email',
+				$elm$json$Json$Encode$string(profileData.email)),
 				_Utils_Tuple2(
 				'firstname',
 				$elm$json$Json$Encode$string(profileData.firstname)),
 				_Utils_Tuple2(
-				'email',
-				$elm$json$Json$Encode$string(profileData.email)),
-				_Utils_Tuple2(
-				'isverified',
-				$elm$json$Json$Encode$bool(profileData.isverified)),
-				_Utils_Tuple2(
-				'profilepicurl',
-				$elm$json$Json$Encode$string(profileData.profilepicurl))
+				'imagefile',
+				$author$project$Credentials$encodeImageString(profileData.imagefile))
 			]));
 };
 var $author$project$Profile$submitProfile = F2(
-	function (session, credentials) {
+	function (session, data) {
 		var _v0 = $author$project$Credentials$fromSessionToToken(session);
 		if (_v0.$ === 'Just') {
 			var token = _v0.a;
 			return $elm$http$Http$request(
 				{
 					body: $elm$http$Http$jsonBody(
-						$author$project$Credentials$unwrappedTokenDataEncoder(credentials)),
+						$author$project$Profile$profileSubmitDataEncoder(data)),
 					expect: A2($elm$http$Http$expectJson, $author$project$Profile$ProfileDone, $author$project$Credentials$tokenDecoder),
 					headers: _List_fromArray(
 						[
@@ -7904,6 +8278,7 @@ var $author$project$Profile$submitProfile = F2(
 		}
 	});
 var $elm$file$File$toUrl = _File_toUrl;
+var $elm$core$String$trim = _String_trim;
 var $author$project$Profile$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -7932,9 +8307,21 @@ var $author$project$Profile$update = F2(
 			case 'ProfileSubmit':
 				var session = msg.a;
 				var cred = msg.b;
+				var validateFirstName = A2(
+					$elm$core$String$join,
+					'',
+					A2(
+						$elm$core$String$split,
+						' ',
+						$elm$core$String$trim(cred.firstname)));
 				return _Utils_Tuple2(
 					model,
-					A2($author$project$Profile$submitProfile, session, cred));
+					A2(
+						$author$project$Profile$submitProfile,
+						session,
+						_Utils_update(
+							cred,
+							{firstname: validateFirstName})));
 			case 'ProfileDone':
 				if (msg.a.$ === 'Ok') {
 					var token = msg.a.a;
@@ -7982,14 +8369,16 @@ var $author$project$Profile$update = F2(
 						$elm$file$File$toUrl(file)));
 			default:
 				var imageFileString = msg.a;
+				var trimImageString = $elm$core$String$trim(imageFileString);
 				var oldProfile = model.profile;
+				var imageString = $author$project$Credentials$stringToImageString(trimImageString);
 				var updateProfile = _Utils_update(
 					oldProfile,
-					{profilepicurl: imageFileString});
+					{profilepicurl: imageString});
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{imageFile: imageFileString, profile: updateProfile}),
+						{imageFile: imageString, profile: updateProfile}),
 					$elm$core$Platform$Cmd$none);
 		}
 	});
@@ -8336,31 +8725,16 @@ var $author$project$Main$update = F2(
 						var _v12 = $author$project$Credentials$fromSessionToToken(session);
 						if (_v12.$ === 'Just') {
 							var token = _v12.a;
-							var tokenString = $author$project$Credentials$fromTokenToString(token);
-							var profileFromToken = $author$project$Credentials$unfoldProfileFromToken(token);
-							var profile = A2($elm$core$String$split, '.', tokenString);
-							var maybeTokenData = A2(
-								$elm$core$Array$get,
-								1,
-								$elm$core$Array$fromList(profile));
-							if (maybeTokenData.$ === 'Just') {
-								var tokenData = maybeTokenData.a;
-								var decodedTokenData = $truqu$elm_base64$Base64$decode(tokenData);
-								if (decodedTokenData.$ === 'Err') {
-									return A2($elm$browser$Browser$Navigation$pushUrl, model.key, '/login');
-								} else {
-									var encodedRecord = decodedTokenData.a;
-									var _v15 = A2($elm$json$Json$Decode$decodeString, profileFromToken, encodedRecord);
-									if (_v15.$ === 'Ok') {
-										var resultTokenRecord = _v15.a;
-										return A2(
-											$elm$browser$Browser$Navigation$pushUrl,
-											model.key,
-											'/profile/' + $author$project$Credentials$userIdToString(resultTokenRecord.id));
-									} else {
-										return A2($elm$browser$Browser$Navigation$pushUrl, model.key, '/login');
-									}
-								}
+							var _v13 = A2(
+								$simonh1000$elm_jwt$Jwt$decodeToken,
+								$author$project$Credentials$decodeTokenData,
+								$author$project$Credentials$fromTokenToString(token));
+							if (_v13.$ === 'Ok') {
+								var resultTokenRecord = _v13.a;
+								return A2(
+									$elm$browser$Browser$Navigation$pushUrl,
+									model.key,
+									'/profile/' + $author$project$Credentials$userIdToString(resultTokenRecord.id));
 							} else {
 								return A2($elm$browser$Browser$Navigation$pushUrl, model.key, '/login');
 							}
@@ -8624,6 +8998,17 @@ var $author$project$Profile$ProfileSubmit = F2(
 var $author$project$Profile$StoreFirstName = function (a) {
 	return {$: 'StoreFirstName', a: a};
 };
+var $author$project$Credentials$imageStringToMaybeString = function (_v0) {
+	var maybeImageString = _v0.a;
+	var _v1 = $author$project$Credentials$ImageString(maybeImageString);
+	if (_v1.a.$ === 'Just') {
+		var imageString = _v1.a.a;
+		return $elm$core$String$isEmpty(imageString) ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(imageString);
+	} else {
+		var _v2 = _v1.a;
+		return $elm$core$Maybe$Nothing;
+	}
+};
 var $elm$html$Html$img = _VirtualDom_node('img');
 var $elm$html$Html$Attributes$src = function (url) {
 	return A2(
@@ -8678,7 +9063,7 @@ var $author$project$Profile$view = function (model) {
 								_List_Nil,
 								_List_fromArray(
 									[
-										$elm$html$Html$text('Upload a avatar'),
+										$elm$html$Html$text('Upload a avatar (Size limit is 3mb)'),
 										A2($elm$html$Html$br, _List_Nil, _List_Nil),
 										A2(
 										$elm$html$Html$input,
@@ -8696,15 +9081,22 @@ var $author$project$Profile$view = function (model) {
 								_List_fromArray(
 									[
 										$elm$html$Html$text('Your avatar preview'),
-										A2($elm$html$Html$br, _List_Nil, _List_Nil),
-										A2(
-										$elm$html$Html$img,
-										_List_fromArray(
-											[
-												A2($elm$html$Html$Attributes$style, 'height', '40px'),
-												$elm$html$Html$Attributes$src(model.imageFile)
-											]),
-										_List_Nil)
+										function () {
+										var _v1 = $author$project$Credentials$imageStringToMaybeString(model.imageFile);
+										if (_v1.$ === 'Just') {
+											var imageString = _v1.a;
+											return A2(
+												$elm$html$Html$img,
+												_List_fromArray(
+													[
+														A2($elm$html$Html$Attributes$style, 'height', '40px'),
+														$elm$html$Html$Attributes$src(imageString)
+													]),
+												_List_Nil);
+										} else {
+											return $elm$html$Html$text('');
+										}
+									}()
 									])),
 								A2($elm$html$Html$br, _List_Nil, _List_Nil),
 								A2(
@@ -8712,18 +9104,28 @@ var $author$project$Profile$view = function (model) {
 								_List_Nil,
 								_List_fromArray(
 									[
-										A2(
-										$elm$html$Html$button,
-										_List_fromArray(
-											[
-												$elm$html$Html$Attributes$type_('button'),
-												$elm$html$Html$Events$onClick(
-												A2($author$project$Profile$ProfileSubmit, session, model.profile))
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text('Submit')
-											]))
+										function () {
+										var _v2 = model;
+										var imageFile = _v2.imageFile;
+										var _v3 = model.profile;
+										var firstname = _v3.firstname;
+										var email = _v3.email;
+										return A2(
+											$elm$html$Html$button,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$type_('button'),
+													$elm$html$Html$Events$onClick(
+													A2(
+														$author$project$Profile$ProfileSubmit,
+														session,
+														{email: email, firstname: firstname, imagefile: imageFile}))
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('Submit')
+												]));
+									}()
 									]))
 							]))
 					]));
@@ -9164,10 +9566,6 @@ var $elm$core$List$filter = F2(
 			_List_Nil,
 			list);
 	});
-var $elm$core$Tuple$second = function (_v0) {
-	var y = _v0.b;
-	return y;
-};
 var $elm$html$Html$Attributes$classList = function (classes) {
 	return $elm$html$Html$Attributes$class(
 		A2(
@@ -9189,14 +9587,10 @@ var $laurentpayot$minidenticons_elm$Minidenticons$colorsNb = 18;
 var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
 var $laurentpayot$minidenticons_elm$Minidenticons$fnvPrime = 16777619;
 var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
-var $elm$core$Basics$modBy = _Basics_modBy;
 var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
 var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
+var $elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
 var $laurentpayot$minidenticons_elm$Minidenticons$offsetBasis = 2166136261;
-var $elm$core$String$foldr = _String_foldr;
-var $elm$core$String$toList = function (string) {
-	return A3($elm$core$String$foldr, $elm$core$List$cons, _List_Nil, string);
-};
 var $elm$core$Bitwise$xor = _Bitwise_xor;
 var $laurentpayot$minidenticons_elm$Minidenticons$simpleHash = function (str) {
 	return A3(
@@ -9300,6 +9694,7 @@ var $author$project$Main$isActive = function (_v0) {
 };
 var $elm$html$Html$nav = _VirtualDom_node('nav');
 var $elm$html$Html$span = _VirtualDom_node('span');
+var $elm$core$Debug$toString = _Debug_toString;
 var $elm$html$Html$Attributes$width = function (n) {
 	return A2(
 		_VirtualDom_attribute,
@@ -9314,13 +9709,6 @@ var $author$project$Main$viewHeader = function (_v0) {
 	var _v1 = $author$project$Credentials$fromSessionToToken(session);
 	if (_v1.$ === 'Just') {
 		var token = _v1.a;
-		var tokenString = $author$project$Credentials$fromTokenToString(token);
-		var profileFromToken = $author$project$Credentials$unfoldProfileFromToken(token);
-		var profile = A2($elm$core$String$split, '.', tokenString);
-		var maybeTokenData = A2(
-			$elm$core$Array$get,
-			1,
-			$elm$core$Array$fromList(profile));
 		return A2(
 			$elm$html$Html$nav,
 			_List_Nil,
@@ -9348,185 +9736,179 @@ var $author$project$Main$viewHeader = function (_v0) {
 					_List_fromArray(
 						[
 							function () {
-							if (maybeTokenData.$ === 'Just') {
-								var tokenData = maybeTokenData.a;
-								var decodedTokenData = $truqu$elm_base64$Base64$decode(tokenData);
-								if (decodedTokenData.$ === 'Err') {
-									var err = decodedTokenData.a;
-									return $elm$html$Html$text(err);
-								} else {
-									var encodedRecord = decodedTokenData.a;
-									var _v4 = A2($elm$json$Json$Decode$decodeString, profileFromToken, encodedRecord);
-									if (_v4.$ === 'Ok') {
-										var resultTokenRecord = _v4.a;
-										return A2(
-											$elm$html$Html$li,
+							var _v2 = A2(
+								$simonh1000$elm_jwt$Jwt$decodeToken,
+								$author$project$Credentials$decodeTokenData,
+								$author$project$Credentials$fromTokenToString(token));
+							if (_v2.$ === 'Ok') {
+								var resultTokenRecord = _v2.a;
+								return A2(
+									$elm$html$Html$li,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$classList(
 											_List_fromArray(
 												[
-													$elm$html$Html$Attributes$classList(
-													_List_fromArray(
-														[
-															_Utils_Tuple2(
-															'active',
-															$author$project$Main$isActive(
-																{
-																	link: $author$project$Main$Profile(resultTokenRecord.id),
-																	page: page
-																}))
-														]))
-												]),
-											_List_fromArray(
-												[
-													A2(
-													$elm$html$Html$div,
-													_List_Nil,
-													_List_fromArray(
-														[
-															(!$elm$core$String$isEmpty(resultTokenRecord.firstname)) ? A2(
-															$elm$html$Html$div,
-															_List_fromArray(
-																[
-																	$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
-																]),
-															_List_fromArray(
-																[
-																	A2(
-																	$elm$html$Html$span,
-																	_List_Nil,
-																	_List_fromArray(
-																		[
-																			$elm$html$Html$text(resultTokenRecord.firstname + ' ⌄')
-																		])),
-																	A2(
-																	$elm$html$Html$div,
-																	_List_fromArray(
-																		[
-																			A2($elm$html$Html$Attributes$style, 'width', '60px')
-																		]),
-																	_List_fromArray(
-																		[
-																			(resultTokenRecord.profilepicurl !== '') ? A2(
-																			$elm$html$Html$img,
-																			_List_fromArray(
-																				[
-																					$elm$html$Html$Attributes$src(resultTokenRecord.profilepicurl),
-																					$elm$html$Html$Attributes$width(60)
-																				]),
-																			_List_Nil) : A3($laurentpayot$minidenticons_elm$Minidenticons$identicon, 50, 50, resultTokenRecord.firstname)
-																		]))
-																])) : A2(
-															$elm$html$Html$div,
-															_List_fromArray(
-																[
-																	$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
-																]),
-															_List_fromArray(
-																[
-																	A2(
-																	$elm$html$Html$span,
-																	_List_Nil,
-																	_List_fromArray(
-																		[
-																			$elm$html$Html$text(resultTokenRecord.email + ' ⌄')
-																		])),
-																	A2(
-																	$elm$html$Html$div,
-																	_List_fromArray(
-																		[
-																			A2($elm$html$Html$Attributes$style, 'width', '60px')
-																		]),
-																	_List_fromArray(
-																		[
-																			(resultTokenRecord.profilepicurl !== '') ? A2(
-																			$elm$html$Html$img,
-																			_List_fromArray(
-																				[
-																					$elm$html$Html$Attributes$src(resultTokenRecord.profilepicurl),
-																					$elm$html$Html$Attributes$width(60)
-																				]),
-																			_List_Nil) : A3($laurentpayot$minidenticons_elm$Minidenticons$identicon, 50, 50, resultTokenRecord.email)
-																		]))
-																])),
-															A2(
-															$elm$html$Html$ul,
-															_List_fromArray(
-																[
-																	A2(
-																	$elm$html$Html$Attributes$style,
-																	'display',
-																	openDropdown ? 'block' : 'none')
-																]),
-															_List_fromArray(
-																[
-																	A2(
-																	$elm$html$Html$li,
-																	_List_fromArray(
-																		[
-																			$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
-																		]),
-																	_List_fromArray(
-																		[
-																			A2(
-																			$elm$html$Html$a,
-																			_List_fromArray(
-																				[
-																					$elm$html$Html$Attributes$href(
-																					'/profile/' + $author$project$Credentials$userIdToString(resultTokenRecord.id))
-																				]),
-																			_List_fromArray(
-																				[
-																					$elm$html$Html$text('My profile')
-																				]))
-																		])),
-																	A2(
-																	$elm$html$Html$li,
-																	_List_fromArray(
-																		[
-																			$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
-																		]),
-																	_List_fromArray(
-																		[
-																			$elm$html$Html$text('option2')
-																		])),
-																	A2(
-																	$elm$html$Html$li,
-																	_List_fromArray(
-																		[
-																			$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
-																		]),
-																	_List_fromArray(
-																		[
-																			$elm$html$Html$text('option3')
-																		]))
-																]))
-														]))
-												]));
-									} else {
-										return A2(
-											$elm$html$Html$li,
+													_Utils_Tuple2(
+													'active',
+													$author$project$Main$isActive(
+														{
+															link: $author$project$Main$Profile(resultTokenRecord.id),
+															page: page
+														}))
+												]))
+										]),
+									_List_fromArray(
+										[
+											A2(
+											$elm$html$Html$div,
 											_List_Nil,
 											_List_fromArray(
 												[
-													$elm$html$Html$text('Home')
-												]));
-									}
-								}
+													(!$elm$core$String$isEmpty(resultTokenRecord.firstname)) ? A2(
+													$elm$html$Html$div,
+													_List_fromArray(
+														[
+															$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
+														]),
+													_List_fromArray(
+														[
+															A2(
+															$elm$html$Html$span,
+															_List_Nil,
+															_List_fromArray(
+																[
+																	$elm$html$Html$text(resultTokenRecord.firstname + ' ⌄')
+																])),
+															A2(
+															$elm$html$Html$div,
+															_List_fromArray(
+																[
+																	A2($elm$html$Html$Attributes$style, 'width', '60px')
+																]),
+															_List_fromArray(
+																[
+																	function () {
+																	var _v3 = $author$project$Credentials$imageStringToMaybeString(resultTokenRecord.profilepicurl);
+																	if (_v3.$ === 'Just') {
+																		var imageString = _v3.a;
+																		return A2(
+																			$elm$html$Html$img,
+																			_List_fromArray(
+																				[
+																					$elm$html$Html$Attributes$src(imageString),
+																					$elm$html$Html$Attributes$width(60)
+																				]),
+																			_List_Nil);
+																	} else {
+																		return A3($laurentpayot$minidenticons_elm$Minidenticons$identicon, 50, 50, resultTokenRecord.firstname);
+																	}
+																}()
+																]))
+														])) : A2(
+													$elm$html$Html$div,
+													_List_fromArray(
+														[
+															$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
+														]),
+													_List_fromArray(
+														[
+															A2(
+															$elm$html$Html$span,
+															_List_Nil,
+															_List_fromArray(
+																[
+																	$elm$html$Html$text(resultTokenRecord.email + ' ⌄')
+																])),
+															A2(
+															$elm$html$Html$div,
+															_List_fromArray(
+																[
+																	A2($elm$html$Html$Attributes$style, 'width', '60px')
+																]),
+															_List_fromArray(
+																[
+																	function () {
+																	var _v4 = $author$project$Credentials$imageStringToMaybeString(resultTokenRecord.profilepicurl);
+																	if (_v4.$ === 'Just') {
+																		var imageString = _v4.a;
+																		return A2(
+																			$elm$html$Html$img,
+																			_List_fromArray(
+																				[
+																					$elm$html$Html$Attributes$src(imageString),
+																					$elm$html$Html$Attributes$width(60)
+																				]),
+																			_List_Nil);
+																	} else {
+																		return A3($laurentpayot$minidenticons_elm$Minidenticons$identicon, 50, 50, resultTokenRecord.email);
+																	}
+																}()
+																]))
+														])),
+													A2(
+													$elm$html$Html$ul,
+													_List_fromArray(
+														[
+															A2(
+															$elm$html$Html$Attributes$style,
+															'display',
+															openDropdown ? 'block' : 'none')
+														]),
+													_List_fromArray(
+														[
+															A2(
+															$elm$html$Html$li,
+															_List_fromArray(
+																[
+																	$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
+																]),
+															_List_fromArray(
+																[
+																	A2(
+																	$elm$html$Html$a,
+																	_List_fromArray(
+																		[
+																			$elm$html$Html$Attributes$href(
+																			'/profile/' + $author$project$Credentials$userIdToString(resultTokenRecord.id))
+																		]),
+																	_List_fromArray(
+																		[
+																			$elm$html$Html$text('My profile')
+																		]))
+																])),
+															A2(
+															$elm$html$Html$li,
+															_List_fromArray(
+																[
+																	$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
+																]),
+															_List_fromArray(
+																[
+																	$elm$html$Html$text('option2')
+																])),
+															A2(
+															$elm$html$Html$li,
+															_List_fromArray(
+																[
+																	$elm$html$Html$Events$onClick($author$project$Main$OpenDropdown)
+																]),
+															_List_fromArray(
+																[
+																	$elm$html$Html$text('option3')
+																]))
+														]))
+												]))
+										]));
 							} else {
+								var err = _v2.a;
 								return A2(
 									$elm$html$Html$li,
 									_List_Nil,
 									_List_fromArray(
 										[
-											A2(
-											$elm$html$Html$a,
-											_List_fromArray(
-												[
-													$elm$html$Html$Attributes$href('/')
-												]),
-											_List_fromArray(
-												[
-													$elm$html$Html$text('Home')
-												]))
+											$elm$html$Html$text(
+											$elm$core$Debug$toString(err))
 										]));
 							}
 						}()

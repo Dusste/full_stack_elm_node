@@ -1,41 +1,49 @@
 module Profile exposing (..)
 
-import Array
-import Base64 exposing (decode)
 import Credentials
     exposing
-        ( Session
+        ( ImageString
+        , Session
         , Token
         , UnwrappedTokenData
         , addHeader
+        , decodeTokenData
+        , emptyImageString
         , emptyUserId
         , emptyVerificationString
+        , encodeImageString
         , encodeToken
         , fromSessionToToken
         , fromTokenToString
+        , imageStringToMaybeString
         , logout
         , storeSession
+        , stringToImageString
         , tokenDecoder
-        , unfoldProfileFromToken
-        , unwrappedTokenDataEncoder
         )
 import File exposing (File)
 import File.Select as Select
 import Html exposing (..)
-import Html.Attributes exposing (alt, checked, src, type_, value)
+import Html.Attributes exposing (src, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Json.Decode as Decode exposing (Decoder, Value, bool, list, string)
-import Json.Decode.Pipeline exposing (required)
-import Json.Encode as Encode exposing (Value, encode)
+import Json.Encode as Encode exposing (encode)
+import Jwt
 import Task
 
 
 type alias Model =
     { profile : UnwrappedTokenData
     , errors : List CheckErrors
-    , imageFile : String
+    , imageFile : ImageString
     , userState : UserState
+    }
+
+
+type alias ProfileSubmitData =
+    { email : String
+    , firstname : String
+    , imagefile : ImageString
     }
 
 
@@ -55,11 +63,20 @@ type Msg
       -- | StoreLastName String
     | StoreVerified Bool
       -- | StoreAdmin Bool
-    | ProfileSubmit Session UnwrappedTokenData
+    | ProfileSubmit Session ProfileSubmitData
     | ProfileDone (Result Http.Error Token)
     | FileRequest
     | FileRequestProceed File
     | FileRead String
+
+
+profileSubmitDataEncoder : ProfileSubmitData -> Encode.Value
+profileSubmitDataEncoder profileData =
+    Encode.object
+        [ ( "email", Encode.string profileData.email )
+        , ( "firstname", Encode.string profileData.firstname )
+        , ( "imagefile", encodeImageString profileData.imagefile )
+        ]
 
 
 initialModel : Model
@@ -70,10 +87,10 @@ initialModel =
         , id = emptyUserId
         , isverified = False
         , verificationstring = emptyVerificationString
-        , profilepicurl = ""
+        , profilepicurl = emptyImageString
         }
     , errors = []
-    , imageFile = ""
+    , imageFile = emptyImageString
     , userState = NotVerified
     }
 
@@ -82,55 +99,24 @@ init : Session -> ( Model, Cmd Msg )
 init session =
     case fromSessionToToken session of
         Just token ->
-            let
-                profileFromToken =
-                    unfoldProfileFromToken token
+            case Jwt.decodeToken decodeTokenData <| fromTokenToString token of
+                Ok profileData ->
+                    ( { initialModel
+                        | profile = profileData
+                        , userState =
+                            if profileData.isverified then
+                                Verified session
 
-                tokenString =
-                    fromTokenToString token
+                            else
+                                NotVerified
+                      }
+                    , Cmd.none
+                    )
 
-                profile : List String
-                profile =
-                    String.split "." tokenString
-
-                maybeTokenData : Maybe String
-                maybeTokenData =
-                    Array.fromList profile |> Array.get 1
-            in
-            case maybeTokenData of
-                Just tokenData ->
-                    let
-                        resultTokenData =
-                            decode tokenData
-                    in
-                    case resultTokenData of
-                        Err _ ->
-                            ( { initialModel | userState = Intruder }
-                            , Cmd.none
-                            )
-
-                        Ok encodedRecord ->
-                            case Decode.decodeString profileFromToken encodedRecord of
-                                Ok profileData ->
-                                    ( { initialModel
-                                        | profile = profileData
-                                        , userState =
-                                            if profileData.isverified then
-                                                Verified session
-
-                                            else
-                                                NotVerified
-                                      }
-                                    , Cmd.none
-                                    )
-
-                                Err _ ->
-                                    ( initialModel
-                                    , Cmd.none
-                                    )
-
-                Nothing ->
-                    ( { initialModel | userState = Intruder }, Cmd.none )
+                Err _ ->
+                    ( { initialModel | userState = Intruder }
+                    , Cmd.none
+                    )
 
         Nothing ->
             ( { initialModel | userState = Intruder }
@@ -170,17 +156,21 @@ view model =
                     -- , br [] []
                     , br [] []
                     , div []
-                        [ text "Upload a avatar"
+                        [ text "Upload a avatar (Size limit is 3mb)"
                         , br [] []
                         , input [ type_ "file", onClick FileRequest ] []
                         ]
                     , br [] []
                     , div []
                         [ text "Your avatar preview"
-                        , br [] []
-                        , img
-                            [ Html.Attributes.style "height" "40px", src model.imageFile ]
-                            []
+                        , case imageStringToMaybeString model.imageFile of
+                            Just imageString ->
+                                img
+                                    [ Html.Attributes.style "height" "40px", src imageString ]
+                                    []
+
+                            Nothing ->
+                                text ""
                         ]
 
                     -- , div []
@@ -194,9 +184,16 @@ view model =
                     --     ]
                     , br [] []
                     , div []
-                        [ button
+                        [ let
+                            { firstname, email } =
+                                model.profile
+
+                            { imageFile } =
+                                model
+                          in
+                          button
                             [ type_ "button"
-                            , onClick (ProfileSubmit session model.profile)
+                            , onClick (ProfileSubmit session { firstname = firstname, email = email, imagefile = imageFile })
                             ]
                             [ text "Submit" ]
                         ]
@@ -258,7 +255,14 @@ update msg model =
         --     in
         --     ( { model | profile = updateProfile }, Cmd.none )
         ProfileSubmit session cred ->
-            ( model, submitProfile session cred )
+            let
+                validateFirstName =
+                    cred.firstname
+                        |> String.trim
+                        |> String.split " "
+                        |> String.join ""
+            in
+            ( model, submitProfile session { cred | firstname = validateFirstName } )
 
         ProfileDone (Ok token) ->
             let
@@ -289,24 +293,30 @@ update msg model =
 
         FileRead imageFileString ->
             let
+                trimImageString =
+                    String.trim imageFileString
+
                 oldProfile =
                     model.profile
 
+                imageString =
+                    stringToImageString trimImageString
+
                 updateProfile =
-                    { oldProfile | profilepicurl = imageFileString }
+                    { oldProfile | profilepicurl = imageString }
             in
-            ( { model | profile = updateProfile, imageFile = imageFileString }, Cmd.none )
+            ( { model | profile = updateProfile, imageFile = imageString }, Cmd.none )
 
 
-submitProfile : Session -> UnwrappedTokenData -> Cmd Msg
-submitProfile session credentials =
+submitProfile : Session -> ProfileSubmitData -> Cmd Msg
+submitProfile session data =
     case fromSessionToToken session of
         Just token ->
             Http.request
                 { method = "PUT"
                 , headers = [ addHeader token ]
                 , url = "/.netlify/functions/profile-put-api"
-                , body = Http.jsonBody (unwrappedTokenDataEncoder credentials)
+                , body = Http.jsonBody (profileSubmitDataEncoder data)
                 , expect = Http.expectJson ProfileDone tokenDecoder
                 , timeout = Nothing
                 , tracker = Nothing

@@ -92,9 +92,7 @@ exports.handler = async function (req) {
         id: decodedId,
         isverified: isVerified,
         email: emailFromUser,
-        firstname: firstName,
         verificationstring,
-        avatarurl,
     } = user.rows[0];
 
     const newToken = jwt.sign(
@@ -102,9 +100,9 @@ exports.handler = async function (req) {
             id: decodedId,
             isverified: true,
             email: emailFromUser,
-            firstname: firstName,
+            firstname: '',
             verificationstring,
-            profilepicurl: avatarurl || '',
+            profilepicurl: '',
         },
         process.env.JWT_SECRET,
         { expiresIn: '2h' },

@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuid } = require('uuid');
 const { clientPromise } = require('../connect-database');
+const querystring = require('querystring').escape;
 const initializeApp = require('firebase/app').initializeApp;
 const {
     getStorage,
@@ -54,8 +55,7 @@ exports.handler = async function (req) {
             body: 'No authorization header sent',
         };
     }
-    const { email, firstname, profilepicurl } = parsedBody;
-
+    const { email, firstname, imagefile } = parsedBody;
     const token = authorization.split(' ')[1];
     // const user = await usersCollection.findOne({ email: { $eq: email } });
 
@@ -85,18 +85,27 @@ exports.handler = async function (req) {
 
     const { id } = decodedToken;
 
-    profilepicurl.length &&
-        (await uploadString(
-            ref(storage, `/images/profile-pic-${id}.jpeg`),
-            profilepicurl,
-            'data_url',
-        ));
-
     let photoUrl = '';
+
     try {
-        photoUrl = await getDownloadURL(ref(storage, `/images/profile-pic-${id}.jpeg`));
+        if (imagefile.length > 0) {
+            await uploadString(
+                ref(storage, `/images/profile-pic-${id}.jpeg`),
+                imagefile,
+                'data_url',
+            );
+            const downloadUrl = await getDownloadURL(
+                ref(storage, `/images/profile-pic-${id}.jpeg`),
+            );
+            photoUrl =
+                downloadUrl.length > 0
+                    ? `https://firebasestorage.googleapis.com/v0/b/${
+                          process.env.FIREBASE_STORAGE_BUCKET
+                      }/o/${querystring(`images/profile-pic-${id}.jpeg`)}?alt=media`
+                    : '';
+        }
     } catch (err) {
-        console.log('No avatar image found', err.toString());
+        console.log('Something went wrong with Firebase', err.toString());
     }
 
     const updateUser = async (parameters) => {
@@ -107,7 +116,7 @@ exports.handler = async function (req) {
         }.users SET firstname = ?, avatarurl = ? WHERE id = ? IF EXISTS;`;
         try {
             const result = await client.execute(query, parameters, { prepare: true });
-            //  result would be undefined but query would be executed and entery is wirtten in the DB
+            //  result would be undefined but query would be executed and entery is written in the DB
             return result;
         } catch (ex) {
             console.log('Error in createUser', ex.toString());

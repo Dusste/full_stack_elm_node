@@ -1,8 +1,5 @@
 module Main exposing (..)
 
-import Array
-import Base64 exposing (decode)
-import BinaryTree exposing (..)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Credentials
@@ -11,11 +8,12 @@ import Credentials
         , UserId
         , VerificationString
         , decodeToSession
+        , decodeTokenData
         , fromSessionToToken
         , fromTokenToString
+        , imageStringToMaybeString
         , logout
         , subscriptionChanges
-        , unfoldProfileFromToken
         , userIdParser
         , userIdToString
         , verifictionStringParser
@@ -25,7 +23,8 @@ import Html exposing (Html, a, div, footer, h1, img, li, nav, p, span, text, ul)
 import Html.Attributes exposing (classList, href, src, style, width)
 import Html.Events exposing (onClick)
 import Html.Lazy exposing (lazy)
-import Json.Decode as Decode exposing (Value)
+import Json.Decode exposing (Value)
+import Jwt
 import Login
 import Minidenticons exposing (identicon)
 import Profile
@@ -123,97 +122,67 @@ viewHeader : Model -> Html Msg
 viewHeader { page, session, openDropdown, key } =
     case fromSessionToToken session of
         Just token ->
-            let
-                -- unwrap profile data only if you have token
-                profileFromToken =
-                    unfoldProfileFromToken token
-
-                -- unwrap token string only if you have token
-                tokenString : String
-                tokenString =
-                    fromTokenToString token
-
-                profile : List String
-                profile =
-                    String.split "." tokenString
-
-                maybeTokenData : Maybe String
-                maybeTokenData =
-                    Array.fromList profile |> Array.get 1
-            in
             nav []
                 [ h1 [] [ a [ href "/" ] [ text "My elm app" ] ]
                 , ul []
-                    [ case maybeTokenData of
-                        Just tokenData ->
-                            let
-                                decodedTokenData =
-                                    decode tokenData
-                            in
-                            case decodedTokenData of
-                                Err err ->
-                                    text err
+                    [ case Jwt.decodeToken decodeTokenData <| fromTokenToString token of
+                        Ok resultTokenRecord ->
+                            li
+                                [ classList
+                                    [ ( "active"
+                                      , isActive { link = Profile resultTokenRecord.id, page = page }
+                                      )
+                                    ]
+                                ]
+                                [ div []
+                                    [ if String.isEmpty resultTokenRecord.firstname == False then
+                                        div
+                                            [ onClick OpenDropdown ]
+                                            [ span [] [ text (resultTokenRecord.firstname ++ " ⌄") ]
+                                            , div [ style "width" "60px" ]
+                                                [ case imageStringToMaybeString resultTokenRecord.profilepicurl of
+                                                    Just imageString ->
+                                                        img [ src imageString, width 60 ] []
 
-                                Ok encodedRecord ->
-                                    case Decode.decodeString profileFromToken encodedRecord of
-                                        Ok resultTokenRecord ->
-                                            li
-                                                [ classList
-                                                    [ ( "active"
-                                                      , isActive { link = Profile resultTokenRecord.id, page = page }
-                                                      )
-                                                    ]
+                                                    Nothing ->
+                                                        identicon 50 50 resultTokenRecord.firstname
                                                 ]
-                                                [ div []
-                                                    [ if String.isEmpty resultTokenRecord.firstname == False then
-                                                        div
-                                                            [ onClick OpenDropdown ]
-                                                            [ span [] [ text (resultTokenRecord.firstname ++ " ⌄") ]
-                                                            , div [ style "width" "60px" ]
-                                                                [ if resultTokenRecord.profilepicurl /= "" then
-                                                                    img [ src resultTokenRecord.profilepicurl, width 60 ] []
+                                            ]
 
-                                                                  else
-                                                                    identicon 50 50 resultTokenRecord.firstname
-                                                                ]
-                                                            ]
-
-                                                      else
-                                                        div
-                                                            [ onClick OpenDropdown ]
-                                                            [ span []
-                                                                [ text
-                                                                    (resultTokenRecord.email ++ " ⌄")
-                                                                ]
-                                                            , div [ style "width" "60px" ]
-                                                                [ if resultTokenRecord.profilepicurl /= "" then
-                                                                    img [ src resultTokenRecord.profilepicurl, width 60 ] []
-
-                                                                  else
-                                                                    identicon 50 50 resultTokenRecord.email
-                                                                ]
-                                                            ]
-                                                    , ul
-                                                        [ style "display"
-                                                            (if openDropdown then
-                                                                "block"
-
-                                                             else
-                                                                "none"
-                                                            )
-                                                        ]
-                                                        [ li [ onClick OpenDropdown ] [ a [ href <| "/profile/" ++ userIdToString resultTokenRecord.id ] [ text "My profile" ] ]
-                                                        , li [ onClick OpenDropdown ] [ text "option2" ]
-                                                        , li [ onClick OpenDropdown ] [ text "option3" ]
-                                                        ]
-                                                    ]
+                                      else
+                                        div
+                                            [ onClick OpenDropdown ]
+                                            [ span []
+                                                [ text
+                                                    (resultTokenRecord.email ++ " ⌄")
                                                 ]
+                                            , div [ style "width" "60px" ]
+                                                [ case imageStringToMaybeString resultTokenRecord.profilepicurl of
+                                                    Just imageString ->
+                                                        img [ src imageString, width 60 ] []
 
-                                        Err _ ->
-                                            li [] [ text "Home" ]
+                                                    Nothing ->
+                                                        identicon 50 50 resultTokenRecord.email
+                                                ]
+                                            ]
+                                    , ul
+                                        [ style "display"
+                                            (if openDropdown then
+                                                "block"
 
-                        Nothing ->
-                            li [] [ a [ href "/" ] [ text "Home" ] ]
+                                             else
+                                                "none"
+                                            )
+                                        ]
+                                        [ li [ onClick OpenDropdown ] [ a [ href <| "/profile/" ++ userIdToString resultTokenRecord.id ] [ text "My profile" ] ]
+                                        , li [ onClick OpenDropdown ] [ text "option2" ]
+                                        , li [ onClick OpenDropdown ] [ text "option3" ]
+                                        ]
+                                    ]
+                                ]
+
+                        Err err ->
+                            li [] [ text (Debug.toString err) ]
                     ]
                 , li
                     []
@@ -371,43 +340,11 @@ update msg model =
             ( { model | session = session }
             , case fromSessionToToken session of
                 Just token ->
-                    let
-                        -- unwrap profile data only if you have token
-                        profileFromToken =
-                            unfoldProfileFromToken token
+                    case Jwt.decodeToken decodeTokenData <| fromTokenToString token of
+                        Ok resultTokenRecord ->
+                            Nav.pushUrl model.key ("/profile/" ++ userIdToString resultTokenRecord.id)
 
-                        -- unwrap token string only if you have token
-                        tokenString : String
-                        tokenString =
-                            fromTokenToString token
-
-                        profile : List String
-                        profile =
-                            String.split "." tokenString
-
-                        maybeTokenData : Maybe String
-                        maybeTokenData =
-                            Array.fromList profile |> Array.get 1
-                    in
-                    case maybeTokenData of
-                        Just tokenData ->
-                            let
-                                decodedTokenData =
-                                    decode tokenData
-                            in
-                            case decodedTokenData of
-                                Err _ ->
-                                    Nav.pushUrl model.key "/login"
-
-                                Ok encodedRecord ->
-                                    case Decode.decodeString profileFromToken encodedRecord of
-                                        Ok resultTokenRecord ->
-                                            Nav.pushUrl model.key ("/profile/" ++ userIdToString resultTokenRecord.id)
-
-                                        Err _ ->
-                                            Nav.pushUrl model.key "/login"
-
-                        Nothing ->
+                        Err _ ->
                             Nav.pushUrl model.key "/login"
 
                 Nothing ->
