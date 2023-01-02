@@ -6,18 +6,27 @@ const { clientPromise } = require('../connect-database');
 
 exports.handler = async function (req) {
     const { body, httpMethod } = req;
-    const client = await clientPromise;
+    let client;
     let parsedBody;
+
+    try {
+        client = await clientPromise;
+    } catch (err) {
+        console.log('Client: ', err);
+        client = err.toString();
+    }
 
     if (httpMethod !== 'POST')
         return {
             statusCode: 403,
         };
 
-    if (!client)
+    if (typeof client.execute !== 'function' || !client) {
         return {
             statusCode: 500,
+            body: `{message: There is no client, payload: ${client}}`,
         };
+    }
 
     try {
         parsedBody = JSON.parse(body);
@@ -47,7 +56,7 @@ exports.handler = async function (req) {
                 : process.env.ASTRA_DB_KEYSPACE_PROD
         }.users WHERE email = ? ALLOW FILTERING;`;
         try {
-            const result = await client.execute(query, parameters, { prepare: true });
+            const result = client.execute(query, parameters, { prepare: true });
 
             return result;
         } catch (ex) {

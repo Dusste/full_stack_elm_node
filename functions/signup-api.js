@@ -15,19 +15,27 @@ const sendEmail = ({ to, from, subject, text, html = '' }) => {
 
 exports.handler = async function (req, context) {
     const { body, httpMethod } = req;
-    const client = await clientPromise;
+    let client;
     let parsedBody;
+
+    try {
+        client = await clientPromise;
+    } catch (err) {
+        console.log('Client: ', err);
+        client = err.toString();
+    }
 
     if (httpMethod !== 'POST')
         return {
             statusCode: 403,
         };
 
-    if (!client)
+    if (typeof client.execute !== 'function' || !client) {
         return {
             statusCode: 500,
-            body: 'There is no client',
+            body: `{message: There is no client, payload: ${client}}`,
         };
+    }
 
     try {
         parsedBody = JSON.parse(body);
@@ -55,7 +63,7 @@ exports.handler = async function (req, context) {
                 : process.env.ASTRA_DB_KEYSPACE_PROD
         }.users WHERE email = ? ALLOW FILTERING;`;
         try {
-            const result = await client.execute(query, parameters, { prepare: true });
+            const result = client.execute(query, parameters, { prepare: true });
             return result;
         } catch (ex) {
             console.log('Error in finduser', ex.toString());

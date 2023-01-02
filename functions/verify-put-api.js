@@ -16,6 +16,7 @@ exports.handler = async function (req) {
     if (!client)
         return {
             statusCode: 500,
+            body: `There is no client: ${client.toString()}`,
         };
 
     if (!authorization) {
