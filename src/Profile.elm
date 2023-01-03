@@ -32,6 +32,7 @@ import Jwt
 import Process
 import Task
 import Time
+import Utils exposing (buildErrorMessage)
 
 
 type alias Model =
@@ -71,7 +72,7 @@ type Msg
     | ProfileDone (Result Http.Error Token)
     | FileRequest
     | FileRequestProceed File
-    | FileRead String
+    | FileRead (Result Http.Error String)
     | GotTime Time.Posix
     | CheckSessionExpired ( Session, Maybe Time.Posix )
     | LogoutUser
@@ -205,6 +206,8 @@ view model =
                             ]
                             [ text "Submit" ]
                         ]
+                    , ul []
+                        (List.map viewError model.errors)
                     ]
                 ]
 
@@ -228,6 +231,22 @@ view model =
                 , p []
                     [ text "Please login again" ]
                 ]
+
+
+viewError : CheckErrors -> Html Msg
+viewError checkErrors =
+    li []
+        [ p []
+            [ text
+                (case checkErrors of
+                    BadInput err ->
+                        err
+
+                    BadRequest err ->
+                        err
+                )
+            ]
+        ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -290,7 +309,7 @@ update msg model =
             ( model, storeSession <| Just <| encode 0 tokenValue )
 
         ProfileDone (Err error) ->
-            ( { model | errors = [ BadRequest "Wrong !" ] }
+            ( { model | errors = [ BadRequest "Something went wrong !" ] }
             , case error of
                 Http.BadStatus statusCode ->
                     if statusCode == 401 then
@@ -307,9 +326,9 @@ update msg model =
             ( model, Select.file [ "image/*" ] FileRequestProceed )
 
         FileRequestProceed file ->
-            ( model, Task.perform FileRead (File.toUrl file) )
+            ( model, Task.attempt FileRead (File.toUrl file) )
 
-        FileRead imageFileString ->
+        FileRead (Ok imageFileString) ->
             let
                 trimImageString =
                     String.trim imageFileString
@@ -324,6 +343,9 @@ update msg model =
                     { oldProfile | profilepicurl = imageString }
             in
             ( { model | profile = updateProfile, imageFile = imageString }, Cmd.none )
+
+        FileRead (Err error) ->
+            ( { model | errors = BadRequest (buildErrorMessage error) :: model.errors }, Cmd.none )
 
         CheckSessionExpired ( session, maybeTime ) ->
             case maybeTime of

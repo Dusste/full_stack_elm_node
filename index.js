@@ -8269,6 +8269,30 @@ var $author$project$Profile$FileRequestProceed = function (a) {
 };
 var $author$project$Profile$LogoutUser = {$: 'LogoutUser'};
 var $author$project$Profile$SessionExpired = {$: 'SessionExpired'};
+var $elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
+var $elm$core$Task$onError = _Scheduler_onError;
+var $elm$core$Task$attempt = F2(
+	function (resultToMessage, task) {
+		return $elm$core$Task$command(
+			$elm$core$Task$Perform(
+				A2(
+					$elm$core$Task$onError,
+					A2(
+						$elm$core$Basics$composeL,
+						A2($elm$core$Basics$composeL, $elm$core$Task$succeed, resultToMessage),
+						$elm$core$Result$Err),
+					A2(
+						$elm$core$Task$andThen,
+						A2(
+							$elm$core$Basics$composeL,
+							A2($elm$core$Basics$composeL, $elm$core$Task$succeed, resultToMessage),
+							$elm$core$Result$Ok),
+						task))));
+	});
 var $elm$file$File$Select$file = F2(
 	function (mimes, toMsg) {
 		return A2(
@@ -8472,22 +8496,37 @@ var $author$project$Profile$update = F2(
 				return _Utils_Tuple2(
 					model,
 					A2(
-						$elm$core$Task$perform,
+						$elm$core$Task$attempt,
 						$author$project$Profile$FileRead,
 						$elm$file$File$toUrl(file)));
 			case 'FileRead':
-				var imageFileString = msg.a;
-				var trimImageString = $elm$core$String$trim(imageFileString);
-				var oldProfile = model.profile;
-				var imageString = $author$project$Credentials$stringToImageString(trimImageString);
-				var updateProfile = _Utils_update(
-					oldProfile,
-					{profilepicurl: imageString});
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{imageFile: imageString, profile: updateProfile}),
-					$elm$core$Platform$Cmd$none);
+				if (msg.a.$ === 'Ok') {
+					var imageFileString = msg.a.a;
+					var trimImageString = $elm$core$String$trim(imageFileString);
+					var oldProfile = model.profile;
+					var imageString = $author$project$Credentials$stringToImageString(trimImageString);
+					var updateProfile = _Utils_update(
+						oldProfile,
+						{profilepicurl: imageString});
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{imageFile: imageString, profile: updateProfile}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					var error = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								errors: A2(
+									$elm$core$List$cons,
+									$author$project$Profile$BadRequest(
+										$author$project$Utils$buildErrorMessage(error)),
+									model.errors)
+							}),
+						$elm$core$Platform$Cmd$none);
+				}
 			case 'CheckSessionExpired':
 				var _v2 = msg.a;
 				var session = _v2.a;
@@ -9169,6 +9208,39 @@ var $elm$html$Html$Attributes$src = function (url) {
 };
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
+var $author$project$Profile$viewError = function (checkErrors) {
+	if (checkErrors.$ === 'BadInput') {
+		var err = checkErrors.a;
+		return A2(
+			$elm$html$Html$li,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$p,
+					_List_Nil,
+					_List_fromArray(
+						[
+							$elm$html$Html$text(err)
+						]))
+				]));
+	} else {
+		var err = checkErrors.a;
+		return A2(
+			$elm$html$Html$li,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$p,
+					_List_Nil,
+					_List_fromArray(
+						[
+							$elm$html$Html$text(err)
+						]))
+				]));
+	}
+};
 var $author$project$Profile$view = function (model) {
 	var _v0 = model.userState;
 	switch (_v0.$) {
@@ -9282,7 +9354,11 @@ var $author$project$Profile$view = function (model) {
 													$elm$html$Html$text('Submit')
 												]));
 									}()
-									]))
+									])),
+								A2(
+								$elm$html$Html$ul,
+								_List_Nil,
+								A2($elm$core$List$map, $author$project$Profile$viewError, model.errors))
 							]))
 					]));
 		case 'NotVerified':

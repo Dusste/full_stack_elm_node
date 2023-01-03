@@ -106,7 +106,9 @@ exports.handler = async function (req) {
                     : '';
         }
     } catch (err) {
-        console.log('Something went wrong with Firebase', err.toString());
+        return {
+            statusCode: 403,
+        };
     }
 
     const updateUser = async (parameters) => {
