@@ -8471,7 +8471,7 @@ var $author$project$Profile$update = F2(
 							{
 								errors: _List_fromArray(
 									[
-										$author$project$Profile$BadRequest('Wrong !')
+										$author$project$Profile$BadRequest('Something went wrong !')
 									])
 							}),
 						function () {
@@ -8531,22 +8531,24 @@ var $author$project$Profile$update = F2(
 				var _v2 = msg.a;
 				var session = _v2.a;
 				var maybeTime = _v2.b;
-				if (maybeTime.$ === 'Just') {
-					var time = maybeTime.a;
-					var _v4 = $author$project$Credentials$fromSessionToToken(session);
-					if (_v4.$ === 'Just') {
-						var token = _v4.a;
+				var _v3 = _Utils_Tuple2(
+					maybeTime,
+					$author$project$Credentials$fromSessionToToken(session));
+				if (_v3.a.$ === 'Just') {
+					if (_v3.b.$ === 'Just') {
+						var time = _v3.a.a;
+						var token = _v3.b.a;
 						var tokenString = $author$project$Credentials$fromTokenToString(token);
-						var _v5 = A2($simonh1000$elm_jwt$Jwt$isExpired, time, tokenString);
-						if (_v5.$ === 'Ok') {
-							var isExpired = _v5.a;
+						var _v4 = A2($simonh1000$elm_jwt$Jwt$isExpired, time, tokenString);
+						if (_v4.$ === 'Ok') {
+							var isExpired = _v4.a;
 							return isExpired ? _Utils_Tuple2(
 								_Utils_update(
 									model,
 									{userState: $author$project$Profile$SessionExpired}),
 								A2(
 									$elm$core$Task$perform,
-									function (_v6) {
+									function (_v5) {
 										return $author$project$Profile$LogoutUser;
 									},
 									$elm$core$Process$sleep(5000))) : _Utils_Tuple2(
@@ -8560,10 +8562,18 @@ var $author$project$Profile$update = F2(
 							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 						}
 					} else {
+						var _v7 = _v3.b;
 						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 					}
 				} else {
-					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					if (_v3.b.$ === 'Just') {
+						var _v6 = _v3.a;
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					} else {
+						var _v8 = _v3.a;
+						var _v9 = _v3.b;
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					}
 				}
 			default:
 				return _Utils_Tuple2(model, $author$project$Credentials$logout);
@@ -9209,37 +9219,28 @@ var $elm$html$Html$Attributes$src = function (url) {
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $author$project$Profile$viewError = function (checkErrors) {
-	if (checkErrors.$ === 'BadInput') {
-		var err = checkErrors.a;
-		return A2(
-			$elm$html$Html$li,
-			_List_Nil,
-			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$p,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text(err)
-						]))
-				]));
-	} else {
-		var err = checkErrors.a;
-		return A2(
-			$elm$html$Html$li,
-			_List_Nil,
-			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$p,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text(err)
-						]))
-				]));
-	}
+	return A2(
+		$elm$html$Html$li,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text(
+						function () {
+							if (checkErrors.$ === 'BadInput') {
+								var err = checkErrors.a;
+								return err;
+							} else {
+								var err = checkErrors.a;
+								return err;
+							}
+						}())
+					]))
+			]));
 };
 var $author$project$Profile$view = function (model) {
 	var _v0 = model.userState;

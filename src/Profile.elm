@@ -348,40 +348,41 @@ update msg model =
             ( { model | errors = BadRequest (buildErrorMessage error) :: model.errors }, Cmd.none )
 
         CheckSessionExpired ( session, maybeTime ) ->
-            case maybeTime of
-                Just time ->
-                    case fromSessionToToken session of
-                        Just token ->
-                            let
-                                tokenString =
-                                    fromTokenToString token
-                            in
-                            case Jwt.isExpired time tokenString of
-                                Ok isExpired ->
-                                    if isExpired then
-                                        ( { model
-                                            | userState =
-                                                SessionExpired
-                                          }
-                                        , Process.sleep 5000
-                                            |> Task.perform (\_ -> LogoutUser)
-                                        )
+            case ( maybeTime, fromSessionToToken session ) of
+                ( Just time, Just token ) ->
+                    let
+                        tokenString =
+                            fromTokenToString token
+                    in
+                    case Jwt.isExpired time tokenString of
+                        Ok isExpired ->
+                            if isExpired then
+                                ( { model
+                                    | userState =
+                                        SessionExpired
+                                  }
+                                , Process.sleep 5000
+                                    |> Task.perform (\_ -> LogoutUser)
+                                )
 
-                                    else
-                                        ( { model
-                                            | userState =
-                                                Verified session
-                                          }
-                                        , Cmd.none
-                                        )
+                            else
+                                ( { model
+                                    | userState =
+                                        Verified session
+                                  }
+                                , Cmd.none
+                                )
 
-                                Err _ ->
-                                    ( model, Cmd.none )
-
-                        Nothing ->
+                        Err _ ->
                             ( model, Cmd.none )
 
-                Nothing ->
+                ( Nothing, Just _ ) ->
+                    ( model, Cmd.none )
+
+                ( Just _, Nothing ) ->
+                    ( model, Cmd.none )
+
+                ( Nothing, Nothing ) ->
                     ( model, Cmd.none )
 
         LogoutUser ->
