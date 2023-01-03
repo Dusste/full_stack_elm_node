@@ -30,7 +30,7 @@ exports.handler = async function (req, context) {
             statusCode: 403,
         };
 
-    if (typeof client.execute !== 'function' || !client) {
+    if (!client || typeof client?.execute !== 'function') {
         return {
             statusCode: 500,
             body: `{message: There is no client, payload: ${client}}`,

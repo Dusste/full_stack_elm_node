@@ -29,7 +29,9 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Encode as Encode exposing (encode)
 import Jwt
+import Process
 import Task
+import Time
 
 
 type alias Model =
@@ -37,6 +39,7 @@ type alias Model =
     , errors : List CheckErrors
     , imageFile : ImageString
     , userState : UserState
+    , time : Maybe Time.Posix
     }
 
 
@@ -56,6 +59,7 @@ type UserState
     = NotVerified
     | Verified Session
     | Intruder
+    | SessionExpired
 
 
 type Msg
@@ -68,6 +72,9 @@ type Msg
     | FileRequest
     | FileRequestProceed File
     | FileRead String
+    | GotTime Time.Posix
+    | CheckSessionExpired ( Session, Maybe Time.Posix )
+    | LogoutUser
 
 
 profileSubmitDataEncoder : ProfileSubmitData -> Encode.Value
@@ -92,6 +99,7 @@ initialModel =
     , errors = []
     , imageFile = emptyImageString
     , userState = NotVerified
+    , time = Nothing
     }
 
 
@@ -110,7 +118,7 @@ init session =
                             else
                                 NotVerified
                       }
-                    , Cmd.none
+                    , Task.perform GotTime Time.now
                     )
 
                 Err _ ->
@@ -129,7 +137,7 @@ view model =
     case model.userState of
         Verified session ->
             div
-                []
+                [ onClick <| CheckSessionExpired ( session, model.time ) ]
                 [ h2 [] [ text "Hello" ]
                 , Html.form []
                     [ div []
@@ -214,10 +222,20 @@ view model =
                     [ text "Please create account or login" ]
                 ]
 
+        SessionExpired ->
+            div []
+                [ h2 [] [ text "Your session have expired" ]
+                , p []
+                    [ text "Please login again" ]
+                ]
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        GotTime time ->
+            ( { model | time = Just time }, Cmd.none )
+
         StoreFirstName firstName ->
             let
                 oldProfile =
@@ -306,6 +324,46 @@ update msg model =
                     { oldProfile | profilepicurl = imageString }
             in
             ( { model | profile = updateProfile, imageFile = imageString }, Cmd.none )
+
+        CheckSessionExpired ( session, maybeTime ) ->
+            case maybeTime of
+                Just time ->
+                    case fromSessionToToken session of
+                        Just token ->
+                            let
+                                tokenString =
+                                    fromTokenToString token
+                            in
+                            case Jwt.isExpired time tokenString of
+                                Ok isExpired ->
+                                    if isExpired then
+                                        ( { model
+                                            | userState =
+                                                SessionExpired
+                                          }
+                                        , Process.sleep 5000
+                                            |> Task.perform (\_ -> LogoutUser)
+                                        )
+
+                                    else
+                                        ( { model
+                                            | userState =
+                                                Verified session
+                                          }
+                                        , Cmd.none
+                                        )
+
+                                Err _ ->
+                                    ( model, Cmd.none )
+
+                        Nothing ->
+                            ( model, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        LogoutUser ->
+            ( model, logout )
 
 
 submitProfile : Session -> ProfileSubmitData -> Cmd Msg

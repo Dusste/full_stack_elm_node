@@ -4587,6 +4587,52 @@ var _Bitwise_shiftRightZfBy = F2(function(offset, a)
 });
 
 
+
+function _Time_now(millisToPosix)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		callback(_Scheduler_succeed(millisToPosix(Date.now())));
+	});
+}
+
+var _Time_setInterval = F2(function(interval, task)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var id = setInterval(function() { _Scheduler_rawSpawn(task); }, interval);
+		return function() { clearInterval(id); };
+	});
+});
+
+function _Time_here()
+{
+	return _Scheduler_binding(function(callback)
+	{
+		callback(_Scheduler_succeed(
+			A2($elm$time$Time$customZone, -(new Date().getTimezoneOffset()), _List_Nil)
+		));
+	});
+}
+
+
+function _Time_getZoneName()
+{
+	return _Scheduler_binding(function(callback)
+	{
+		try
+		{
+			var name = $elm$time$Time$Name(Intl.DateTimeFormat().resolvedOptions().timeZone);
+		}
+		catch (e)
+		{
+			var name = $elm$time$Time$Offset(new Date().getTimezoneOffset());
+		}
+		callback(_Scheduler_succeed(name));
+	});
+}
+
+
 function _Url_percentEncode(string)
 {
 	return encodeURIComponent(string);
@@ -5952,6 +5998,9 @@ var $author$project$Login$initialModel = {
 var $author$project$Login$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Login$initialModel, $elm$core$Platform$Cmd$none);
 };
+var $author$project$Profile$GotTime = function (a) {
+	return {$: 'GotTime', a: a};
+};
 var $author$project$Profile$Intruder = {$: 'Intruder'};
 var $author$project$Profile$NotVerified = {$: 'NotVerified'};
 var $author$project$Profile$Verified = function (a) {
@@ -6626,8 +6675,25 @@ var $author$project$Profile$initialModel = {
 	errors: _List_Nil,
 	imageFile: $author$project$Credentials$emptyImageString,
 	profile: {email: '', firstname: '', id: $author$project$Credentials$emptyUserId, isverified: false, profilepicurl: $author$project$Credentials$emptyImageString, verificationstring: $author$project$Credentials$emptyVerificationString},
+	time: $elm$core$Maybe$Nothing,
 	userState: $author$project$Profile$NotVerified
 };
+var $elm$time$Time$Name = function (a) {
+	return {$: 'Name', a: a};
+};
+var $elm$time$Time$Offset = function (a) {
+	return {$: 'Offset', a: a};
+};
+var $elm$time$Time$Zone = F2(
+	function (a, b) {
+		return {$: 'Zone', a: a, b: b};
+	});
+var $elm$time$Time$customZone = $elm$time$Time$Zone;
+var $elm$time$Time$Posix = function (a) {
+	return {$: 'Posix', a: a};
+};
+var $elm$time$Time$millisToPosix = $elm$time$Time$Posix;
+var $elm$time$Time$now = _Time_now($elm$time$Time$millisToPosix);
 var $author$project$Profile$init = function (session) {
 	var _v0 = $author$project$Credentials$fromSessionToToken(session);
 	if (_v0.$ === 'Just') {
@@ -6645,7 +6711,7 @@ var $author$project$Profile$init = function (session) {
 						profile: profileData,
 						userState: profileData.isverified ? $author$project$Profile$Verified(session) : $author$project$Profile$NotVerified
 					}),
-				$elm$core$Platform$Cmd$none);
+				A2($elm$core$Task$perform, $author$project$Profile$GotTime, $elm$time$Time$now));
 		} else {
 			return _Utils_Tuple2(
 				_Utils_update(
@@ -8201,16 +8267,49 @@ var $author$project$Profile$FileRead = function (a) {
 var $author$project$Profile$FileRequestProceed = function (a) {
 	return {$: 'FileRequestProceed', a: a};
 };
-var $elm$time$Time$Posix = function (a) {
-	return {$: 'Posix', a: a};
-};
-var $elm$time$Time$millisToPosix = $elm$time$Time$Posix;
+var $author$project$Profile$LogoutUser = {$: 'LogoutUser'};
+var $author$project$Profile$SessionExpired = {$: 'SessionExpired'};
 var $elm$file$File$Select$file = F2(
 	function (mimes, toMsg) {
 		return A2(
 			$elm$core$Task$perform,
 			toMsg,
 			_File_uploadOne(mimes));
+	});
+var $elm$json$Json$Decode$float = _Json_decodeFloat;
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $elm$core$Basics$round = _Basics_round;
+var $simonh1000$elm_jwt$Jwt$getTokenExpirationMillis = function (token) {
+	var decodeExp = $elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				$elm$json$Json$Decode$int,
+				A2($elm$json$Json$Decode$map, $elm$core$Basics$round, $elm$json$Json$Decode$float)
+			]));
+	return A2(
+		$elm$core$Result$map,
+		function (exp) {
+			return 1000 * exp;
+		},
+		A2(
+			$simonh1000$elm_jwt$Jwt$decodeToken,
+			A2($elm$json$Json$Decode$field, 'exp', decodeExp),
+			token));
+};
+var $elm$time$Time$posixToMillis = function (_v0) {
+	var millis = _v0.a;
+	return millis;
+};
+var $simonh1000$elm_jwt$Jwt$isExpired = F2(
+	function (now, token) {
+		return A2(
+			$elm$core$Result$map,
+			function (millis) {
+				return _Utils_cmp(
+					$elm$time$Time$posixToMillis(now),
+					millis) > 0;
+			},
+			$simonh1000$elm_jwt$Jwt$getTokenExpirationMillis(token));
 	});
 var $author$project$Credentials$stringToImageString = function (str) {
 	return $elm$core$String$isEmpty(str) ? $author$project$Credentials$ImageString($elm$core$Maybe$Nothing) : $author$project$Credentials$ImageString(
@@ -8282,6 +8381,15 @@ var $elm$core$String$trim = _String_trim;
 var $author$project$Profile$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
+			case 'GotTime':
+				var time = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							time: $elm$core$Maybe$Just(time)
+						}),
+					$elm$core$Platform$Cmd$none);
 			case 'StoreFirstName':
 				var firstName = msg.a;
 				var oldProfile = model.profile;
@@ -8367,7 +8475,7 @@ var $author$project$Profile$update = F2(
 						$elm$core$Task$perform,
 						$author$project$Profile$FileRead,
 						$elm$file$File$toUrl(file)));
-			default:
+			case 'FileRead':
 				var imageFileString = msg.a;
 				var trimImageString = $elm$core$String$trim(imageFileString);
 				var oldProfile = model.profile;
@@ -8380,6 +8488,46 @@ var $author$project$Profile$update = F2(
 						model,
 						{imageFile: imageString, profile: updateProfile}),
 					$elm$core$Platform$Cmd$none);
+			case 'CheckSessionExpired':
+				var _v2 = msg.a;
+				var session = _v2.a;
+				var maybeTime = _v2.b;
+				if (maybeTime.$ === 'Just') {
+					var time = maybeTime.a;
+					var _v4 = $author$project$Credentials$fromSessionToToken(session);
+					if (_v4.$ === 'Just') {
+						var token = _v4.a;
+						var tokenString = $author$project$Credentials$fromTokenToString(token);
+						var _v5 = A2($simonh1000$elm_jwt$Jwt$isExpired, time, tokenString);
+						if (_v5.$ === 'Ok') {
+							var isExpired = _v5.a;
+							return isExpired ? _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{userState: $author$project$Profile$SessionExpired}),
+								A2(
+									$elm$core$Task$perform,
+									function (_v6) {
+										return $author$project$Profile$LogoutUser;
+									},
+									$elm$core$Process$sleep(5000))) : _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{
+										userState: $author$project$Profile$Verified(session)
+									}),
+								$elm$core$Platform$Cmd$none);
+						} else {
+							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+						}
+					} else {
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					}
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			default:
+				return _Utils_Tuple2(model, $author$project$Credentials$logout);
 		}
 	});
 var $author$project$Signup$BadRequest = function (a) {
@@ -8990,6 +9138,9 @@ var $author$project$Login$view = function (model) {
 					]))
 			]));
 };
+var $author$project$Profile$CheckSessionExpired = function (a) {
+	return {$: 'CheckSessionExpired', a: a};
+};
 var $author$project$Profile$FileRequest = {$: 'FileRequest'};
 var $author$project$Profile$ProfileSubmit = F2(
 	function (a, b) {
@@ -9025,7 +9176,12 @@ var $author$project$Profile$view = function (model) {
 			var session = _v0.a;
 			return A2(
 				$elm$html$Html$div,
-				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onClick(
+						$author$project$Profile$CheckSessionExpired(
+							_Utils_Tuple2(session, model.time)))
+					]),
 				_List_fromArray(
 					[
 						A2(
@@ -9150,7 +9306,7 @@ var $author$project$Profile$view = function (model) {
 								$elm$html$Html$text('You can\'t access your profile until you verify your email')
 							]))
 					]));
-		default:
+		case 'Intruder':
 			return A2(
 				$elm$html$Html$div,
 				_List_Nil,
@@ -9169,6 +9325,27 @@ var $author$project$Profile$view = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$text('Please create account or login')
+							]))
+					]));
+		default:
+			return A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$h2,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Your session have expired')
+							])),
+						A2(
+						$elm$html$Html$p,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Please login again')
 							]))
 					]));
 	}
