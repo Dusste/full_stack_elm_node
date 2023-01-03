@@ -373,19 +373,39 @@ urlToPage : Url -> Session -> Page
 urlToPage url session =
     case Parser.parse matchRoute url of
         Just Login ->
-            LoginPage (Tuple.first (Login.init ()))
+            case fromSessionToToken session of
+                Just _ ->
+                    NotFoundPage
+
+                Nothing ->
+                    LoginPage (Tuple.first (Login.init ()))
 
         Just Signup ->
-            SignupPage (Tuple.first (Signup.init ()))
+            case fromSessionToToken session of
+                Just _ ->
+                    NotFoundPage
+
+                Nothing ->
+                    SignupPage (Tuple.first (Signup.init ()))
 
         Just (Profile _) ->
-            ProfilePage (Tuple.first (Profile.init session))
+            case fromSessionToToken session of
+                Just _ ->
+                    ProfilePage (Tuple.first (Profile.init session))
+
+                Nothing ->
+                    NotFoundPage
+
+        Just (Verification _) ->
+            case fromSessionToToken session of
+                Just _ ->
+                    VerificationPage (Tuple.first (Verification.init session url.path))
+
+                Nothing ->
+                    NotFoundPage
 
         Just Home ->
             HomePage (Tuple.first (Home.init ()))
-
-        Just (Verification _) ->
-            VerificationPage (Tuple.first (Verification.init session url.path))
 
         Just NotFound ->
             NotFoundPage

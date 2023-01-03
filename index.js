@@ -7693,24 +7693,44 @@ var $author$project$Main$urlToPage = F2(
 			switch (_v0.a.$) {
 				case 'Login':
 					var _v1 = _v0.a;
-					return $author$project$Main$LoginPage(
-						$author$project$Login$init(_Utils_Tuple0).a);
+					var _v2 = $author$project$Credentials$fromSessionToToken(session);
+					if (_v2.$ === 'Just') {
+						return $author$project$Main$NotFoundPage;
+					} else {
+						return $author$project$Main$LoginPage(
+							$author$project$Login$init(_Utils_Tuple0).a);
+					}
 				case 'Signup':
-					var _v2 = _v0.a;
-					return $author$project$Main$SignupPage(
-						$author$project$Signup$init(_Utils_Tuple0).a);
-				case 'Profile':
-					return $author$project$Main$ProfilePage(
-						$author$project$Profile$init(session).a);
-				case 'Home':
 					var _v3 = _v0.a;
+					var _v4 = $author$project$Credentials$fromSessionToToken(session);
+					if (_v4.$ === 'Just') {
+						return $author$project$Main$NotFoundPage;
+					} else {
+						return $author$project$Main$SignupPage(
+							$author$project$Signup$init(_Utils_Tuple0).a);
+					}
+				case 'Profile':
+					var _v5 = $author$project$Credentials$fromSessionToToken(session);
+					if (_v5.$ === 'Just') {
+						return $author$project$Main$ProfilePage(
+							$author$project$Profile$init(session).a);
+					} else {
+						return $author$project$Main$NotFoundPage;
+					}
+				case 'Verification':
+					var _v6 = $author$project$Credentials$fromSessionToToken(session);
+					if (_v6.$ === 'Just') {
+						return $author$project$Main$VerificationPage(
+							A2($author$project$Verification$init, session, url.path).a);
+					} else {
+						return $author$project$Main$NotFoundPage;
+					}
+				case 'Home':
+					var _v7 = _v0.a;
 					return $author$project$Main$HomePage(
 						$author$project$Home$init(_Utils_Tuple0).a);
-				case 'Verification':
-					return $author$project$Main$VerificationPage(
-						A2($author$project$Verification$init, session, url.path).a);
 				default:
-					var _v4 = _v0.a;
+					var _v8 = _v0.a;
 					return $author$project$Main$NotFoundPage;
 			}
 		} else {
