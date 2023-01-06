@@ -1,10 +1,13 @@
 {
     "name": "my_elm_app",
     "version": "0.0.1",
-    "private": true,
     "scripts": {
-        "start": "NODE_ENV=development nodemon app.js & elm-live src/Main.elm  --proxy-prefix=/api --proxy-host=http://localhost:8080/api --pushstate -- --output=index.js"
+        "start": "NODE_ENV=development nodemon app.js & elm-live src/Main.elm  --proxy-prefix=/api --proxy-host=http://localhost:8080/api --pushstate -- --output=index.js",
+        "build": "NODE_ENV=production && npm i && npm run start",
+        "predeploy": "npm run build",
+        "deploy": "gh-pages -d build"
     },
+    "homepage": "https://dusste.github.io/elm_auth/",
     "author": "Dusan Stevanovic",
     "license": "ISC",
     "dependencies": {
@@ -25,6 +28,7 @@
         "uuid": "^8.3.2"
     },
     "devDependencies": {
+        "gh-pages": "^4.0.0",
         "nodemon": "^2.0.20"
     }
 }
