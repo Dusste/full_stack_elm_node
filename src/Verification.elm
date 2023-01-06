@@ -96,7 +96,7 @@ apiCallToVerify session =
             Http.request
                 { method = "PUT"
                 , headers = [ addHeader token ]
-                , url = "/.netlify/functions/verify-put-api"
+                , url = "/api/verify"
                 , expect = Http.expectJson VerifyDone tokenDecoder
                 , body = Http.emptyBody
                 , timeout = Nothing

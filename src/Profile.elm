@@ -396,7 +396,7 @@ submitProfile session data =
             Http.request
                 { method = "PUT"
                 , headers = [ addHeader token ]
-                , url = "/.netlify/functions/profile-put-api"
+                , url = "/api/profile"
                 , body = Http.jsonBody (profileSubmitDataEncoder data)
                 , expect = Http.expectJson ProfileDone tokenDecoder
                 , timeout = Nothing

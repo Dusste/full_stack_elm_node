@@ -123,7 +123,7 @@ sumOfErrors model =
 submitLogin : Credentials -> Cmd Msg
 submitLogin credentials =
     Http.post
-        { url = "/.netlify/functions/login-api"
+        { url = "/api/login"
         , body = Http.jsonBody (credentialsEncoder credentials)
         , expect = Http.expectJson LoginDone tokenDecoder
         }

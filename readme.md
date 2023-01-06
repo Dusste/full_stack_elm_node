@@ -1,8 +1,8 @@
 # My Elm app
 
-## Full authentication flow via serverless functions and Elm
+## Full authentication/authorization flow via Node and Elm
 
-### Elm / Astra DataStax / Firebase Storage / Netlify
+### Elm / Astra DataStax / Firebase Storage / Express
 
 -   Node == v14
--   Run: netlify dev
+-   Run: npm run start

@@ -2,9 +2,11 @@ module Main exposing (..)
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav
+import Chat
 import Credentials
     exposing
         ( Session
+        , SocketMessageData
         , UserId
         , VerificationString
         , decodeToSession
@@ -13,6 +15,7 @@ import Credentials
         , fromTokenToString
         , imageStringToMaybeString
         , logout
+        , socketMessageChanges
         , subscriptionChanges
         , userIdParser
         , userIdToString
@@ -29,6 +32,8 @@ import Login
 import Minidenticons exposing (identicon)
 import Profile
 import Signup
+import Task
+import Time
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser, s)
 import Verification
@@ -47,6 +52,7 @@ type Page
     | SignupPage Signup.Model
     | ProfilePage Profile.Model
     | HomePage Home.Model
+    | ChatPage Chat.Model
     | VerificationPage Verification.Model
     | NotFoundPage
 
@@ -56,6 +62,7 @@ type Route
     | Signup
     | Profile UserId
     | Home
+    | Chat
     | Verification VerificationString
     | NotFound
 
@@ -67,10 +74,13 @@ type Msg
     | GotLoginMsg Login.Msg
     | GotProfileMsg Profile.Msg
     | GotHomeMsg Home.Msg
+    | GotChatMsg Chat.Msg
     | GotVerificationMsg Verification.Msg
     | GotSubscriptionChangeMsg Session
+    | GotSubscriptionSocketMsg SocketMessageData
     | GetLogout
     | OpenDropdown
+    | ChatNewMessage
 
 
 content : Model -> Html Msg
@@ -91,6 +101,10 @@ content model =
         HomePage homeModel ->
             Home.view homeModel
                 |> Html.map GotHomeMsg
+
+        ChatPage chatModel ->
+            Chat.view chatModel
+                |> Html.map GotChatMsg
 
         VerificationPage verificationModel ->
             Verification.view verificationModel
@@ -183,10 +197,18 @@ viewHeader { page, session, openDropdown, key } =
 
                         Err err ->
                             li [] [ text (Debug.toString err) ]
+                    , li
+                        [ classList
+                            [ ( "active"
+                              , isActive { link = Chat, page = page }
+                              )
+                            ]
+                        ]
+                        [ a [ href "/chat" ] [ text "Chat" ] ]
+                    , li
+                        []
+                        [ a [ href "/", onClick GetLogout ] [ text "logout" ] ]
                     ]
-                , li
-                    []
-                    [ a [ href "/", onClick GetLogout ] [ text "logout" ] ]
                 ]
 
         Nothing ->
@@ -246,6 +268,12 @@ isActive { link, page } =
             True
 
         ( Home, _ ) ->
+            False
+
+        ( Chat, ChatPage _ ) ->
+            True
+
+        ( Chat, _ ) ->
             False
 
         ( Verification _, VerificationPage _ ) ->
@@ -312,6 +340,18 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
+        GotChatMsg chatMsg ->
+            case model.page of
+                ChatPage chatModel ->
+                    let
+                        ( chatModelFromChat, chatMsgFromChat ) =
+                            Chat.update chatMsg chatModel
+                    in
+                    ( { model | page = ChatPage chatModelFromChat }, Cmd.map GotChatMsg chatMsgFromChat )
+
+                _ ->
+                    ( model, Cmd.none )
+
         GotVerificationMsg verificationMsg ->
             case model.page of
                 VerificationPage verificationModel ->
@@ -351,8 +391,30 @@ update msg model =
                     Nav.pushUrl model.key "/login"
             )
 
+        GotSubscriptionSocketMsg socketMsgObj ->
+            let
+                ( chatModelFromChat, chatMsgFromChat ) =
+                    Chat.init model.session <| Just socketMsgObj
+            in
+            ( { model | page = ChatPage chatModelFromChat }, Cmd.map GotChatMsg chatMsgFromChat )
+
+        -- case model.page of
+        --     ChatPage chatModel ->
+        --         let
+        --             ( chatModelFromChat, chatMsgFromChat ) =
+        --                 Chat.update msgToChatMsg chatModel
+        --         in
+        --         ( { model | page = ChatPage chatModelFromChat }, Cmd.map GotChatMsg chatMsgFromChat )
+        --     _ ->
+        --         ( model, Cmd.none )
+        -- (model, GotSubscriptionSocketMsg)
+        -- in
+        -- ( model, Cmd.none )
         GetLogout ->
             ( model, logout )
+
+        ChatNewMessage ->
+            ( model, Cmd.none )
 
         OpenDropdown ->
             ( { model | openDropdown = not model.openDropdown }, Cmd.none )
@@ -365,6 +427,7 @@ matchRoute =
         , Parser.map Login (s "login")
         , Parser.map Profile (s "profile" </> userIdParser)
         , Parser.map Signup (s "signup")
+        , Parser.map Chat (s "chat")
         , Parser.map Verification (s "verify-email" </> verifictionStringParser)
         ]
 
@@ -400,6 +463,14 @@ urlToPage url session =
             case fromSessionToToken session of
                 Just _ ->
                     VerificationPage (Tuple.first (Verification.init session url.path))
+
+                Nothing ->
+                    NotFoundPage
+
+        Just Chat ->
+            case fromSessionToToken session of
+                Just _ ->
+                    ChatPage (Tuple.first (Chat.init session Nothing))
 
                 Nothing ->
                     NotFoundPage
@@ -461,6 +532,13 @@ initCurrentPage ( url, model, existingCmds ) =
             in
             ( { model | page = HomePage pageModel }, Cmd.map GotHomeMsg pageCmds )
 
+        ChatPage _ ->
+            let
+                ( pageModel, pageCmds ) =
+                    Chat.init model.session Nothing
+            in
+            ( { model | page = ChatPage pageModel }, Cmd.map GotChatMsg pageCmds )
+
         VerificationPage _ ->
             let
                 ( pageModel, pageCmds ) =
@@ -490,7 +568,10 @@ init flags url key =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    subscriptionChanges GotSubscriptionChangeMsg model.key
+    Sub.batch
+        [ subscriptionChanges GotSubscriptionChangeMsg model.key
+        , socketMessageChanges GotSubscriptionSocketMsg model.key
+        ]
 
 
 main : Program Value Model Msg

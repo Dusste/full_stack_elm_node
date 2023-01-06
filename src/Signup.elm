@@ -162,7 +162,7 @@ sumOfErrors model =
 submitSignup : Credentials -> Cmd Msg
 submitSignup credentials =
     Http.post
-        { url = "/.netlify/functions/signup-api"
+        { url = "/api/signup"
         , body = Http.jsonBody (credentialsEncoder credentials)
         , expect = Http.expectJson SignupDone tokenDecoder
         }

@@ -5953,6 +5953,12 @@ var $author$project$Credentials$decodeToSession = F2(
 			return $author$project$Credentials$Guest;
 		}
 	});
+var $author$project$Main$ChatPage = function (a) {
+	return {$: 'ChatPage', a: a};
+};
+var $author$project$Main$GotChatMsg = function (a) {
+	return {$: 'GotChatMsg', a: a};
+};
 var $author$project$Main$GotHomeMsg = function (a) {
 	return {$: 'GotHomeMsg', a: a};
 };
@@ -5983,28 +5989,6 @@ var $author$project$Main$SignupPage = function (a) {
 };
 var $author$project$Main$VerificationPage = function (a) {
 	return {$: 'VerificationPage', a: a};
-};
-var $author$project$Home$initialModel = {};
-var $elm$core$Platform$Cmd$batch = _Platform_batch;
-var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
-var $author$project$Home$init = function (_v0) {
-	return _Utils_Tuple2($author$project$Home$initialModel, $elm$core$Platform$Cmd$none);
-};
-var $author$project$Login$initialModel = {
-	errors: _List_Nil,
-	isLoading: false,
-	loginCredentials: {email: '', password: ''}
-};
-var $author$project$Login$init = function (_v0) {
-	return _Utils_Tuple2($author$project$Login$initialModel, $elm$core$Platform$Cmd$none);
-};
-var $author$project$Profile$GotTime = function (a) {
-	return {$: 'GotTime', a: a};
-};
-var $author$project$Profile$Intruder = {$: 'Intruder'};
-var $author$project$Profile$NotVerified = {$: 'NotVerified'};
-var $author$project$Profile$Verified = function (a) {
-	return {$: 'Verified', a: a};
 };
 var $simonh1000$elm_jwt$Jwt$TokenDecodeError = function (a) {
 	return {$: 'TokenDecodeError', a: a};
@@ -6668,6 +6652,77 @@ var $author$project$Credentials$fromTokenToString = function (_v0) {
 	var string = _v0.a;
 	return string;
 };
+var $author$project$Chat$initialModel = {
+	message: '',
+	receivedSocketData: {
+		clientId: '',
+		connectionId: '',
+		data: {message: ''},
+		id: '',
+		name: '',
+		timestamp: 0
+	}
+};
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Credentials$initiateSocketChannel = _Platform_outgoingPort('initiateSocketChannel', $elm$json$Json$Encode$string);
+var $elm$core$Platform$Cmd$batch = _Platform_batch;
+var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$Credentials$userIdToString = function (_v0) {
+	var id = _v0.a;
+	return id;
+};
+var $author$project$Chat$init = F2(
+	function (session, maybeSocket) {
+		var _v0 = $author$project$Credentials$fromSessionToToken(session);
+		if (_v0.$ === 'Just') {
+			var token = _v0.a;
+			var _v1 = A2(
+				$simonh1000$elm_jwt$Jwt$decodeToken,
+				$author$project$Credentials$decodeTokenData,
+				$author$project$Credentials$fromTokenToString(token));
+			if (_v1.$ === 'Ok') {
+				var resultTokenRecord = _v1.a;
+				if (maybeSocket.$ === 'Just') {
+					var receivedSocketData = maybeSocket.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							$author$project$Chat$initialModel,
+							{receivedSocketData: receivedSocketData}),
+						$author$project$Credentials$initiateSocketChannel(
+							$author$project$Credentials$userIdToString(resultTokenRecord.id)));
+				} else {
+					return _Utils_Tuple2(
+						$author$project$Chat$initialModel,
+						$author$project$Credentials$initiateSocketChannel(
+							$author$project$Credentials$userIdToString(resultTokenRecord.id)));
+				}
+			} else {
+				return _Utils_Tuple2($author$project$Chat$initialModel, $elm$core$Platform$Cmd$none);
+			}
+		} else {
+			return _Utils_Tuple2($author$project$Chat$initialModel, $elm$core$Platform$Cmd$none);
+		}
+	});
+var $author$project$Home$initialModel = {};
+var $author$project$Home$init = function (_v0) {
+	return _Utils_Tuple2($author$project$Home$initialModel, $elm$core$Platform$Cmd$none);
+};
+var $author$project$Login$initialModel = {
+	errors: _List_Nil,
+	isLoading: false,
+	loginCredentials: {email: '', password: ''}
+};
+var $author$project$Login$init = function (_v0) {
+	return _Utils_Tuple2($author$project$Login$initialModel, $elm$core$Platform$Cmd$none);
+};
+var $author$project$Profile$GotTime = function (a) {
+	return {$: 'GotTime', a: a};
+};
+var $author$project$Profile$Intruder = {$: 'Intruder'};
+var $author$project$Profile$NotVerified = {$: 'NotVerified'};
+var $author$project$Profile$Verified = function (a) {
+	return {$: 'Verified', a: a};
+};
 var $author$project$Credentials$emptyImageString = $author$project$Credentials$ImageString($elm$core$Maybe$Nothing);
 var $author$project$Credentials$emptyUserId = $author$project$Credentials$UserId('');
 var $author$project$Credentials$emptyVerificationString = $author$project$Credentials$VerificationString('');
@@ -6835,10 +6890,21 @@ var $author$project$Main$initCurrentPage = function (_v0) {
 						page: $author$project$Main$HomePage(pageModel)
 					}),
 				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotHomeMsg, pageCmds));
-		case 'VerificationPage':
-			var _v5 = A2($author$project$Verification$init, model.session, url.path);
+		case 'ChatPage':
+			var _v5 = A2($author$project$Chat$init, model.session, $elm$core$Maybe$Nothing);
 			var pageModel = _v5.a;
 			var pageCmds = _v5.b;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{
+						page: $author$project$Main$ChatPage(pageModel)
+					}),
+				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotChatMsg, pageCmds));
+		case 'VerificationPage':
+			var _v6 = A2($author$project$Verification$init, model.session, url.path);
+			var pageModel = _v6.a;
+			var pageCmds = _v6.b;
 			return _Utils_Tuple2(
 				_Utils_update(
 					model,
@@ -6847,9 +6913,9 @@ var $author$project$Main$initCurrentPage = function (_v0) {
 					}),
 				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotVerificationMsg, pageCmds));
 		default:
-			var _v6 = $author$project$Profile$init(model.session);
-			var pageModel = _v6.a;
-			var pageCmds = _v6.b;
+			var _v7 = $author$project$Profile$init(model.session);
+			var pageModel = _v7.a;
+			var pageCmds = _v7.b;
 			return _Utils_Tuple2(
 				_Utils_update(
 					model,
@@ -6859,6 +6925,7 @@ var $author$project$Main$initCurrentPage = function (_v0) {
 				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotProfileMsg, pageCmds));
 	}
 };
+var $author$project$Main$Chat = {$: 'Chat'};
 var $author$project$Main$Home = {$: 'Home'};
 var $author$project$Main$Login = {$: 'Login'};
 var $author$project$Main$Profile = function (a) {
@@ -7048,6 +7115,10 @@ var $author$project$Main$matchRoute = $elm$url$Url$Parser$oneOf(
 			$elm$url$Url$Parser$map,
 			$author$project$Main$Signup,
 			$elm$url$Url$Parser$s('signup')),
+			A2(
+			$elm$url$Url$Parser$map,
+			$author$project$Main$Chat,
+			$elm$url$Url$Parser$s('chat')),
 			A2(
 			$elm$url$Url$Parser$map,
 			$author$project$Main$Verification,
@@ -7725,12 +7796,21 @@ var $author$project$Main$urlToPage = F2(
 					} else {
 						return $author$project$Main$NotFoundPage;
 					}
-				case 'Home':
+				case 'Chat':
 					var _v7 = _v0.a;
+					var _v8 = $author$project$Credentials$fromSessionToToken(session);
+					if (_v8.$ === 'Just') {
+						return $author$project$Main$ChatPage(
+							A2($author$project$Chat$init, session, $elm$core$Maybe$Nothing).a);
+					} else {
+						return $author$project$Main$NotFoundPage;
+					}
+				case 'Home':
+					var _v9 = _v0.a;
 					return $author$project$Main$HomePage(
 						$author$project$Home$init(_Utils_Tuple0).a);
 				default:
-					var _v8 = _v0.a;
+					var _v10 = _v0.a;
 					return $author$project$Main$NotFoundPage;
 			}
 		} else {
@@ -7752,6 +7832,76 @@ var $author$project$Main$init = F3(
 var $author$project$Main$GotSubscriptionChangeMsg = function (a) {
 	return {$: 'GotSubscriptionChangeMsg', a: a};
 };
+var $author$project$Main$GotSubscriptionSocketMsg = function (a) {
+	return {$: 'GotSubscriptionSocketMsg', a: a};
+};
+var $elm$core$Platform$Sub$batch = _Platform_batch;
+var $author$project$Credentials$SocketMessageData = F6(
+	function (name, id, clientId, connectionId, timestamp, data) {
+		return {clientId: clientId, connectionId: connectionId, data: data, id: id, name: name, timestamp: timestamp};
+	});
+var $author$project$Credentials$DataMessage = function (message) {
+	return {message: message};
+};
+var $author$project$Credentials$decodeMessage = A3(
+	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+	'message',
+	$elm$json$Json$Decode$string,
+	$elm$json$Json$Decode$succeed($author$project$Credentials$DataMessage));
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $author$project$Credentials$decodeSocketMessage = A3(
+	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+	'data',
+	$author$project$Credentials$decodeMessage,
+	A3(
+		$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+		'timestamp',
+		$elm$json$Json$Decode$int,
+		A3(
+			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+			'connectionId',
+			$elm$json$Json$Decode$string,
+			A3(
+				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+				'clientId',
+				$elm$json$Json$Decode$string,
+				A3(
+					$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+					'id',
+					$elm$json$Json$Decode$string,
+					A3(
+						$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+						'name',
+						$elm$json$Json$Decode$string,
+						$elm$json$Json$Decode$succeed($author$project$Credentials$SocketMessageData)))))));
+var $elm$core$Debug$toString = _Debug_toString;
+var $author$project$Credentials$decodeToSocket = F2(
+	function (key, value) {
+		var result = A2($elm$json$Json$Decode$decodeValue, $author$project$Credentials$decodeSocketMessage, value);
+		if (result.$ === 'Ok') {
+			var obj = result.a;
+			return obj;
+		} else {
+			var err = result.a;
+			return {
+				clientId: '',
+				connectionId: '',
+				data: {message: ''},
+				id: '',
+				name: $elm$core$Debug$toString(err),
+				timestamp: 0
+			};
+		}
+	});
+var $author$project$Credentials$publishSocketMessage = _Platform_incomingPort('publishSocketMessage', $elm$json$Json$Decode$value);
+var $author$project$Credentials$socketMessageChanges = F2(
+	function (toMsg, key) {
+		return $author$project$Credentials$publishSocketMessage(
+			function (val) {
+				return toMsg(
+					A2($author$project$Credentials$decodeToSocket, key, val));
+			});
+	});
 var $author$project$Credentials$onSessionChange = _Platform_incomingPort('onSessionChange', $elm$json$Json$Decode$value);
 var $author$project$Credentials$subscriptionChanges = F2(
 	function (toMsg, key) {
@@ -7762,7 +7912,12 @@ var $author$project$Credentials$subscriptionChanges = F2(
 			});
 	});
 var $author$project$Main$subscriptions = function (model) {
-	return A2($author$project$Credentials$subscriptionChanges, $author$project$Main$GotSubscriptionChangeMsg, model.key);
+	return $elm$core$Platform$Sub$batch(
+		_List_fromArray(
+			[
+				A2($author$project$Credentials$subscriptionChanges, $author$project$Main$GotSubscriptionChangeMsg, model.key),
+				A2($author$project$Credentials$socketMessageChanges, $author$project$Main$GotSubscriptionSocketMsg, model.key)
+			]));
 };
 var $elm$browser$Browser$Navigation$load = _Browser_load;
 var $elm$core$Maybe$destruct = F3(
@@ -7775,7 +7930,6 @@ var $elm$core$Maybe$destruct = F3(
 		}
 	});
 var $elm$json$Json$Encode$null = _Json_encodeNull;
-var $elm$json$Json$Encode$string = _Json_wrap;
 var $author$project$Credentials$storeSession = _Platform_outgoingPort(
 	'storeSession',
 	function ($) {
@@ -7827,6 +7981,24 @@ var $elm$url$Url$toString = function (url) {
 					_Utils_ap(http, url.host)),
 				url.path)));
 };
+var $author$project$Credentials$sendMessageToSocket = _Platform_outgoingPort('sendMessageToSocket', $elm$json$Json$Encode$string);
+var $author$project$Chat$update = F2(
+	function (msg, model) {
+		if (msg.$ === 'StoreMessage') {
+			var message = msg.a;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{message: message}),
+				$elm$core$Platform$Cmd$none);
+		} else {
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{message: ''}),
+				$author$project$Credentials$sendMessageToSocket(model.message));
+		}
+	});
 var $author$project$Home$update = F2(
 	function (msg, model) {
 		return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
@@ -8162,7 +8334,7 @@ var $author$project$Login$submitLogin = function (credentials) {
 			body: $elm$http$Http$jsonBody(
 				$author$project$Login$credentialsEncoder(credentials)),
 			expect: A2($elm$http$Http$expectJson, $author$project$Login$LoginDone, $author$project$Credentials$tokenDecoder),
-			url: '/.netlify/functions/login-api'
+			url: '/api/login'
 		});
 };
 var $author$project$Login$BadEmail = function (a) {
@@ -8321,7 +8493,6 @@ var $elm$file$File$Select$file = F2(
 			_File_uploadOne(mimes));
 	});
 var $elm$json$Json$Decode$float = _Json_decodeFloat;
-var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $elm$core$Basics$round = _Basics_round;
 var $simonh1000$elm_jwt$Jwt$getTokenExpirationMillis = function (token) {
 	var decodeExp = $elm$json$Json$Decode$oneOf(
@@ -8414,7 +8585,7 @@ var $author$project$Profile$submitProfile = F2(
 					method: 'PUT',
 					timeout: $elm$core$Maybe$Nothing,
 					tracker: $elm$core$Maybe$Nothing,
-					url: '/.netlify/functions/profile-put-api'
+					url: '/api/profile'
 				});
 		} else {
 			return $elm$core$Platform$Cmd$none;
@@ -8623,7 +8794,7 @@ var $author$project$Signup$submitSignup = function (credentials) {
 			body: $elm$http$Http$jsonBody(
 				$author$project$Signup$credentialsEncoder(credentials)),
 			expect: A2($elm$http$Http$expectJson, $author$project$Signup$SignupDone, $author$project$Credentials$tokenDecoder),
-			url: '/.netlify/functions/signup-api'
+			url: '/api/signup'
 		});
 };
 var $author$project$Signup$BadEmail = function (a) {
@@ -8765,7 +8936,7 @@ var $author$project$Verification$apiCallToVerify = function (session) {
 				method: 'PUT',
 				timeout: $elm$core$Maybe$Nothing,
 				tracker: $elm$core$Maybe$Nothing,
-				url: '/.netlify/functions/verify-put-api'
+				url: '/api/verify'
 			});
 	} else {
 		return $elm$core$Platform$Cmd$none;
@@ -8809,10 +8980,6 @@ var $author$project$Verification$update = F2(
 							A2($elm$json$Json$Encode$encode, 0, tokenValue))));
 		}
 	});
-var $author$project$Credentials$userIdToString = function (_v0) {
-	var id = _v0.a;
-	return id;
-};
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -8896,14 +9063,32 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
+			case 'GotChatMsg':
+				var chatMsg = msg.a;
+				var _v8 = model.page;
+				if (_v8.$ === 'ChatPage') {
+					var chatModel = _v8.a;
+					var _v9 = A2($author$project$Chat$update, chatMsg, chatModel);
+					var chatModelFromChat = _v9.a;
+					var chatMsgFromChat = _v9.b;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								page: $author$project$Main$ChatPage(chatModelFromChat)
+							}),
+						A2($elm$core$Platform$Cmd$map, $author$project$Main$GotChatMsg, chatMsgFromChat));
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
 			case 'GotVerificationMsg':
 				var verificationMsg = msg.a;
-				var _v8 = model.page;
-				if (_v8.$ === 'VerificationPage') {
-					var verificationModel = _v8.a;
-					var _v9 = A2($author$project$Verification$update, verificationMsg, verificationModel);
-					var verificationModelFromVerification = _v9.a;
-					var verificationMsgFromVerification = _v9.b;
+				var _v10 = model.page;
+				if (_v10.$ === 'VerificationPage') {
+					var verificationModel = _v10.a;
+					var _v11 = A2($author$project$Verification$update, verificationMsg, verificationModel);
+					var verificationModelFromVerification = _v11.a;
+					var verificationMsgFromVerification = _v11.b;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
@@ -8916,12 +9101,12 @@ var $author$project$Main$update = F2(
 				}
 			case 'GotSignupMsg':
 				var signupMsg = msg.a;
-				var _v10 = model.page;
-				if (_v10.$ === 'SignupPage') {
-					var signupModel = _v10.a;
-					var _v11 = A2($author$project$Signup$update, signupMsg, signupModel);
-					var signupModelFromSignup = _v11.a;
-					var signupMsgFromSignup = _v11.b;
+				var _v12 = model.page;
+				if (_v12.$ === 'SignupPage') {
+					var signupModel = _v12.a;
+					var _v13 = A2($author$project$Signup$update, signupMsg, signupModel);
+					var signupModelFromSignup = _v13.a;
+					var signupMsgFromSignup = _v13.b;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
@@ -8939,15 +9124,15 @@ var $author$project$Main$update = F2(
 						model,
 						{session: session}),
 					function () {
-						var _v12 = $author$project$Credentials$fromSessionToToken(session);
-						if (_v12.$ === 'Just') {
-							var token = _v12.a;
-							var _v13 = A2(
+						var _v14 = $author$project$Credentials$fromSessionToToken(session);
+						if (_v14.$ === 'Just') {
+							var token = _v14.a;
+							var _v15 = A2(
 								$simonh1000$elm_jwt$Jwt$decodeToken,
 								$author$project$Credentials$decodeTokenData,
 								$author$project$Credentials$fromTokenToString(token));
-							if (_v13.$ === 'Ok') {
-								var resultTokenRecord = _v13.a;
+							if (_v15.$ === 'Ok') {
+								var resultTokenRecord = _v15.a;
 								return A2(
 									$elm$browser$Browser$Navigation$pushUrl,
 									model.key,
@@ -8959,8 +9144,25 @@ var $author$project$Main$update = F2(
 							return A2($elm$browser$Browser$Navigation$pushUrl, model.key, '/login');
 						}
 					}());
+			case 'GotSubscriptionSocketMsg':
+				var socketMsgObj = msg.a;
+				var _v16 = A2(
+					$author$project$Chat$init,
+					model.session,
+					$elm$core$Maybe$Just(socketMsgObj));
+				var chatModelFromChat = _v16.a;
+				var chatMsgFromChat = _v16.b;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							page: $author$project$Main$ChatPage(chatModelFromChat)
+						}),
+					A2($elm$core$Platform$Cmd$map, $author$project$Main$GotChatMsg, chatMsgFromChat));
 			case 'GetLogout':
 				return _Utils_Tuple2(model, $author$project$Credentials$logout);
+			case 'ChatNewMessage':
+				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 			default:
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -8974,42 +9176,15 @@ var $elm$html$Html$map = $elm$virtual_dom$VirtualDom$map;
 var $elm$html$Html$p = _VirtualDom_node('p');
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$html$Html$h2 = _VirtualDom_node('h2');
-var $author$project$Home$view = function (model) {
-	return A2(
-		$elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$h2,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Hello and welcome to our awesome website !')
-					])),
-				A2(
-				$elm$html$Html$p,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('which is still under construction')
-					]))
-			]));
-};
-var $author$project$Login$LoginSubmit = function (a) {
-	return {$: 'LoginSubmit', a: a};
-};
-var $author$project$Login$StoreEmail = function (a) {
-	return {$: 'StoreEmail', a: a};
-};
-var $author$project$Login$StorePassword = function (a) {
-	return {$: 'StorePassword', a: a};
+var $author$project$Chat$MessageSubmit = {$: 'MessageSubmit'};
+var $author$project$Chat$StoreMessage = function (a) {
+	return {$: 'StoreMessage', a: a};
 };
 var $elm$html$Html$br = _VirtualDom_node('br');
 var $elm$html$Html$button = _VirtualDom_node('button');
+var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$html$Html$form = _VirtualDom_node('form');
+var $elm$html$Html$h2 = _VirtualDom_node('h2');
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
@@ -9065,6 +9240,99 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $elm$html$Html$ul = _VirtualDom_node('ul');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+var $author$project$Chat$view = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$h2,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Chat')
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$ul,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text(model.receivedSocketData.data.message)
+							]))
+					])),
+				A2(
+				$elm$html$Html$form,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('SomeUser:'),
+								A2($elm$html$Html$br, _List_Nil, _List_Nil),
+								A2(
+								$elm$html$Html$input,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$type_('text'),
+										$elm$html$Html$Events$onInput($author$project$Chat$StoreMessage),
+										$elm$html$Html$Attributes$value(model.message)
+									]),
+								_List_Nil)
+							])),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$type_('button'),
+								$elm$html$Html$Events$onClick($author$project$Chat$MessageSubmit)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Send message')
+							]))
+					]))
+			]));
+};
+var $author$project$Home$view = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$h2,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Hello and welcome to our awesome website !')
+					])),
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('which is still under construction')
+					]))
+			]));
+};
+var $author$project$Login$LoginSubmit = function (a) {
+	return {$: 'LoginSubmit', a: a};
+};
+var $author$project$Login$StoreEmail = function (a) {
+	return {$: 'StoreEmail', a: a};
+};
+var $author$project$Login$StorePassword = function (a) {
+	return {$: 'StorePassword', a: a};
+};
 var $elm$html$Html$li = _VirtualDom_node('li');
 var $author$project$Login$viewError = function (checkErrors) {
 	switch (checkErrors.$) {
@@ -9799,6 +10067,12 @@ var $author$project$Main$content = function (model) {
 				$elm$html$Html$map,
 				$author$project$Main$GotHomeMsg,
 				$author$project$Home$view(homeModel));
+		case 'ChatPage':
+			var chatModel = _v0.a;
+			return A2(
+				$elm$html$Html$map,
+				$author$project$Main$GotChatMsg,
+				$author$project$Chat$view(chatModel));
 		case 'VerificationPage':
 			var verificationModel = _v0.a;
 			return A2(
@@ -9955,6 +10229,14 @@ var $author$project$Main$isActive = function (_v0) {
 				var _v7 = _v1.a;
 				return false;
 			}
+		case 'Chat':
+			if (_v1.b.$ === 'ChatPage') {
+				var _v8 = _v1.a;
+				return true;
+			} else {
+				var _v9 = _v1.a;
+				return false;
+			}
 		case 'Verification':
 			if (_v1.b.$ === 'VerificationPage') {
 				return true;
@@ -9962,13 +10244,12 @@ var $author$project$Main$isActive = function (_v0) {
 				return false;
 			}
 		default:
-			var _v8 = _v1.a;
+			var _v10 = _v1.a;
 			return false;
 	}
 };
 var $elm$html$Html$nav = _VirtualDom_node('nav');
 var $elm$html$Html$span = _VirtualDom_node('span');
-var $elm$core$Debug$toString = _Debug_toString;
 var $elm$html$Html$Attributes$width = function (n) {
 	return A2(
 		_VirtualDom_attribute,
@@ -10185,23 +10466,49 @@ var $author$project$Main$viewHeader = function (_v0) {
 											$elm$core$Debug$toString(err))
 										]));
 							}
-						}()
-						])),
-					A2(
-					$elm$html$Html$li,
-					_List_Nil,
-					_List_fromArray(
-						[
+						}(),
 							A2(
-							$elm$html$Html$a,
+							$elm$html$Html$li,
 							_List_fromArray(
 								[
-									$elm$html$Html$Attributes$href('/'),
-									$elm$html$Html$Events$onClick($author$project$Main$GetLogout)
+									$elm$html$Html$Attributes$classList(
+									_List_fromArray(
+										[
+											_Utils_Tuple2(
+											'active',
+											$author$project$Main$isActive(
+												{link: $author$project$Main$Chat, page: page}))
+										]))
 								]),
 							_List_fromArray(
 								[
-									$elm$html$Html$text('logout')
+									A2(
+									$elm$html$Html$a,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$href('/chat')
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text('Chat')
+										]))
+								])),
+							A2(
+							$elm$html$Html$li,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$a,
+									_List_fromArray(
+										[
+											$elm$html$Html$Attributes$href('/'),
+											$elm$html$Html$Events$onClick($author$project$Main$GetLogout)
+										]),
+									_List_fromArray(
+										[
+											$elm$html$Html$text('logout')
+										]))
 								]))
 						]))
 				]));

@@ -3,21 +3,28 @@
     "version": "0.0.1",
     "private": true,
     "scripts": {
-        "start": "elm-live src/Main.elm --pushstate -- --output=index.js"
+        "start": "NODE_ENV=development nodemon app.js & elm-live src/Main.elm  --proxy-prefix=/api --proxy-host=http://localhost:8080/api --pushstate -- --output=index.js"
     },
     "author": "Dusan Stevanovic",
     "license": "ISC",
     "dependencies": {
         "@sendgrid/mail": "^7.7.0",
         "bcrypt": "^5.0.1",
+        "body-parser": "^1.20.1",
         "cassandra-driver": "^4.6.4",
+        "dotenv": "^16.0.3",
         "elm": "^0.19.1-5",
         "elm-hot": "^1.0.1",
         "elm-live": "^4.0.2",
+        "express": "^4.18.2",
         "firebase": "^9.15.0",
         "jsonwebtoken": "^8.5.1",
         "netlify-cli": "^12.0.11",
         "prettier": "^2.2.1",
+        "socket.io": "^4.5.4",
         "uuid": "^8.3.2"
+    },
+    "devDependencies": {
+        "nodemon": "^2.0.20"
     }
 }

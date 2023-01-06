@@ -1,6 +1,7 @@
 port module Credentials exposing
     ( ImageString
     , Session
+    , SocketMessageData
     , Token
     , UnwrappedTokenData
     , UserId
@@ -17,8 +18,11 @@ port module Credentials exposing
     , fromTokenToString
     , guest
     , imageStringToMaybeString
+    , initiateSocketChannel
     , logout
     , onSessionChange
+    , sendMessageToSocket
+    , socketMessageChanges
     , storeSession
     , stringToImageString
     , subscriptionChanges
@@ -31,8 +35,8 @@ port module Credentials exposing
 
 import Browser.Navigation as Nav
 import Http exposing (Header, header)
-import Json.Decode as Decode exposing (Decoder, Value, at, bool, map6, string)
-import Json.Decode.Pipeline exposing (required)
+import Json.Decode as Decode exposing (Decoder, Value, at, bool, int, map6, string)
+import Json.Decode.Pipeline exposing (required, requiredAt)
 import Json.Encode as Encode exposing (Value)
 import Url.Parser exposing (Parser, custom)
 
@@ -52,6 +56,43 @@ type VerificationString
 
 type UserId
     = UserId String
+
+
+type alias SocketMessageData =
+    { name : String
+    , id : String
+    , clientId : String
+    , connectionId : String
+    , timestamp : Int
+    , data : DataMessage
+    }
+
+
+type alias DataMessage =
+    { message : String
+    }
+
+
+
+--    t{ name = Debug.toString err
+--     , id = ""
+--     , clientId = ""
+--     , connectionId = ""
+--     , timestamp = 0
+--     , data =
+--         { message = ""
+--         }
+--     }
+-- {
+--     name: 'hello-world-message',
+--     id: 'W46cHmYS-f:5:0',
+--     clientId: '123',
+--     connectionId: 'W46cHmYS-f',
+--     encoding: null,
+--     data: {
+--         message: '{msgType: hello-there-guys, msgText: Hello from Elm Side !}',
+--     },
+-- };
 
 
 userIdToString : UserId -> String
@@ -201,12 +242,21 @@ encodeToken (Token token) =
 port storeSession : Maybe String -> Cmd msg
 
 
+port onSessionChange : (Value -> msg) -> Sub msg
+
+
+port publishSocketMessage : (Value -> msg) -> Sub msg
+
+
+port initiateSocketChannel : String -> Cmd msg
+
+
+port sendMessageToSocket : String -> Cmd msg
+
+
 logout : Cmd msg
 logout =
     storeSession Nothing
-
-
-port onSessionChange : (Value -> msg) -> Sub msg
 
 
 decodeTokenData : Decoder UnwrappedTokenData
@@ -242,9 +292,81 @@ decodeToSession key value =
             Guest
 
 
+decodeSocketMessage : Decoder SocketMessageData
+decodeSocketMessage =
+    Decode.succeed SocketMessageData
+        |> required "name" string
+        |> required "id" string
+        |> required "clientId" string
+        |> required "connectionId" string
+        |> required "timestamp" int
+        |> required "data" decodeMessage
+
+
+decodeMessage : Decoder DataMessage
+decodeMessage =
+    Decode.succeed DataMessage
+        |> required "message" string
+
+
+
+-- { name = String
+-- , id = String
+-- , clientId = String
+-- , connectionId = String
+-- , encoding = String
+-- , data =
+--     { message = String
+--     }
+-- }
+
+
+decodeToSocket : Nav.Key -> Value -> SocketMessageData
+decodeToSocket key value =
+    let
+        result =
+            Decode.decodeValue
+                decodeSocketMessage
+                value
+
+        -- |> Result.toMaybe
+    in
+    case result of
+        Ok obj ->
+            obj
+
+        Err err ->
+            { name = Debug.toString err
+            , id = ""
+            , clientId = ""
+            , connectionId = ""
+            , timestamp = 0
+            , data =
+                { message = ""
+                }
+            }
+
+
+
+-- decodeTokenData : Decoder UnwrappedTokenData
+-- decodeTokenData =
+--     map6 UnwrappedTokenData
+--         (at [ "id" ] idDecoder)
+--         (at [ "isverified" ] bool)
+--         (at [ "email" ] string)
+--         (at [ "firstname" ] string)
+--         (at [ "verificationstring" ] verifyStringDecoder)
+--         (at [ "profilepicurl" ] imageStringDecoder)
+
+
 subscriptionChanges : (Session -> msg) -> Nav.Key -> Sub msg
 subscriptionChanges toMsg key =
     onSessionChange (\val -> toMsg (decodeToSession key val))
+
+
+socketMessageChanges : (SocketMessageData -> msg) -> Nav.Key -> Sub msg
+socketMessageChanges toMsg key =
+    publishSocketMessage (\val -> toMsg (decodeToSocket key val))
 
 
 addHeader : Token -> Header
