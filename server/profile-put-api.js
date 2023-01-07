@@ -64,16 +64,16 @@ exports.module = {
                     imagefile,
                     'data_url',
                 );
-                const downloadUrl = await getDownloadURL(
-                    ref(storage, `/images/profile-pic-${id}.jpeg`),
-                );
-                photoUrl =
-                    downloadUrl.length > 0
-                        ? `https://firebasestorage.googleapis.com/v0/b/${
-                              process.env.FIREBASE_STORAGE_BUCKET
-                          }/o/${querystring(`images/profile-pic-${id}.jpeg`)}?alt=media`
-                        : '';
             }
+            const downloadUrl = await getDownloadURL(
+                ref(storage, `/images/profile-pic-${id}.jpeg`),
+            );
+            photoUrl =
+                downloadUrl.length > 0
+                    ? `https://firebasestorage.googleapis.com/v0/b/${
+                          process.env.FIREBASE_STORAGE_BUCKET
+                      }/o/${querystring(`images/profile-pic-${id}.jpeg`)}?alt=media`
+                    : '';
         } catch (err) {
             return res.sendStatus(403);
         }

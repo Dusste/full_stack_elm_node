@@ -8,7 +8,9 @@ const PORT = process.env.PORT || 8080;
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: '3mb' }));
+app.use(bodyParser.json({ limit: '3mb', extended: true }));
+app.use(bodyParser.urlencoded({ limit: '3mb', extended: true }));
 
 routes.forEach((route) => {
     route = route.module;
