@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav
-import Chat
+import Chat exposing (unfoldMessageReceived)
 import Credentials
     exposing
         ( Session
@@ -44,6 +44,7 @@ type alias Model =
     , key : Nav.Key
     , session : Session
     , openDropdown : Bool
+    , time : Maybe Time.Posix
     }
 
 
@@ -81,47 +82,57 @@ type Msg
     | GetLogout
     | OpenDropdown
     | ChatNewMessage
+    | GotTime Time.Posix
+    | CheckSessionExpired ( Session, Maybe Time.Posix )
 
 
 content : Model -> Html Msg
 content model =
-    case model.page of
-        LoginPage loginModel ->
-            Login.view loginModel
-                |> Html.map GotLoginMsg
+    div []
+        [ case model.page of
+            LoginPage loginModel ->
+                Login.view loginModel
+                    |> Html.map GotLoginMsg
 
-        SignupPage signupModel ->
-            Signup.view signupModel
-                |> Html.map GotSignupMsg
+            SignupPage signupModel ->
+                Signup.view signupModel
+                    |> Html.map GotSignupMsg
 
-        ProfilePage profileModel ->
-            Profile.view profileModel
-                |> Html.map GotProfileMsg
+            ProfilePage profileModel ->
+                Profile.view profileModel
+                    |> Html.map GotProfileMsg
 
-        HomePage homeModel ->
-            Home.view homeModel
-                |> Html.map GotHomeMsg
+            HomePage homeModel ->
+                Home.view homeModel
+                    |> Html.map GotHomeMsg
 
-        ChatPage chatModel ->
-            Chat.view chatModel
-                |> Html.map GotChatMsg
+            ChatPage chatModel ->
+                Chat.view chatModel
+                    |> Html.map GotChatMsg
 
-        VerificationPage verificationModel ->
-            Verification.view verificationModel
-                |> Html.map GotVerificationMsg
+            VerificationPage verificationModel ->
+                Verification.view verificationModel
+                    |> Html.map GotVerificationMsg
 
-        NotFoundPage ->
-            p [] [ text "Page not found buddy -_- sorry" ]
+            NotFoundPage ->
+                p [] [ text "Page not found buddy -_- sorry" ]
+        ]
+
+
+app : Model -> Html Msg
+app model =
+    div [ onClick <| CheckSessionExpired ( model.session, model.time ) ]
+        [ lazy viewHeader model
+        , content model
+        , viewFooter
+        ]
 
 
 view : Model -> Document Msg
 view model =
     { title = "My elm app"
     , body =
-        [ lazy viewHeader model
-        , content model
-        , viewFooter
-        ]
+        [ app model ]
     }
 
 
@@ -295,7 +306,17 @@ update msg model =
                     ( model, Nav.load href )
 
                 Browser.Internal url ->
-                    ( model, Nav.pushUrl model.key (Url.toString url) )
+                    let
+                        urlPath =
+                            url.path
+                    in
+                    ( model
+                    , if urlPath == "/chat" then
+                        Cmd.batch [ Nav.reload, Nav.pushUrl model.key (Url.toString url) ]
+
+                      else
+                        Nav.pushUrl model.key (Url.toString url)
+                    )
 
         ChangedUrl url ->
             let
@@ -340,18 +361,6 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        GotChatMsg chatMsg ->
-            case model.page of
-                ChatPage chatModel ->
-                    let
-                        ( chatModelFromChat, chatMsgFromChat ) =
-                            Chat.update chatMsg chatModel
-                    in
-                    ( { model | page = ChatPage chatModelFromChat }, Cmd.map GotChatMsg chatMsgFromChat )
-
-                _ ->
-                    ( model, Cmd.none )
-
         GotVerificationMsg verificationMsg ->
             case model.page of
                 VerificationPage verificationModel ->
@@ -392,29 +401,71 @@ update msg model =
             )
 
         GotSubscriptionSocketMsg socketMsgObj ->
-            let
-                ( chatModelFromChat, chatMsgFromChat ) =
-                    Chat.init model.session <| Just socketMsgObj
-            in
-            ( { model | page = ChatPage chatModelFromChat }, Cmd.map GotChatMsg chatMsgFromChat )
+            case model.page of
+                ChatPage chatModel ->
+                    let
+                        chatMsg =
+                            unfoldMessageReceived socketMsgObj
 
-        -- case model.page of
-        --     ChatPage chatModel ->
-        --         let
-        --             ( chatModelFromChat, chatMsgFromChat ) =
-        --                 Chat.update msgToChatMsg chatModel
-        --         in
-        --         ( { model | page = ChatPage chatModelFromChat }, Cmd.map GotChatMsg chatMsgFromChat )
-        --     _ ->
-        --         ( model, Cmd.none )
-        -- (model, GotSubscriptionSocketMsg)
-        -- in
-        -- ( model, Cmd.none )
+                        ( chatModelFromChat, chatMsgFromChat ) =
+                            Chat.update chatMsg chatModel
+                    in
+                    ( { model | page = ChatPage chatModelFromChat }, Cmd.map GotChatMsg chatMsgFromChat )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotChatMsg chatMsg ->
+            case model.page of
+                ChatPage chatModel ->
+                    let
+                        ( chatModelFromChat, chatMsgFromChat ) =
+                            Chat.update chatMsg chatModel
+                    in
+                    ( { model | page = ChatPage chatModelFromChat }, Cmd.map GotChatMsg chatMsgFromChat )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        CheckSessionExpired ( session, maybeTime ) ->
+            case ( maybeTime, fromSessionToToken session ) of
+                ( Just time, Just token ) ->
+                    let
+                        tokenString =
+                            fromTokenToString token
+                    in
+                    case Jwt.isExpired time tokenString of
+                        Ok isExpired ->
+                            if isExpired then
+                                ( model
+                                , logout
+                                )
+
+                            else
+                                ( model
+                                , Cmd.none
+                                )
+
+                        Err _ ->
+                            ( model, Cmd.none )
+
+                ( Nothing, Just _ ) ->
+                    ( model, Cmd.none )
+
+                ( Just _, Nothing ) ->
+                    ( model, Cmd.none )
+
+                ( Nothing, Nothing ) ->
+                    ( model, Cmd.none )
+
         GetLogout ->
             ( model, logout )
 
         ChatNewMessage ->
             ( model, Cmd.none )
+
+        GotTime time ->
+            ( { model | time = Just time }, Cmd.none )
 
         OpenDropdown ->
             ( { model | openDropdown = not model.openDropdown }, Cmd.none )
@@ -470,7 +521,7 @@ urlToPage url session =
         Just Chat ->
             case fromSessionToToken session of
                 Just _ ->
-                    ChatPage (Tuple.first (Chat.init session Nothing))
+                    ChatPage (Tuple.first (Chat.init session))
 
                 Nothing ->
                     NotFoundPage
@@ -530,14 +581,14 @@ initCurrentPage ( url, model, existingCmds ) =
                 ( pageModel, pageCmds ) =
                     Home.init ()
             in
-            ( { model | page = HomePage pageModel }, Cmd.map GotHomeMsg pageCmds )
+            ( { model | page = HomePage pageModel }, Cmd.batch [ Cmd.map GotHomeMsg pageCmds, existingCmds ] )
 
         ChatPage _ ->
             let
                 ( pageModel, pageCmds ) =
-                    Chat.init model.session Nothing
+                    Chat.init model.session
             in
-            ( { model | page = ChatPage pageModel }, Cmd.map GotChatMsg pageCmds )
+            ( { model | page = ChatPage pageModel }, Cmd.batch [ Cmd.map GotChatMsg pageCmds, existingCmds ] )
 
         VerificationPage _ ->
             let
@@ -551,7 +602,7 @@ initCurrentPage ( url, model, existingCmds ) =
                 ( pageModel, pageCmds ) =
                     Profile.init model.session
             in
-            ( { model | page = ProfilePage pageModel }, Cmd.map GotProfileMsg pageCmds )
+            ( { model | page = ProfilePage pageModel }, Cmd.batch [ Cmd.map GotProfileMsg pageCmds, existingCmds ] )
 
 
 init : Value -> Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -561,9 +612,14 @@ init flags url key =
             decodeToSession key flags
 
         model =
-            { page = urlToPage url session, key = key, session = session, openDropdown = False }
+            { page = urlToPage url session
+            , key = key
+            , session = session
+            , openDropdown = False
+            , time = Nothing
+            }
     in
-    initCurrentPage ( url, model, Cmd.none )
+    initCurrentPage ( url, model, Task.perform GotTime Time.now )
 
 
 subscriptions : Model -> Sub Msg

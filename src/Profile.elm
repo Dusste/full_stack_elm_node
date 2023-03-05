@@ -40,7 +40,6 @@ type alias Model =
     , errors : List CheckErrors
     , imageFile : ImageString
     , userState : UserState
-    , time : Maybe Time.Posix
     }
 
 
@@ -73,8 +72,6 @@ type Msg
     | FileRequest
     | FileRequestProceed File
     | FileRead (Result Http.Error String)
-    | GotTime Time.Posix
-    | CheckSessionExpired ( Session, Maybe Time.Posix )
     | LogoutUser
 
 
@@ -100,7 +97,6 @@ initialModel =
     , errors = []
     , imageFile = emptyImageString
     , userState = NotVerified
-    , time = Nothing
     }
 
 
@@ -119,7 +115,7 @@ init session =
                             else
                                 NotVerified
                       }
-                    , Task.perform GotTime Time.now
+                    , Cmd.none
                     )
 
                 Err _ ->
@@ -138,7 +134,7 @@ view model =
     case model.userState of
         Verified session ->
             div
-                [ onClick <| CheckSessionExpired ( session, model.time ) ]
+                []
                 [ h2 [] [ text "Hello" ]
                 , Html.form []
                     [ div []
@@ -252,9 +248,6 @@ viewError checkErrors =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GotTime time ->
-            ( { model | time = Just time }, Cmd.none )
-
         StoreFirstName firstName ->
             let
                 oldProfile =
@@ -346,44 +339,6 @@ update msg model =
 
         FileRead (Err error) ->
             ( { model | errors = BadRequest (buildErrorMessage error) :: model.errors }, Cmd.none )
-
-        CheckSessionExpired ( session, maybeTime ) ->
-            case ( maybeTime, fromSessionToToken session ) of
-                ( Just time, Just token ) ->
-                    let
-                        tokenString =
-                            fromTokenToString token
-                    in
-                    case Jwt.isExpired time tokenString of
-                        Ok isExpired ->
-                            if isExpired then
-                                ( { model
-                                    | userState =
-                                        SessionExpired
-                                  }
-                                , Process.sleep 5000
-                                    |> Task.perform (\_ -> LogoutUser)
-                                )
-
-                            else
-                                ( { model
-                                    | userState =
-                                        Verified session
-                                  }
-                                , Cmd.none
-                                )
-
-                        Err _ ->
-                            ( model, Cmd.none )
-
-                ( Nothing, Just _ ) ->
-                    ( model, Cmd.none )
-
-                ( Just _, Nothing ) ->
-                    ( model, Cmd.none )
-
-                ( Nothing, Nothing ) ->
-                    ( model, Cmd.none )
 
         LogoutUser ->
             ( model, logout )

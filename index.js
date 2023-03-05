@@ -4588,69 +4588,6 @@ var _Bitwise_shiftRightZfBy = F2(function(offset, a)
 
 
 
-function _Time_now(millisToPosix)
-{
-	return _Scheduler_binding(function(callback)
-	{
-		callback(_Scheduler_succeed(millisToPosix(Date.now())));
-	});
-}
-
-var _Time_setInterval = F2(function(interval, task)
-{
-	return _Scheduler_binding(function(callback)
-	{
-		var id = setInterval(function() { _Scheduler_rawSpawn(task); }, interval);
-		return function() { clearInterval(id); };
-	});
-});
-
-function _Time_here()
-{
-	return _Scheduler_binding(function(callback)
-	{
-		callback(_Scheduler_succeed(
-			A2($elm$time$Time$customZone, -(new Date().getTimezoneOffset()), _List_Nil)
-		));
-	});
-}
-
-
-function _Time_getZoneName()
-{
-	return _Scheduler_binding(function(callback)
-	{
-		try
-		{
-			var name = $elm$time$Time$Name(Intl.DateTimeFormat().resolvedOptions().timeZone);
-		}
-		catch (e)
-		{
-			var name = $elm$time$Time$Offset(new Date().getTimezoneOffset());
-		}
-		callback(_Scheduler_succeed(name));
-	});
-}
-
-
-function _Url_percentEncode(string)
-{
-	return encodeURIComponent(string);
-}
-
-function _Url_percentDecode(string)
-{
-	try
-	{
-		return $elm$core$Maybe$Just(decodeURIComponent(string));
-	}
-	catch (e)
-	{
-		return $elm$core$Maybe$Nothing;
-	}
-}
-
-
 // SEND REQUEST
 
 var _Http_toTask = F3(function(router, toTask, request)
@@ -4823,6 +4760,69 @@ function _Http_track(router, xhr, tracker)
 			size: event.lengthComputable ? $elm$core$Maybe$Just(event.total) : $elm$core$Maybe$Nothing
 		}))));
 	});
+}
+
+
+function _Time_now(millisToPosix)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		callback(_Scheduler_succeed(millisToPosix(Date.now())));
+	});
+}
+
+var _Time_setInterval = F2(function(interval, task)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var id = setInterval(function() { _Scheduler_rawSpawn(task); }, interval);
+		return function() { clearInterval(id); };
+	});
+});
+
+function _Time_here()
+{
+	return _Scheduler_binding(function(callback)
+	{
+		callback(_Scheduler_succeed(
+			A2($elm$time$Time$customZone, -(new Date().getTimezoneOffset()), _List_Nil)
+		));
+	});
+}
+
+
+function _Time_getZoneName()
+{
+	return _Scheduler_binding(function(callback)
+	{
+		try
+		{
+			var name = $elm$time$Time$Name(Intl.DateTimeFormat().resolvedOptions().timeZone);
+		}
+		catch (e)
+		{
+			var name = $elm$time$Time$Offset(new Date().getTimezoneOffset());
+		}
+		callback(_Scheduler_succeed(name));
+	});
+}
+
+
+function _Url_percentEncode(string)
+{
+	return encodeURIComponent(string);
+}
+
+function _Url_percentDecode(string)
+{
+	try
+	{
+		return $elm$core$Maybe$Just(decodeURIComponent(string));
+	}
+	catch (e)
+	{
+		return $elm$core$Maybe$Nothing;
+	}
 }
 
 // CREATE
@@ -5897,6 +5897,9 @@ var $elm$core$Task$perform = F2(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
 var $elm$browser$Browser$application = _Browser_application;
+var $author$project$Main$GotTime = function (a) {
+	return {$: 'GotTime', a: a};
+};
 var $author$project$Credentials$Guest = {$: 'Guest'};
 var $author$project$Credentials$LoggedIn = function (a) {
 	return {$: 'LoggedIn', a: a};
@@ -5990,6 +5993,35 @@ var $author$project$Main$SignupPage = function (a) {
 var $author$project$Main$VerificationPage = function (a) {
 	return {$: 'VerificationPage', a: a};
 };
+var $elm$core$Platform$Cmd$batch = _Platform_batch;
+var $elm$json$Json$Encode$object = function (pairs) {
+	return _Json_wrap(
+		A3(
+			$elm$core$List$foldl,
+			F2(
+				function (_v0, obj) {
+					var k = _v0.a;
+					var v = _v0.b;
+					return A3(_Json_addField, k, v, obj);
+				}),
+			_Json_emptyObject(_Utils_Tuple0),
+			pairs));
+};
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Credentials$addUserToRoom = _Platform_outgoingPort(
+	'addUserToRoom',
+	function ($) {
+		return $elm$json$Json$Encode$object(
+			_List_fromArray(
+				[
+					_Utils_Tuple2(
+					'userId',
+					$elm$json$Json$Encode$string($.userId)),
+					_Utils_Tuple2(
+					'userName',
+					$elm$json$Json$Encode$string($.userName))
+				]));
+	});
 var $simonh1000$elm_jwt$Jwt$TokenDecodeError = function (a) {
 	return {$: 'TokenDecodeError', a: a};
 };
@@ -6640,555 +6672,38 @@ var $author$project$Credentials$decodeTokenData = A7(
 		_List_fromArray(
 			['profilepicurl']),
 		$author$project$Credentials$imageStringDecoder));
-var $author$project$Credentials$fromSessionToToken = function (session) {
-	if (session.$ === 'LoggedIn') {
-		var token = session.a;
-		return $elm$core$Maybe$Just(token);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
+var $author$project$Chat$SocketEstablished = function (a) {
+	return {$: 'SocketEstablished', a: a};
 };
-var $author$project$Credentials$fromTokenToString = function (_v0) {
-	var string = _v0.a;
-	return string;
-};
-var $author$project$Chat$initialModel = {
-	message: '',
-	receivedSocketData: {
-		clientId: '',
-		connectionId: '',
-		data: {message: ''},
-		id: '',
-		name: '',
-		timestamp: 0
-	}
-};
-var $elm$json$Json$Encode$string = _Json_wrap;
-var $author$project$Credentials$initiateSocketChannel = _Platform_outgoingPort('initiateSocketChannel', $elm$json$Json$Encode$string);
-var $elm$core$Platform$Cmd$batch = _Platform_batch;
-var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
-var $author$project$Credentials$userIdToString = function (_v0) {
-	var id = _v0.a;
-	return id;
-};
-var $author$project$Chat$init = F2(
-	function (session, maybeSocket) {
-		var _v0 = $author$project$Credentials$fromSessionToToken(session);
-		if (_v0.$ === 'Just') {
-			var token = _v0.a;
-			var _v1 = A2(
-				$simonh1000$elm_jwt$Jwt$decodeToken,
-				$author$project$Credentials$decodeTokenData,
-				$author$project$Credentials$fromTokenToString(token));
-			if (_v1.$ === 'Ok') {
-				var resultTokenRecord = _v1.a;
-				if (maybeSocket.$ === 'Just') {
-					var receivedSocketData = maybeSocket.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							$author$project$Chat$initialModel,
-							{receivedSocketData: receivedSocketData}),
-						$author$project$Credentials$initiateSocketChannel(
-							$author$project$Credentials$userIdToString(resultTokenRecord.id)));
-				} else {
-					return _Utils_Tuple2(
-						$author$project$Chat$initialModel,
-						$author$project$Credentials$initiateSocketChannel(
-							$author$project$Credentials$userIdToString(resultTokenRecord.id)));
-				}
-			} else {
-				return _Utils_Tuple2($author$project$Chat$initialModel, $elm$core$Platform$Cmd$none);
-			}
-		} else {
-			return _Utils_Tuple2($author$project$Chat$initialModel, $elm$core$Platform$Cmd$none);
-		}
-	});
-var $author$project$Home$initialModel = {};
-var $author$project$Home$init = function (_v0) {
-	return _Utils_Tuple2($author$project$Home$initialModel, $elm$core$Platform$Cmd$none);
-};
-var $author$project$Login$initialModel = {
-	errors: _List_Nil,
-	isLoading: false,
-	loginCredentials: {email: '', password: ''}
-};
-var $author$project$Login$init = function (_v0) {
-	return _Utils_Tuple2($author$project$Login$initialModel, $elm$core$Platform$Cmd$none);
-};
-var $author$project$Profile$GotTime = function (a) {
-	return {$: 'GotTime', a: a};
-};
-var $author$project$Profile$Intruder = {$: 'Intruder'};
-var $author$project$Profile$NotVerified = {$: 'NotVerified'};
-var $author$project$Profile$Verified = function (a) {
-	return {$: 'Verified', a: a};
-};
-var $author$project$Credentials$emptyImageString = $author$project$Credentials$ImageString($elm$core$Maybe$Nothing);
-var $author$project$Credentials$emptyUserId = $author$project$Credentials$UserId('');
-var $author$project$Credentials$emptyVerificationString = $author$project$Credentials$VerificationString('');
-var $author$project$Profile$initialModel = {
-	errors: _List_Nil,
-	imageFile: $author$project$Credentials$emptyImageString,
-	profile: {email: '', firstname: '', id: $author$project$Credentials$emptyUserId, isverified: false, profilepicurl: $author$project$Credentials$emptyImageString, verificationstring: $author$project$Credentials$emptyVerificationString},
-	time: $elm$core$Maybe$Nothing,
-	userState: $author$project$Profile$NotVerified
-};
-var $elm$time$Time$Name = function (a) {
-	return {$: 'Name', a: a};
-};
-var $elm$time$Time$Offset = function (a) {
-	return {$: 'Offset', a: a};
-};
-var $elm$time$Time$Zone = F2(
+var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
-		return {$: 'Zone', a: a, b: b};
+		return {$: 'BadStatus_', a: a, b: b};
 	});
-var $elm$time$Time$customZone = $elm$time$Time$Zone;
-var $elm$time$Time$Posix = function (a) {
-	return {$: 'Posix', a: a};
+var $elm$http$Http$BadUrl_ = function (a) {
+	return {$: 'BadUrl_', a: a};
 };
-var $elm$time$Time$millisToPosix = $elm$time$Time$Posix;
-var $elm$time$Time$now = _Time_now($elm$time$Time$millisToPosix);
-var $author$project$Profile$init = function (session) {
-	var _v0 = $author$project$Credentials$fromSessionToToken(session);
-	if (_v0.$ === 'Just') {
-		var token = _v0.a;
-		var _v1 = A2(
-			$simonh1000$elm_jwt$Jwt$decodeToken,
-			$author$project$Credentials$decodeTokenData,
-			$author$project$Credentials$fromTokenToString(token));
-		if (_v1.$ === 'Ok') {
-			var profileData = _v1.a;
-			return _Utils_Tuple2(
-				_Utils_update(
-					$author$project$Profile$initialModel,
-					{
-						profile: profileData,
-						userState: profileData.isverified ? $author$project$Profile$Verified(session) : $author$project$Profile$NotVerified
-					}),
-				A2($elm$core$Task$perform, $author$project$Profile$GotTime, $elm$time$Time$now));
-		} else {
-			return _Utils_Tuple2(
-				_Utils_update(
-					$author$project$Profile$initialModel,
-					{userState: $author$project$Profile$Intruder}),
-				$elm$core$Platform$Cmd$none);
-		}
+var $elm$http$Http$GoodStatus_ = F2(
+	function (a, b) {
+		return {$: 'GoodStatus_', a: a, b: b};
+	});
+var $elm$http$Http$NetworkError_ = {$: 'NetworkError_'};
+var $elm$http$Http$Receiving = function (a) {
+	return {$: 'Receiving', a: a};
+};
+var $elm$http$Http$Sending = function (a) {
+	return {$: 'Sending', a: a};
+};
+var $elm$http$Http$Timeout_ = {$: 'Timeout_'};
+var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
+var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
+var $elm$core$Maybe$isJust = function (maybe) {
+	if (maybe.$ === 'Just') {
+		return true;
 	} else {
-		return _Utils_Tuple2(
-			_Utils_update(
-				$author$project$Profile$initialModel,
-				{userState: $author$project$Profile$Intruder}),
-			$elm$core$Platform$Cmd$none);
+		return false;
 	}
 };
-var $author$project$Signup$initialModel = {
-	errors: _List_Nil,
-	isLoading: false,
-	signupCredentials: {confirmPassword: '', email: '', password: ''}
-};
-var $author$project$Signup$init = function (_v0) {
-	return _Utils_Tuple2($author$project$Signup$initialModel, $elm$core$Platform$Cmd$none);
-};
-var $author$project$Verification$Sessionless = {$: 'Sessionless'};
-var $author$project$Verification$VerificationFail = {$: 'VerificationFail'};
-var $author$project$Verification$VerificationPending = {$: 'VerificationPending'};
-var $author$project$Verification$Verified = {$: 'Verified'};
-var $author$project$Verification$VerifyApiCallStart = function (a) {
-	return {$: 'VerifyApiCallStart', a: a};
-};
-var $elm$core$Process$sleep = _Process_sleep;
-var $author$project$Verification$apiCallAfterSomeTime = F2(
-	function (session, toMsg) {
-		return A2(
-			$elm$core$Task$perform,
-			function (_v0) {
-				return toMsg(session);
-			},
-			$elm$core$Process$sleep(5000));
-	});
-var $elm$core$Basics$neq = _Utils_notEqual;
-var $elm$core$Basics$not = _Basics_not;
-var $author$project$Credentials$verificationToString = function (_v0) {
-	var verificationString = _v0.a;
-	return verificationString;
-};
-var $author$project$Verification$init = F2(
-	function (session, verificationParam) {
-		var _v0 = $author$project$Credentials$fromSessionToToken(session);
-		if (_v0.$ === 'Just') {
-			var token = _v0.a;
-			var _v1 = A2(
-				$simonh1000$elm_jwt$Jwt$decodeToken,
-				$author$project$Credentials$decodeTokenData,
-				$author$project$Credentials$fromTokenToString(token));
-			if (_v1.$ === 'Ok') {
-				var resultTokenRecord = _v1.a;
-				return (!_Utils_eq(
-					verificationParam,
-					'/verify-email/' + $author$project$Credentials$verificationToString(resultTokenRecord.verificationstring))) ? _Utils_Tuple2(
-					{userState: $author$project$Verification$VerificationFail},
-					$elm$core$Platform$Cmd$none) : ((!resultTokenRecord.isverified) ? _Utils_Tuple2(
-					{userState: $author$project$Verification$VerificationPending},
-					A2($author$project$Verification$apiCallAfterSomeTime, session, $author$project$Verification$VerifyApiCallStart)) : _Utils_Tuple2(
-					{userState: $author$project$Verification$Verified},
-					$elm$core$Platform$Cmd$none));
-			} else {
-				return _Utils_Tuple2(
-					{userState: $author$project$Verification$Sessionless},
-					$elm$core$Platform$Cmd$none);
-			}
-		} else {
-			return _Utils_Tuple2(
-				{userState: $author$project$Verification$Sessionless},
-				$elm$core$Platform$Cmd$none);
-		}
-	});
-var $elm$core$Platform$Cmd$map = _Platform_map;
-var $author$project$Main$initCurrentPage = function (_v0) {
-	var url = _v0.a;
-	var model = _v0.b;
-	var existingCmds = _v0.c;
-	var _v1 = model.page;
-	switch (_v1.$) {
-		case 'NotFoundPage':
-			return _Utils_Tuple2(
-				_Utils_update(
-					model,
-					{page: $author$project$Main$NotFoundPage}),
-				$elm$core$Platform$Cmd$none);
-		case 'LoginPage':
-			var _v2 = $author$project$Login$init(_Utils_Tuple0);
-			var pageModel = _v2.a;
-			var pageCmds = _v2.b;
-			return _Utils_Tuple2(
-				_Utils_update(
-					model,
-					{
-						page: $author$project$Main$LoginPage(pageModel)
-					}),
-				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotLoginMsg, pageCmds));
-		case 'SignupPage':
-			var _v3 = $author$project$Signup$init(_Utils_Tuple0);
-			var pageModel = _v3.a;
-			var pageCmds = _v3.b;
-			return _Utils_Tuple2(
-				_Utils_update(
-					model,
-					{
-						page: $author$project$Main$SignupPage(pageModel)
-					}),
-				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotSignupMsg, pageCmds));
-		case 'HomePage':
-			var _v4 = $author$project$Home$init(_Utils_Tuple0);
-			var pageModel = _v4.a;
-			var pageCmds = _v4.b;
-			return _Utils_Tuple2(
-				_Utils_update(
-					model,
-					{
-						page: $author$project$Main$HomePage(pageModel)
-					}),
-				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotHomeMsg, pageCmds));
-		case 'ChatPage':
-			var _v5 = A2($author$project$Chat$init, model.session, $elm$core$Maybe$Nothing);
-			var pageModel = _v5.a;
-			var pageCmds = _v5.b;
-			return _Utils_Tuple2(
-				_Utils_update(
-					model,
-					{
-						page: $author$project$Main$ChatPage(pageModel)
-					}),
-				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotChatMsg, pageCmds));
-		case 'VerificationPage':
-			var _v6 = A2($author$project$Verification$init, model.session, url.path);
-			var pageModel = _v6.a;
-			var pageCmds = _v6.b;
-			return _Utils_Tuple2(
-				_Utils_update(
-					model,
-					{
-						page: $author$project$Main$VerificationPage(pageModel)
-					}),
-				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotVerificationMsg, pageCmds));
-		default:
-			var _v7 = $author$project$Profile$init(model.session);
-			var pageModel = _v7.a;
-			var pageCmds = _v7.b;
-			return _Utils_Tuple2(
-				_Utils_update(
-					model,
-					{
-						page: $author$project$Main$ProfilePage(pageModel)
-					}),
-				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotProfileMsg, pageCmds));
-	}
-};
-var $author$project$Main$Chat = {$: 'Chat'};
-var $author$project$Main$Home = {$: 'Home'};
-var $author$project$Main$Login = {$: 'Login'};
-var $author$project$Main$Profile = function (a) {
-	return {$: 'Profile', a: a};
-};
-var $author$project$Main$Signup = {$: 'Signup'};
-var $author$project$Main$Verification = function (a) {
-	return {$: 'Verification', a: a};
-};
-var $elm$url$Url$Parser$Parser = function (a) {
-	return {$: 'Parser', a: a};
-};
-var $elm$url$Url$Parser$State = F5(
-	function (visited, unvisited, params, frag, value) {
-		return {frag: frag, params: params, unvisited: unvisited, value: value, visited: visited};
-	});
-var $elm$url$Url$Parser$mapState = F2(
-	function (func, _v0) {
-		var visited = _v0.visited;
-		var unvisited = _v0.unvisited;
-		var params = _v0.params;
-		var frag = _v0.frag;
-		var value = _v0.value;
-		return A5(
-			$elm$url$Url$Parser$State,
-			visited,
-			unvisited,
-			params,
-			frag,
-			func(value));
-	});
-var $elm$url$Url$Parser$map = F2(
-	function (subValue, _v0) {
-		var parseArg = _v0.a;
-		return $elm$url$Url$Parser$Parser(
-			function (_v1) {
-				var visited = _v1.visited;
-				var unvisited = _v1.unvisited;
-				var params = _v1.params;
-				var frag = _v1.frag;
-				var value = _v1.value;
-				return A2(
-					$elm$core$List$map,
-					$elm$url$Url$Parser$mapState(value),
-					parseArg(
-						A5($elm$url$Url$Parser$State, visited, unvisited, params, frag, subValue)));
-			});
-	});
-var $elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
-		}
-	});
-var $elm$core$List$concat = function (lists) {
-	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
-};
-var $elm$core$List$concatMap = F2(
-	function (f, list) {
-		return $elm$core$List$concat(
-			A2($elm$core$List$map, f, list));
-	});
-var $elm$url$Url$Parser$oneOf = function (parsers) {
-	return $elm$url$Url$Parser$Parser(
-		function (state) {
-			return A2(
-				$elm$core$List$concatMap,
-				function (_v0) {
-					var parser = _v0.a;
-					return parser(state);
-				},
-				parsers);
-		});
-};
-var $elm$url$Url$Parser$s = function (str) {
-	return $elm$url$Url$Parser$Parser(
-		function (_v0) {
-			var visited = _v0.visited;
-			var unvisited = _v0.unvisited;
-			var params = _v0.params;
-			var frag = _v0.frag;
-			var value = _v0.value;
-			if (!unvisited.b) {
-				return _List_Nil;
-			} else {
-				var next = unvisited.a;
-				var rest = unvisited.b;
-				return _Utils_eq(next, str) ? _List_fromArray(
-					[
-						A5(
-						$elm$url$Url$Parser$State,
-						A2($elm$core$List$cons, next, visited),
-						rest,
-						params,
-						frag,
-						value)
-					]) : _List_Nil;
-			}
-		});
-};
-var $elm$url$Url$Parser$slash = F2(
-	function (_v0, _v1) {
-		var parseBefore = _v0.a;
-		var parseAfter = _v1.a;
-		return $elm$url$Url$Parser$Parser(
-			function (state) {
-				return A2(
-					$elm$core$List$concatMap,
-					parseAfter,
-					parseBefore(state));
-			});
-	});
-var $elm$url$Url$Parser$top = $elm$url$Url$Parser$Parser(
-	function (state) {
-		return _List_fromArray(
-			[state]);
-	});
-var $elm$url$Url$Parser$custom = F2(
-	function (tipe, stringToSomething) {
-		return $elm$url$Url$Parser$Parser(
-			function (_v0) {
-				var visited = _v0.visited;
-				var unvisited = _v0.unvisited;
-				var params = _v0.params;
-				var frag = _v0.frag;
-				var value = _v0.value;
-				if (!unvisited.b) {
-					return _List_Nil;
-				} else {
-					var next = unvisited.a;
-					var rest = unvisited.b;
-					var _v2 = stringToSomething(next);
-					if (_v2.$ === 'Just') {
-						var nextValue = _v2.a;
-						return _List_fromArray(
-							[
-								A5(
-								$elm$url$Url$Parser$State,
-								A2($elm$core$List$cons, next, visited),
-								rest,
-								params,
-								frag,
-								value(nextValue))
-							]);
-					} else {
-						return _List_Nil;
-					}
-				}
-			});
-	});
-var $author$project$Credentials$userIdParser = A2(
-	$elm$url$Url$Parser$custom,
-	'USERID',
-	function (userId) {
-		return A2(
-			$elm$core$Maybe$map,
-			$author$project$Credentials$UserId,
-			$elm$core$Maybe$Just(userId));
-	});
-var $author$project$Credentials$verifictionStringParser = A2(
-	$elm$url$Url$Parser$custom,
-	'VERIFICATIONSTRING',
-	function (verificationString) {
-		return A2(
-			$elm$core$Maybe$map,
-			$author$project$Credentials$VerificationString,
-			$elm$core$Maybe$Just(verificationString));
-	});
-var $author$project$Main$matchRoute = $elm$url$Url$Parser$oneOf(
-	_List_fromArray(
-		[
-			A2($elm$url$Url$Parser$map, $author$project$Main$Home, $elm$url$Url$Parser$top),
-			A2(
-			$elm$url$Url$Parser$map,
-			$author$project$Main$Login,
-			$elm$url$Url$Parser$s('login')),
-			A2(
-			$elm$url$Url$Parser$map,
-			$author$project$Main$Profile,
-			A2(
-				$elm$url$Url$Parser$slash,
-				$elm$url$Url$Parser$s('profile'),
-				$author$project$Credentials$userIdParser)),
-			A2(
-			$elm$url$Url$Parser$map,
-			$author$project$Main$Signup,
-			$elm$url$Url$Parser$s('signup')),
-			A2(
-			$elm$url$Url$Parser$map,
-			$author$project$Main$Chat,
-			$elm$url$Url$Parser$s('chat')),
-			A2(
-			$elm$url$Url$Parser$map,
-			$author$project$Main$Verification,
-			A2(
-				$elm$url$Url$Parser$slash,
-				$elm$url$Url$Parser$s('verify-email'),
-				$author$project$Credentials$verifictionStringParser))
-		]));
-var $elm$url$Url$Parser$getFirstMatch = function (states) {
-	getFirstMatch:
-	while (true) {
-		if (!states.b) {
-			return $elm$core$Maybe$Nothing;
-		} else {
-			var state = states.a;
-			var rest = states.b;
-			var _v1 = state.unvisited;
-			if (!_v1.b) {
-				return $elm$core$Maybe$Just(state.value);
-			} else {
-				if ((_v1.a === '') && (!_v1.b.b)) {
-					return $elm$core$Maybe$Just(state.value);
-				} else {
-					var $temp$states = rest;
-					states = $temp$states;
-					continue getFirstMatch;
-				}
-			}
-		}
-	}
-};
-var $elm$url$Url$Parser$removeFinalEmpty = function (segments) {
-	if (!segments.b) {
-		return _List_Nil;
-	} else {
-		if ((segments.a === '') && (!segments.b.b)) {
-			return _List_Nil;
-		} else {
-			var segment = segments.a;
-			var rest = segments.b;
-			return A2(
-				$elm$core$List$cons,
-				segment,
-				$elm$url$Url$Parser$removeFinalEmpty(rest));
-		}
-	}
-};
-var $elm$url$Url$Parser$preparePath = function (path) {
-	var _v0 = A2($elm$core$String$split, '/', path);
-	if (_v0.b && (_v0.a === '')) {
-		var segments = _v0.b;
-		return $elm$url$Url$Parser$removeFinalEmpty(segments);
-	} else {
-		var segments = _v0;
-		return $elm$url$Url$Parser$removeFinalEmpty(segments);
-	}
-};
-var $elm$url$Url$Parser$addToParametersHelp = F2(
-	function (value, maybeList) {
-		if (maybeList.$ === 'Nothing') {
-			return $elm$core$Maybe$Just(
-				_List_fromArray(
-					[value]));
-		} else {
-			var list = maybeList.a;
-			return $elm$core$Maybe$Just(
-				A2($elm$core$List$cons, value, list));
-		}
-	});
-var $elm$url$Url$percentDecode = _Url_percentDecode;
+var $elm$core$Platform$sendToSelf = _Platform_sendToSelf;
 var $elm$core$Basics$compare = _Utils_compare;
 var $elm$core$Dict$get = F2(
 	function (targetKey, dict) {
@@ -7226,7 +6741,6 @@ var $elm$core$Dict$RBNode_elm_builtin = F5(
 	function (a, b, c, d, e) {
 		return {$: 'RBNode_elm_builtin', a: a, b: b, c: c, d: d, e: e};
 	});
-var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
 var $elm$core$Dict$Red = {$: 'Red'};
 var $elm$core$Dict$balance = F5(
 	function (color, key, value, left, right) {
@@ -7703,398 +7217,6 @@ var $elm$core$Dict$update = F3(
 			return A2($elm$core$Dict$remove, targetKey, dictionary);
 		}
 	});
-var $elm$url$Url$Parser$addParam = F2(
-	function (segment, dict) {
-		var _v0 = A2($elm$core$String$split, '=', segment);
-		if ((_v0.b && _v0.b.b) && (!_v0.b.b.b)) {
-			var rawKey = _v0.a;
-			var _v1 = _v0.b;
-			var rawValue = _v1.a;
-			var _v2 = $elm$url$Url$percentDecode(rawKey);
-			if (_v2.$ === 'Nothing') {
-				return dict;
-			} else {
-				var key = _v2.a;
-				var _v3 = $elm$url$Url$percentDecode(rawValue);
-				if (_v3.$ === 'Nothing') {
-					return dict;
-				} else {
-					var value = _v3.a;
-					return A3(
-						$elm$core$Dict$update,
-						key,
-						$elm$url$Url$Parser$addToParametersHelp(value),
-						dict);
-				}
-			}
-		} else {
-			return dict;
-		}
-	});
-var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
-var $elm$url$Url$Parser$prepareQuery = function (maybeQuery) {
-	if (maybeQuery.$ === 'Nothing') {
-		return $elm$core$Dict$empty;
-	} else {
-		var qry = maybeQuery.a;
-		return A3(
-			$elm$core$List$foldr,
-			$elm$url$Url$Parser$addParam,
-			$elm$core$Dict$empty,
-			A2($elm$core$String$split, '&', qry));
-	}
-};
-var $elm$url$Url$Parser$parse = F2(
-	function (_v0, url) {
-		var parser = _v0.a;
-		return $elm$url$Url$Parser$getFirstMatch(
-			parser(
-				A5(
-					$elm$url$Url$Parser$State,
-					_List_Nil,
-					$elm$url$Url$Parser$preparePath(url.path),
-					$elm$url$Url$Parser$prepareQuery(url.query),
-					url.fragment,
-					$elm$core$Basics$identity)));
-	});
-var $author$project$Main$urlToPage = F2(
-	function (url, session) {
-		var _v0 = A2($elm$url$Url$Parser$parse, $author$project$Main$matchRoute, url);
-		if (_v0.$ === 'Just') {
-			switch (_v0.a.$) {
-				case 'Login':
-					var _v1 = _v0.a;
-					var _v2 = $author$project$Credentials$fromSessionToToken(session);
-					if (_v2.$ === 'Just') {
-						return $author$project$Main$NotFoundPage;
-					} else {
-						return $author$project$Main$LoginPage(
-							$author$project$Login$init(_Utils_Tuple0).a);
-					}
-				case 'Signup':
-					var _v3 = _v0.a;
-					var _v4 = $author$project$Credentials$fromSessionToToken(session);
-					if (_v4.$ === 'Just') {
-						return $author$project$Main$NotFoundPage;
-					} else {
-						return $author$project$Main$SignupPage(
-							$author$project$Signup$init(_Utils_Tuple0).a);
-					}
-				case 'Profile':
-					var _v5 = $author$project$Credentials$fromSessionToToken(session);
-					if (_v5.$ === 'Just') {
-						return $author$project$Main$ProfilePage(
-							$author$project$Profile$init(session).a);
-					} else {
-						return $author$project$Main$NotFoundPage;
-					}
-				case 'Verification':
-					var _v6 = $author$project$Credentials$fromSessionToToken(session);
-					if (_v6.$ === 'Just') {
-						return $author$project$Main$VerificationPage(
-							A2($author$project$Verification$init, session, url.path).a);
-					} else {
-						return $author$project$Main$NotFoundPage;
-					}
-				case 'Chat':
-					var _v7 = _v0.a;
-					var _v8 = $author$project$Credentials$fromSessionToToken(session);
-					if (_v8.$ === 'Just') {
-						return $author$project$Main$ChatPage(
-							A2($author$project$Chat$init, session, $elm$core$Maybe$Nothing).a);
-					} else {
-						return $author$project$Main$NotFoundPage;
-					}
-				case 'Home':
-					var _v9 = _v0.a;
-					return $author$project$Main$HomePage(
-						$author$project$Home$init(_Utils_Tuple0).a);
-				default:
-					var _v10 = _v0.a;
-					return $author$project$Main$NotFoundPage;
-			}
-		} else {
-			return $author$project$Main$NotFoundPage;
-		}
-	});
-var $author$project$Main$init = F3(
-	function (flags, url, key) {
-		var session = A2($author$project$Credentials$decodeToSession, key, flags);
-		var model = {
-			key: key,
-			openDropdown: false,
-			page: A2($author$project$Main$urlToPage, url, session),
-			session: session
-		};
-		return $author$project$Main$initCurrentPage(
-			_Utils_Tuple3(url, model, $elm$core$Platform$Cmd$none));
-	});
-var $author$project$Main$GotSubscriptionChangeMsg = function (a) {
-	return {$: 'GotSubscriptionChangeMsg', a: a};
-};
-var $author$project$Main$GotSubscriptionSocketMsg = function (a) {
-	return {$: 'GotSubscriptionSocketMsg', a: a};
-};
-var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $author$project$Credentials$SocketMessageData = F6(
-	function (name, id, clientId, connectionId, timestamp, data) {
-		return {clientId: clientId, connectionId: connectionId, data: data, id: id, name: name, timestamp: timestamp};
-	});
-var $author$project$Credentials$DataMessage = function (message) {
-	return {message: message};
-};
-var $author$project$Credentials$decodeMessage = A3(
-	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-	'message',
-	$elm$json$Json$Decode$string,
-	$elm$json$Json$Decode$succeed($author$project$Credentials$DataMessage));
-var $elm$json$Json$Decode$int = _Json_decodeInt;
-var $author$project$Credentials$decodeSocketMessage = A3(
-	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-	'data',
-	$author$project$Credentials$decodeMessage,
-	A3(
-		$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-		'timestamp',
-		$elm$json$Json$Decode$int,
-		A3(
-			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-			'connectionId',
-			$elm$json$Json$Decode$string,
-			A3(
-				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-				'clientId',
-				$elm$json$Json$Decode$string,
-				A3(
-					$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-					'id',
-					$elm$json$Json$Decode$string,
-					A3(
-						$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-						'name',
-						$elm$json$Json$Decode$string,
-						$elm$json$Json$Decode$succeed($author$project$Credentials$SocketMessageData)))))));
-var $elm$core$Debug$toString = _Debug_toString;
-var $author$project$Credentials$decodeToSocket = F2(
-	function (key, value) {
-		var result = A2($elm$json$Json$Decode$decodeValue, $author$project$Credentials$decodeSocketMessage, value);
-		if (result.$ === 'Ok') {
-			var obj = result.a;
-			return obj;
-		} else {
-			var err = result.a;
-			return {
-				clientId: '',
-				connectionId: '',
-				data: {message: ''},
-				id: '',
-				name: $elm$core$Debug$toString(err),
-				timestamp: 0
-			};
-		}
-	});
-var $author$project$Credentials$publishSocketMessage = _Platform_incomingPort('publishSocketMessage', $elm$json$Json$Decode$value);
-var $author$project$Credentials$socketMessageChanges = F2(
-	function (toMsg, key) {
-		return $author$project$Credentials$publishSocketMessage(
-			function (val) {
-				return toMsg(
-					A2($author$project$Credentials$decodeToSocket, key, val));
-			});
-	});
-var $author$project$Credentials$onSessionChange = _Platform_incomingPort('onSessionChange', $elm$json$Json$Decode$value);
-var $author$project$Credentials$subscriptionChanges = F2(
-	function (toMsg, key) {
-		return $author$project$Credentials$onSessionChange(
-			function (val) {
-				return toMsg(
-					A2($author$project$Credentials$decodeToSession, key, val));
-			});
-	});
-var $author$project$Main$subscriptions = function (model) {
-	return $elm$core$Platform$Sub$batch(
-		_List_fromArray(
-			[
-				A2($author$project$Credentials$subscriptionChanges, $author$project$Main$GotSubscriptionChangeMsg, model.key),
-				A2($author$project$Credentials$socketMessageChanges, $author$project$Main$GotSubscriptionSocketMsg, model.key)
-			]));
-};
-var $elm$browser$Browser$Navigation$load = _Browser_load;
-var $elm$core$Maybe$destruct = F3(
-	function (_default, func, maybe) {
-		if (maybe.$ === 'Just') {
-			var a = maybe.a;
-			return func(a);
-		} else {
-			return _default;
-		}
-	});
-var $elm$json$Json$Encode$null = _Json_encodeNull;
-var $author$project$Credentials$storeSession = _Platform_outgoingPort(
-	'storeSession',
-	function ($) {
-		return A3($elm$core$Maybe$destruct, $elm$json$Json$Encode$null, $elm$json$Json$Encode$string, $);
-	});
-var $author$project$Credentials$logout = $author$project$Credentials$storeSession($elm$core$Maybe$Nothing);
-var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
-var $elm$url$Url$addPort = F2(
-	function (maybePort, starter) {
-		if (maybePort.$ === 'Nothing') {
-			return starter;
-		} else {
-			var port_ = maybePort.a;
-			return starter + (':' + $elm$core$String$fromInt(port_));
-		}
-	});
-var $elm$url$Url$addPrefixed = F3(
-	function (prefix, maybeSegment, starter) {
-		if (maybeSegment.$ === 'Nothing') {
-			return starter;
-		} else {
-			var segment = maybeSegment.a;
-			return _Utils_ap(
-				starter,
-				_Utils_ap(prefix, segment));
-		}
-	});
-var $elm$url$Url$toString = function (url) {
-	var http = function () {
-		var _v0 = url.protocol;
-		if (_v0.$ === 'Http') {
-			return 'http://';
-		} else {
-			return 'https://';
-		}
-	}();
-	return A3(
-		$elm$url$Url$addPrefixed,
-		'#',
-		url.fragment,
-		A3(
-			$elm$url$Url$addPrefixed,
-			'?',
-			url.query,
-			_Utils_ap(
-				A2(
-					$elm$url$Url$addPort,
-					url.port_,
-					_Utils_ap(http, url.host)),
-				url.path)));
-};
-var $author$project$Credentials$sendMessageToSocket = _Platform_outgoingPort('sendMessageToSocket', $elm$json$Json$Encode$string);
-var $author$project$Chat$update = F2(
-	function (msg, model) {
-		if (msg.$ === 'StoreMessage') {
-			var message = msg.a;
-			return _Utils_Tuple2(
-				_Utils_update(
-					model,
-					{message: message}),
-				$elm$core$Platform$Cmd$none);
-		} else {
-			return _Utils_Tuple2(
-				_Utils_update(
-					model,
-					{message: ''}),
-				$author$project$Credentials$sendMessageToSocket(model.message));
-		}
-	});
-var $author$project$Home$update = F2(
-	function (msg, model) {
-		return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-	});
-var $author$project$Login$BadRequest = function (a) {
-	return {$: 'BadRequest', a: a};
-};
-var $author$project$Utils$buildErrorMessage = function (httpError) {
-	switch (httpError.$) {
-		case 'BadUrl':
-			var message = httpError.a;
-			return message;
-		case 'Timeout':
-			return 'Server is taking too long to respond. Please try again later.';
-		case 'NetworkError':
-			return 'Unable to reach server.';
-		case 'BadStatus':
-			var statusCode = httpError.a;
-			return 'Request failed with status code: ' + $elm$core$String$fromInt(statusCode);
-		default:
-			var message = httpError.a;
-			return message;
-	}
-};
-var $elm$json$Json$Encode$object = function (pairs) {
-	return _Json_wrap(
-		A3(
-			$elm$core$List$foldl,
-			F2(
-				function (_v0, obj) {
-					var k = _v0.a;
-					var v = _v0.b;
-					return A3(_Json_addField, k, v, obj);
-				}),
-			_Json_emptyObject(_Utils_Tuple0),
-			pairs));
-};
-var $author$project$Credentials$encodeToken = function (_v0) {
-	var token = _v0.a;
-	return $elm$json$Json$Encode$object(
-		_List_fromArray(
-			[
-				_Utils_Tuple2(
-				'token',
-				$elm$json$Json$Encode$string(token))
-			]));
-};
-var $elm$core$List$isEmpty = function (xs) {
-	if (!xs.b) {
-		return true;
-	} else {
-		return false;
-	}
-};
-var $author$project$Login$LoginDone = function (a) {
-	return {$: 'LoginDone', a: a};
-};
-var $author$project$Login$credentialsEncoder = function (credentials) {
-	return $elm$json$Json$Encode$object(
-		_List_fromArray(
-			[
-				_Utils_Tuple2(
-				'email',
-				$elm$json$Json$Encode$string(credentials.email)),
-				_Utils_Tuple2(
-				'password',
-				$elm$json$Json$Encode$string(credentials.password))
-			]));
-};
-var $elm$http$Http$BadStatus_ = F2(
-	function (a, b) {
-		return {$: 'BadStatus_', a: a, b: b};
-	});
-var $elm$http$Http$BadUrl_ = function (a) {
-	return {$: 'BadUrl_', a: a};
-};
-var $elm$http$Http$GoodStatus_ = F2(
-	function (a, b) {
-		return {$: 'GoodStatus_', a: a, b: b};
-	});
-var $elm$http$Http$NetworkError_ = {$: 'NetworkError_'};
-var $elm$http$Http$Receiving = function (a) {
-	return {$: 'Receiving', a: a};
-};
-var $elm$http$Http$Sending = function (a) {
-	return {$: 'Sending', a: a};
-};
-var $elm$http$Http$Timeout_ = {$: 'Timeout_'};
-var $elm$core$Maybe$isJust = function (maybe) {
-	if (maybe.$ === 'Just') {
-		return true;
-	} else {
-		return false;
-	}
-};
-var $elm$core$Platform$sendToSelf = _Platform_sendToSelf;
 var $elm$http$Http$expectStringResponse = F2(
 	function (toMsg, toResult) {
 		return A3(
@@ -8150,12 +7272,7 @@ var $elm$http$Http$expectJson = F2(
 						A2($elm$json$Json$Decode$decodeString, decoder, string));
 				}));
 	});
-var $elm$http$Http$jsonBody = function (value) {
-	return A2(
-		_Http_pair,
-		'application/json',
-		A2($elm$json$Json$Encode$encode, 0, value));
-};
+var $elm$http$Http$emptyBody = _Http_emptyBody;
 var $elm$http$Http$Request = function (a) {
 	return {$: 'Request', a: a};
 };
@@ -8324,6 +7441,1030 @@ var $elm$http$Http$request = function (r) {
 		$elm$http$Http$Request(
 			{allowCookiesFromOtherDomains: false, body: r.body, expect: r.expect, headers: r.headers, method: r.method, timeout: r.timeout, tracker: r.tracker, url: r.url}));
 };
+var $elm$http$Http$get = function (r) {
+	return $elm$http$Http$request(
+		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
+};
+var $author$project$Chat$Int = {$: 'Int'};
+var $author$project$Chat$roomIdDecoder = $elm$json$Json$Decode$succeed($author$project$Chat$Int);
+var $author$project$Chat$establishSocketConnection = $elm$http$Http$get(
+	{
+		expect: A2($elm$http$Http$expectJson, $author$project$Chat$SocketEstablished, $author$project$Chat$roomIdDecoder),
+		url: '/api/socket?roomId=123'
+	});
+var $author$project$Chat$ChatMessages = function (a) {
+	return {$: 'ChatMessages', a: a};
+};
+var $author$project$Credentials$SocketMessageData = F6(
+	function (name, id, clientId, connectionId, timestamp, data) {
+		return {clientId: clientId, connectionId: connectionId, data: data, id: id, name: name, timestamp: timestamp};
+	});
+var $author$project$Credentials$DataMessage = function (message) {
+	return {message: message};
+};
+var $author$project$Credentials$decodeMessage = A3(
+	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+	'message',
+	$elm$json$Json$Decode$string,
+	$elm$json$Json$Decode$succeed($author$project$Credentials$DataMessage));
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $author$project$Credentials$decodeSocketMessage = A3(
+	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+	'data',
+	$author$project$Credentials$decodeMessage,
+	A3(
+		$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+		'timestamp',
+		$elm$json$Json$Decode$int,
+		A3(
+			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+			'connectionId',
+			$elm$json$Json$Decode$string,
+			A3(
+				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+				'clientId',
+				$elm$json$Json$Decode$string,
+				A3(
+					$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+					'id',
+					$elm$json$Json$Decode$string,
+					A3(
+						$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+						'name',
+						$elm$json$Json$Decode$string,
+						$elm$json$Json$Decode$succeed($author$project$Credentials$SocketMessageData)))))));
+var $elm$json$Json$Decode$list = _Json_decodeList;
+var $author$project$Chat$fetchChatMessages = $elm$http$Http$get(
+	{
+		expect: A2(
+			$elm$http$Http$expectJson,
+			$author$project$Chat$ChatMessages,
+			$elm$json$Json$Decode$list($author$project$Credentials$decodeSocketMessage)),
+		url: '/api/messages'
+	});
+var $author$project$Credentials$fromSessionToToken = function (session) {
+	if (session.$ === 'LoggedIn') {
+		var token = session.a;
+		return $elm$core$Maybe$Just(token);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Credentials$fromTokenToString = function (_v0) {
+	var string = _v0.a;
+	return string;
+};
+var $author$project$Chat$initialModel = {error: $elm$core$Maybe$Nothing, message: '', receivedMessages: _List_Nil};
+var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$Chat$takeNameOrEmail = F2(
+	function (name, email) {
+		return $elm$core$String$isEmpty(name) ? email : name;
+	});
+var $author$project$Credentials$userIdToString = function (_v0) {
+	var id = _v0.a;
+	return id;
+};
+var $author$project$Chat$init = function (session) {
+	var _v0 = $author$project$Credentials$fromSessionToToken(session);
+	if (_v0.$ === 'Just') {
+		var token = _v0.a;
+		var _v1 = A2(
+			$simonh1000$elm_jwt$Jwt$decodeToken,
+			$author$project$Credentials$decodeTokenData,
+			$author$project$Credentials$fromTokenToString(token));
+		if (_v1.$ === 'Ok') {
+			var resultTokenRecord = _v1.a;
+			return _Utils_Tuple2(
+				$author$project$Chat$initialModel,
+				$elm$core$Platform$Cmd$batch(
+					_List_fromArray(
+						[
+							$author$project$Chat$establishSocketConnection,
+							$author$project$Credentials$addUserToRoom(
+							{
+								userId: $author$project$Credentials$userIdToString(resultTokenRecord.id),
+								userName: A2($author$project$Chat$takeNameOrEmail, resultTokenRecord.firstname, resultTokenRecord.email)
+							}),
+							$author$project$Chat$fetchChatMessages
+						])));
+		} else {
+			return _Utils_Tuple2($author$project$Chat$initialModel, $elm$core$Platform$Cmd$none);
+		}
+	} else {
+		return _Utils_Tuple2($author$project$Chat$initialModel, $elm$core$Platform$Cmd$none);
+	}
+};
+var $author$project$Home$initialModel = {};
+var $author$project$Home$init = function (_v0) {
+	return _Utils_Tuple2($author$project$Home$initialModel, $elm$core$Platform$Cmd$none);
+};
+var $author$project$Login$initialModel = {
+	errors: _List_Nil,
+	isLoading: false,
+	loginCredentials: {email: '', password: ''}
+};
+var $author$project$Login$init = function (_v0) {
+	return _Utils_Tuple2($author$project$Login$initialModel, $elm$core$Platform$Cmd$none);
+};
+var $author$project$Profile$Intruder = {$: 'Intruder'};
+var $author$project$Profile$NotVerified = {$: 'NotVerified'};
+var $author$project$Profile$Verified = function (a) {
+	return {$: 'Verified', a: a};
+};
+var $author$project$Credentials$emptyImageString = $author$project$Credentials$ImageString($elm$core$Maybe$Nothing);
+var $author$project$Credentials$emptyUserId = $author$project$Credentials$UserId('');
+var $author$project$Credentials$emptyVerificationString = $author$project$Credentials$VerificationString('');
+var $author$project$Profile$initialModel = {
+	errors: _List_Nil,
+	imageFile: $author$project$Credentials$emptyImageString,
+	profile: {email: '', firstname: '', id: $author$project$Credentials$emptyUserId, isverified: false, profilepicurl: $author$project$Credentials$emptyImageString, verificationstring: $author$project$Credentials$emptyVerificationString},
+	userState: $author$project$Profile$NotVerified
+};
+var $author$project$Profile$init = function (session) {
+	var _v0 = $author$project$Credentials$fromSessionToToken(session);
+	if (_v0.$ === 'Just') {
+		var token = _v0.a;
+		var _v1 = A2(
+			$simonh1000$elm_jwt$Jwt$decodeToken,
+			$author$project$Credentials$decodeTokenData,
+			$author$project$Credentials$fromTokenToString(token));
+		if (_v1.$ === 'Ok') {
+			var profileData = _v1.a;
+			return _Utils_Tuple2(
+				_Utils_update(
+					$author$project$Profile$initialModel,
+					{
+						profile: profileData,
+						userState: profileData.isverified ? $author$project$Profile$Verified(session) : $author$project$Profile$NotVerified
+					}),
+				$elm$core$Platform$Cmd$none);
+		} else {
+			return _Utils_Tuple2(
+				_Utils_update(
+					$author$project$Profile$initialModel,
+					{userState: $author$project$Profile$Intruder}),
+				$elm$core$Platform$Cmd$none);
+		}
+	} else {
+		return _Utils_Tuple2(
+			_Utils_update(
+				$author$project$Profile$initialModel,
+				{userState: $author$project$Profile$Intruder}),
+			$elm$core$Platform$Cmd$none);
+	}
+};
+var $author$project$Signup$initialModel = {
+	errors: _List_Nil,
+	isLoading: false,
+	signupCredentials: {confirmPassword: '', email: '', password: ''}
+};
+var $author$project$Signup$init = function (_v0) {
+	return _Utils_Tuple2($author$project$Signup$initialModel, $elm$core$Platform$Cmd$none);
+};
+var $author$project$Verification$Sessionless = {$: 'Sessionless'};
+var $author$project$Verification$VerificationFail = {$: 'VerificationFail'};
+var $author$project$Verification$VerificationPending = {$: 'VerificationPending'};
+var $author$project$Verification$Verified = {$: 'Verified'};
+var $author$project$Verification$VerifyApiCallStart = function (a) {
+	return {$: 'VerifyApiCallStart', a: a};
+};
+var $elm$core$Process$sleep = _Process_sleep;
+var $author$project$Verification$apiCallAfterSomeTime = F2(
+	function (session, toMsg) {
+		return A2(
+			$elm$core$Task$perform,
+			function (_v0) {
+				return toMsg(session);
+			},
+			$elm$core$Process$sleep(5000));
+	});
+var $elm$core$Basics$neq = _Utils_notEqual;
+var $elm$core$Basics$not = _Basics_not;
+var $author$project$Credentials$verificationToString = function (_v0) {
+	var verificationString = _v0.a;
+	return verificationString;
+};
+var $author$project$Verification$init = F2(
+	function (session, verificationParam) {
+		var _v0 = $author$project$Credentials$fromSessionToToken(session);
+		if (_v0.$ === 'Just') {
+			var token = _v0.a;
+			var _v1 = A2(
+				$simonh1000$elm_jwt$Jwt$decodeToken,
+				$author$project$Credentials$decodeTokenData,
+				$author$project$Credentials$fromTokenToString(token));
+			if (_v1.$ === 'Ok') {
+				var resultTokenRecord = _v1.a;
+				return (!_Utils_eq(
+					verificationParam,
+					'/verify-email/' + $author$project$Credentials$verificationToString(resultTokenRecord.verificationstring))) ? _Utils_Tuple2(
+					{userState: $author$project$Verification$VerificationFail},
+					$elm$core$Platform$Cmd$none) : ((!resultTokenRecord.isverified) ? _Utils_Tuple2(
+					{userState: $author$project$Verification$VerificationPending},
+					A2($author$project$Verification$apiCallAfterSomeTime, session, $author$project$Verification$VerifyApiCallStart)) : _Utils_Tuple2(
+					{userState: $author$project$Verification$Verified},
+					$elm$core$Platform$Cmd$none));
+			} else {
+				return _Utils_Tuple2(
+					{userState: $author$project$Verification$Sessionless},
+					$elm$core$Platform$Cmd$none);
+			}
+		} else {
+			return _Utils_Tuple2(
+				{userState: $author$project$Verification$Sessionless},
+				$elm$core$Platform$Cmd$none);
+		}
+	});
+var $elm$core$Platform$Cmd$map = _Platform_map;
+var $author$project$Main$initCurrentPage = function (_v0) {
+	var url = _v0.a;
+	var model = _v0.b;
+	var existingCmds = _v0.c;
+	var _v1 = model.page;
+	switch (_v1.$) {
+		case 'NotFoundPage':
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{page: $author$project$Main$NotFoundPage}),
+				$elm$core$Platform$Cmd$none);
+		case 'LoginPage':
+			var _v2 = $author$project$Login$init(_Utils_Tuple0);
+			var pageModel = _v2.a;
+			var pageCmds = _v2.b;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{
+						page: $author$project$Main$LoginPage(pageModel)
+					}),
+				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotLoginMsg, pageCmds));
+		case 'SignupPage':
+			var _v3 = $author$project$Signup$init(_Utils_Tuple0);
+			var pageModel = _v3.a;
+			var pageCmds = _v3.b;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{
+						page: $author$project$Main$SignupPage(pageModel)
+					}),
+				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotSignupMsg, pageCmds));
+		case 'HomePage':
+			var _v4 = $author$project$Home$init(_Utils_Tuple0);
+			var pageModel = _v4.a;
+			var pageCmds = _v4.b;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{
+						page: $author$project$Main$HomePage(pageModel)
+					}),
+				$elm$core$Platform$Cmd$batch(
+					_List_fromArray(
+						[
+							A2($elm$core$Platform$Cmd$map, $author$project$Main$GotHomeMsg, pageCmds),
+							existingCmds
+						])));
+		case 'ChatPage':
+			var _v5 = $author$project$Chat$init(model.session);
+			var pageModel = _v5.a;
+			var pageCmds = _v5.b;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{
+						page: $author$project$Main$ChatPage(pageModel)
+					}),
+				$elm$core$Platform$Cmd$batch(
+					_List_fromArray(
+						[
+							A2($elm$core$Platform$Cmd$map, $author$project$Main$GotChatMsg, pageCmds),
+							existingCmds
+						])));
+		case 'VerificationPage':
+			var _v6 = A2($author$project$Verification$init, model.session, url.path);
+			var pageModel = _v6.a;
+			var pageCmds = _v6.b;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{
+						page: $author$project$Main$VerificationPage(pageModel)
+					}),
+				A2($elm$core$Platform$Cmd$map, $author$project$Main$GotVerificationMsg, pageCmds));
+		default:
+			var _v7 = $author$project$Profile$init(model.session);
+			var pageModel = _v7.a;
+			var pageCmds = _v7.b;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{
+						page: $author$project$Main$ProfilePage(pageModel)
+					}),
+				$elm$core$Platform$Cmd$batch(
+					_List_fromArray(
+						[
+							A2($elm$core$Platform$Cmd$map, $author$project$Main$GotProfileMsg, pageCmds),
+							existingCmds
+						])));
+	}
+};
+var $elm$time$Time$Name = function (a) {
+	return {$: 'Name', a: a};
+};
+var $elm$time$Time$Offset = function (a) {
+	return {$: 'Offset', a: a};
+};
+var $elm$time$Time$Zone = F2(
+	function (a, b) {
+		return {$: 'Zone', a: a, b: b};
+	});
+var $elm$time$Time$customZone = $elm$time$Time$Zone;
+var $elm$time$Time$Posix = function (a) {
+	return {$: 'Posix', a: a};
+};
+var $elm$time$Time$millisToPosix = $elm$time$Time$Posix;
+var $elm$time$Time$now = _Time_now($elm$time$Time$millisToPosix);
+var $author$project$Main$Chat = {$: 'Chat'};
+var $author$project$Main$Home = {$: 'Home'};
+var $author$project$Main$Login = {$: 'Login'};
+var $author$project$Main$Profile = function (a) {
+	return {$: 'Profile', a: a};
+};
+var $author$project$Main$Signup = {$: 'Signup'};
+var $author$project$Main$Verification = function (a) {
+	return {$: 'Verification', a: a};
+};
+var $elm$url$Url$Parser$Parser = function (a) {
+	return {$: 'Parser', a: a};
+};
+var $elm$url$Url$Parser$State = F5(
+	function (visited, unvisited, params, frag, value) {
+		return {frag: frag, params: params, unvisited: unvisited, value: value, visited: visited};
+	});
+var $elm$url$Url$Parser$mapState = F2(
+	function (func, _v0) {
+		var visited = _v0.visited;
+		var unvisited = _v0.unvisited;
+		var params = _v0.params;
+		var frag = _v0.frag;
+		var value = _v0.value;
+		return A5(
+			$elm$url$Url$Parser$State,
+			visited,
+			unvisited,
+			params,
+			frag,
+			func(value));
+	});
+var $elm$url$Url$Parser$map = F2(
+	function (subValue, _v0) {
+		var parseArg = _v0.a;
+		return $elm$url$Url$Parser$Parser(
+			function (_v1) {
+				var visited = _v1.visited;
+				var unvisited = _v1.unvisited;
+				var params = _v1.params;
+				var frag = _v1.frag;
+				var value = _v1.value;
+				return A2(
+					$elm$core$List$map,
+					$elm$url$Url$Parser$mapState(value),
+					parseArg(
+						A5($elm$url$Url$Parser$State, visited, unvisited, params, frag, subValue)));
+			});
+	});
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $elm$core$List$concat = function (lists) {
+	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
+};
+var $elm$core$List$concatMap = F2(
+	function (f, list) {
+		return $elm$core$List$concat(
+			A2($elm$core$List$map, f, list));
+	});
+var $elm$url$Url$Parser$oneOf = function (parsers) {
+	return $elm$url$Url$Parser$Parser(
+		function (state) {
+			return A2(
+				$elm$core$List$concatMap,
+				function (_v0) {
+					var parser = _v0.a;
+					return parser(state);
+				},
+				parsers);
+		});
+};
+var $elm$url$Url$Parser$s = function (str) {
+	return $elm$url$Url$Parser$Parser(
+		function (_v0) {
+			var visited = _v0.visited;
+			var unvisited = _v0.unvisited;
+			var params = _v0.params;
+			var frag = _v0.frag;
+			var value = _v0.value;
+			if (!unvisited.b) {
+				return _List_Nil;
+			} else {
+				var next = unvisited.a;
+				var rest = unvisited.b;
+				return _Utils_eq(next, str) ? _List_fromArray(
+					[
+						A5(
+						$elm$url$Url$Parser$State,
+						A2($elm$core$List$cons, next, visited),
+						rest,
+						params,
+						frag,
+						value)
+					]) : _List_Nil;
+			}
+		});
+};
+var $elm$url$Url$Parser$slash = F2(
+	function (_v0, _v1) {
+		var parseBefore = _v0.a;
+		var parseAfter = _v1.a;
+		return $elm$url$Url$Parser$Parser(
+			function (state) {
+				return A2(
+					$elm$core$List$concatMap,
+					parseAfter,
+					parseBefore(state));
+			});
+	});
+var $elm$url$Url$Parser$top = $elm$url$Url$Parser$Parser(
+	function (state) {
+		return _List_fromArray(
+			[state]);
+	});
+var $elm$url$Url$Parser$custom = F2(
+	function (tipe, stringToSomething) {
+		return $elm$url$Url$Parser$Parser(
+			function (_v0) {
+				var visited = _v0.visited;
+				var unvisited = _v0.unvisited;
+				var params = _v0.params;
+				var frag = _v0.frag;
+				var value = _v0.value;
+				if (!unvisited.b) {
+					return _List_Nil;
+				} else {
+					var next = unvisited.a;
+					var rest = unvisited.b;
+					var _v2 = stringToSomething(next);
+					if (_v2.$ === 'Just') {
+						var nextValue = _v2.a;
+						return _List_fromArray(
+							[
+								A5(
+								$elm$url$Url$Parser$State,
+								A2($elm$core$List$cons, next, visited),
+								rest,
+								params,
+								frag,
+								value(nextValue))
+							]);
+					} else {
+						return _List_Nil;
+					}
+				}
+			});
+	});
+var $author$project$Credentials$userIdParser = A2(
+	$elm$url$Url$Parser$custom,
+	'USERID',
+	function (userId) {
+		return A2(
+			$elm$core$Maybe$map,
+			$author$project$Credentials$UserId,
+			$elm$core$Maybe$Just(userId));
+	});
+var $author$project$Credentials$verifictionStringParser = A2(
+	$elm$url$Url$Parser$custom,
+	'VERIFICATIONSTRING',
+	function (verificationString) {
+		return A2(
+			$elm$core$Maybe$map,
+			$author$project$Credentials$VerificationString,
+			$elm$core$Maybe$Just(verificationString));
+	});
+var $author$project$Main$matchRoute = $elm$url$Url$Parser$oneOf(
+	_List_fromArray(
+		[
+			A2($elm$url$Url$Parser$map, $author$project$Main$Home, $elm$url$Url$Parser$top),
+			A2(
+			$elm$url$Url$Parser$map,
+			$author$project$Main$Login,
+			$elm$url$Url$Parser$s('login')),
+			A2(
+			$elm$url$Url$Parser$map,
+			$author$project$Main$Profile,
+			A2(
+				$elm$url$Url$Parser$slash,
+				$elm$url$Url$Parser$s('profile'),
+				$author$project$Credentials$userIdParser)),
+			A2(
+			$elm$url$Url$Parser$map,
+			$author$project$Main$Signup,
+			$elm$url$Url$Parser$s('signup')),
+			A2(
+			$elm$url$Url$Parser$map,
+			$author$project$Main$Chat,
+			$elm$url$Url$Parser$s('chat')),
+			A2(
+			$elm$url$Url$Parser$map,
+			$author$project$Main$Verification,
+			A2(
+				$elm$url$Url$Parser$slash,
+				$elm$url$Url$Parser$s('verify-email'),
+				$author$project$Credentials$verifictionStringParser))
+		]));
+var $elm$url$Url$Parser$getFirstMatch = function (states) {
+	getFirstMatch:
+	while (true) {
+		if (!states.b) {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var state = states.a;
+			var rest = states.b;
+			var _v1 = state.unvisited;
+			if (!_v1.b) {
+				return $elm$core$Maybe$Just(state.value);
+			} else {
+				if ((_v1.a === '') && (!_v1.b.b)) {
+					return $elm$core$Maybe$Just(state.value);
+				} else {
+					var $temp$states = rest;
+					states = $temp$states;
+					continue getFirstMatch;
+				}
+			}
+		}
+	}
+};
+var $elm$url$Url$Parser$removeFinalEmpty = function (segments) {
+	if (!segments.b) {
+		return _List_Nil;
+	} else {
+		if ((segments.a === '') && (!segments.b.b)) {
+			return _List_Nil;
+		} else {
+			var segment = segments.a;
+			var rest = segments.b;
+			return A2(
+				$elm$core$List$cons,
+				segment,
+				$elm$url$Url$Parser$removeFinalEmpty(rest));
+		}
+	}
+};
+var $elm$url$Url$Parser$preparePath = function (path) {
+	var _v0 = A2($elm$core$String$split, '/', path);
+	if (_v0.b && (_v0.a === '')) {
+		var segments = _v0.b;
+		return $elm$url$Url$Parser$removeFinalEmpty(segments);
+	} else {
+		var segments = _v0;
+		return $elm$url$Url$Parser$removeFinalEmpty(segments);
+	}
+};
+var $elm$url$Url$Parser$addToParametersHelp = F2(
+	function (value, maybeList) {
+		if (maybeList.$ === 'Nothing') {
+			return $elm$core$Maybe$Just(
+				_List_fromArray(
+					[value]));
+		} else {
+			var list = maybeList.a;
+			return $elm$core$Maybe$Just(
+				A2($elm$core$List$cons, value, list));
+		}
+	});
+var $elm$url$Url$percentDecode = _Url_percentDecode;
+var $elm$url$Url$Parser$addParam = F2(
+	function (segment, dict) {
+		var _v0 = A2($elm$core$String$split, '=', segment);
+		if ((_v0.b && _v0.b.b) && (!_v0.b.b.b)) {
+			var rawKey = _v0.a;
+			var _v1 = _v0.b;
+			var rawValue = _v1.a;
+			var _v2 = $elm$url$Url$percentDecode(rawKey);
+			if (_v2.$ === 'Nothing') {
+				return dict;
+			} else {
+				var key = _v2.a;
+				var _v3 = $elm$url$Url$percentDecode(rawValue);
+				if (_v3.$ === 'Nothing') {
+					return dict;
+				} else {
+					var value = _v3.a;
+					return A3(
+						$elm$core$Dict$update,
+						key,
+						$elm$url$Url$Parser$addToParametersHelp(value),
+						dict);
+				}
+			}
+		} else {
+			return dict;
+		}
+	});
+var $elm$url$Url$Parser$prepareQuery = function (maybeQuery) {
+	if (maybeQuery.$ === 'Nothing') {
+		return $elm$core$Dict$empty;
+	} else {
+		var qry = maybeQuery.a;
+		return A3(
+			$elm$core$List$foldr,
+			$elm$url$Url$Parser$addParam,
+			$elm$core$Dict$empty,
+			A2($elm$core$String$split, '&', qry));
+	}
+};
+var $elm$url$Url$Parser$parse = F2(
+	function (_v0, url) {
+		var parser = _v0.a;
+		return $elm$url$Url$Parser$getFirstMatch(
+			parser(
+				A5(
+					$elm$url$Url$Parser$State,
+					_List_Nil,
+					$elm$url$Url$Parser$preparePath(url.path),
+					$elm$url$Url$Parser$prepareQuery(url.query),
+					url.fragment,
+					$elm$core$Basics$identity)));
+	});
+var $author$project$Main$urlToPage = F2(
+	function (url, session) {
+		var _v0 = A2($elm$url$Url$Parser$parse, $author$project$Main$matchRoute, url);
+		if (_v0.$ === 'Just') {
+			switch (_v0.a.$) {
+				case 'Login':
+					var _v1 = _v0.a;
+					var _v2 = $author$project$Credentials$fromSessionToToken(session);
+					if (_v2.$ === 'Just') {
+						return $author$project$Main$NotFoundPage;
+					} else {
+						return $author$project$Main$LoginPage(
+							$author$project$Login$init(_Utils_Tuple0).a);
+					}
+				case 'Signup':
+					var _v3 = _v0.a;
+					var _v4 = $author$project$Credentials$fromSessionToToken(session);
+					if (_v4.$ === 'Just') {
+						return $author$project$Main$NotFoundPage;
+					} else {
+						return $author$project$Main$SignupPage(
+							$author$project$Signup$init(_Utils_Tuple0).a);
+					}
+				case 'Profile':
+					var _v5 = $author$project$Credentials$fromSessionToToken(session);
+					if (_v5.$ === 'Just') {
+						return $author$project$Main$ProfilePage(
+							$author$project$Profile$init(session).a);
+					} else {
+						return $author$project$Main$NotFoundPage;
+					}
+				case 'Verification':
+					var _v6 = $author$project$Credentials$fromSessionToToken(session);
+					if (_v6.$ === 'Just') {
+						return $author$project$Main$VerificationPage(
+							A2($author$project$Verification$init, session, url.path).a);
+					} else {
+						return $author$project$Main$NotFoundPage;
+					}
+				case 'Chat':
+					var _v7 = _v0.a;
+					var _v8 = $author$project$Credentials$fromSessionToToken(session);
+					if (_v8.$ === 'Just') {
+						return $author$project$Main$ChatPage(
+							$author$project$Chat$init(session).a);
+					} else {
+						return $author$project$Main$NotFoundPage;
+					}
+				case 'Home':
+					var _v9 = _v0.a;
+					return $author$project$Main$HomePage(
+						$author$project$Home$init(_Utils_Tuple0).a);
+				default:
+					var _v10 = _v0.a;
+					return $author$project$Main$NotFoundPage;
+			}
+		} else {
+			return $author$project$Main$NotFoundPage;
+		}
+	});
+var $author$project$Main$init = F3(
+	function (flags, url, key) {
+		var session = A2($author$project$Credentials$decodeToSession, key, flags);
+		var model = {
+			key: key,
+			openDropdown: false,
+			page: A2($author$project$Main$urlToPage, url, session),
+			session: session,
+			time: $elm$core$Maybe$Nothing
+		};
+		return $author$project$Main$initCurrentPage(
+			_Utils_Tuple3(
+				url,
+				model,
+				A2($elm$core$Task$perform, $author$project$Main$GotTime, $elm$time$Time$now)));
+	});
+var $author$project$Main$GotSubscriptionChangeMsg = function (a) {
+	return {$: 'GotSubscriptionChangeMsg', a: a};
+};
+var $author$project$Main$GotSubscriptionSocketMsg = function (a) {
+	return {$: 'GotSubscriptionSocketMsg', a: a};
+};
+var $elm$core$Platform$Sub$batch = _Platform_batch;
+var $elm$core$Debug$toString = _Debug_toString;
+var $author$project$Credentials$decodeToSocket = F2(
+	function (key, value) {
+		var result = A2($elm$json$Json$Decode$decodeValue, $author$project$Credentials$decodeSocketMessage, value);
+		if (result.$ === 'Ok') {
+			var obj = result.a;
+			return obj;
+		} else {
+			var err = result.a;
+			return {
+				clientId: '',
+				connectionId: '',
+				data: {message: ''},
+				id: '',
+				name: $elm$core$Debug$toString(err),
+				timestamp: 0
+			};
+		}
+	});
+var $author$project$Credentials$listenSocketMessage = _Platform_incomingPort('listenSocketMessage', $elm$json$Json$Decode$value);
+var $author$project$Credentials$socketMessageChanges = F2(
+	function (toMsg, key) {
+		return $author$project$Credentials$listenSocketMessage(
+			function (val) {
+				return toMsg(
+					A2($author$project$Credentials$decodeToSocket, key, val));
+			});
+	});
+var $author$project$Credentials$onSessionChange = _Platform_incomingPort('onSessionChange', $elm$json$Json$Decode$value);
+var $author$project$Credentials$subscriptionChanges = F2(
+	function (toMsg, key) {
+		return $author$project$Credentials$onSessionChange(
+			function (val) {
+				return toMsg(
+					A2($author$project$Credentials$decodeToSession, key, val));
+			});
+	});
+var $author$project$Main$subscriptions = function (model) {
+	return $elm$core$Platform$Sub$batch(
+		_List_fromArray(
+			[
+				A2($author$project$Credentials$subscriptionChanges, $author$project$Main$GotSubscriptionChangeMsg, model.key),
+				A2($author$project$Credentials$socketMessageChanges, $author$project$Main$GotSubscriptionSocketMsg, model.key)
+			]));
+};
+var $elm$json$Json$Decode$float = _Json_decodeFloat;
+var $elm$core$Basics$round = _Basics_round;
+var $simonh1000$elm_jwt$Jwt$getTokenExpirationMillis = function (token) {
+	var decodeExp = $elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				$elm$json$Json$Decode$int,
+				A2($elm$json$Json$Decode$map, $elm$core$Basics$round, $elm$json$Json$Decode$float)
+			]));
+	return A2(
+		$elm$core$Result$map,
+		function (exp) {
+			return 1000 * exp;
+		},
+		A2(
+			$simonh1000$elm_jwt$Jwt$decodeToken,
+			A2($elm$json$Json$Decode$field, 'exp', decodeExp),
+			token));
+};
+var $elm$time$Time$posixToMillis = function (_v0) {
+	var millis = _v0.a;
+	return millis;
+};
+var $simonh1000$elm_jwt$Jwt$isExpired = F2(
+	function (now, token) {
+		return A2(
+			$elm$core$Result$map,
+			function (millis) {
+				return _Utils_cmp(
+					$elm$time$Time$posixToMillis(now),
+					millis) > 0;
+			},
+			$simonh1000$elm_jwt$Jwt$getTokenExpirationMillis(token));
+	});
+var $elm$browser$Browser$Navigation$load = _Browser_load;
+var $elm$core$Maybe$destruct = F3(
+	function (_default, func, maybe) {
+		if (maybe.$ === 'Just') {
+			var a = maybe.a;
+			return func(a);
+		} else {
+			return _default;
+		}
+	});
+var $elm$json$Json$Encode$null = _Json_encodeNull;
+var $author$project$Credentials$storeSession = _Platform_outgoingPort(
+	'storeSession',
+	function ($) {
+		return A3($elm$core$Maybe$destruct, $elm$json$Json$Encode$null, $elm$json$Json$Encode$string, $);
+	});
+var $author$project$Credentials$logout = $author$project$Credentials$storeSession($elm$core$Maybe$Nothing);
+var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
+var $elm$browser$Browser$Navigation$reload = _Browser_reload(false);
+var $elm$url$Url$addPort = F2(
+	function (maybePort, starter) {
+		if (maybePort.$ === 'Nothing') {
+			return starter;
+		} else {
+			var port_ = maybePort.a;
+			return starter + (':' + $elm$core$String$fromInt(port_));
+		}
+	});
+var $elm$url$Url$addPrefixed = F3(
+	function (prefix, maybeSegment, starter) {
+		if (maybeSegment.$ === 'Nothing') {
+			return starter;
+		} else {
+			var segment = maybeSegment.a;
+			return _Utils_ap(
+				starter,
+				_Utils_ap(prefix, segment));
+		}
+	});
+var $elm$url$Url$toString = function (url) {
+	var http = function () {
+		var _v0 = url.protocol;
+		if (_v0.$ === 'Http') {
+			return 'http://';
+		} else {
+			return 'https://';
+		}
+	}();
+	return A3(
+		$elm$url$Url$addPrefixed,
+		'#',
+		url.fragment,
+		A3(
+			$elm$url$Url$addPrefixed,
+			'?',
+			url.query,
+			_Utils_ap(
+				A2(
+					$elm$url$Url$addPort,
+					url.port_,
+					_Utils_ap(http, url.host)),
+				url.path)));
+};
+var $author$project$Chat$MessageReceived = function (a) {
+	return {$: 'MessageReceived', a: a};
+};
+var $author$project$Chat$unfoldMessageReceived = function (socketData) {
+	return $author$project$Chat$MessageReceived(socketData);
+};
+var $author$project$Utils$buildErrorMessage = function (httpError) {
+	switch (httpError.$) {
+		case 'BadUrl':
+			var message = httpError.a;
+			return message;
+		case 'Timeout':
+			return 'Server is taking too long to respond. Please try again later.';
+		case 'NetworkError':
+			return 'Unable to reach server.';
+		case 'BadStatus':
+			var statusCode = httpError.a;
+			return 'Request failed with status code: ' + $elm$core$String$fromInt(statusCode);
+		default:
+			var message = httpError.a;
+			return message;
+	}
+};
+var $author$project$Credentials$emitTyping = _Platform_outgoingPort('emitTyping', $elm$json$Json$Encode$string);
+var $author$project$Credentials$sendMessageToSocket = _Platform_outgoingPort('sendMessageToSocket', $elm$json$Json$Encode$string);
+var $author$project$Chat$update = F2(
+	function (msg, model) {
+		switch (msg.$) {
+			case 'StoreMessage':
+				var message = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{message: message}),
+					$author$project$Credentials$emitTyping(message));
+			case 'MessageSubmit':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{message: ''}),
+					$author$project$Credentials$sendMessageToSocket(model.message));
+			case 'MessageReceived':
+				var message = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							receivedMessages: _Utils_ap(
+								model.receivedMessages,
+								_List_fromArray(
+									[message]))
+						}),
+					$elm$core$Platform$Cmd$none);
+			case 'SocketEstablished':
+				if (msg.a.$ === 'Ok') {
+					var roomId = msg.a.a;
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				} else {
+					var err = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								error: $elm$core$Maybe$Just(
+									$author$project$Utils$buildErrorMessage(err))
+							}),
+						$elm$core$Platform$Cmd$none);
+				}
+			default:
+				if (msg.a.$ === 'Ok') {
+					var messages = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								receivedMessages: _Utils_ap(model.receivedMessages, messages)
+							}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					var err = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								error: $elm$core$Maybe$Just(
+									$author$project$Utils$buildErrorMessage(err))
+							}),
+						$elm$core$Platform$Cmd$none);
+				}
+		}
+	});
+var $author$project$Home$update = F2(
+	function (msg, model) {
+		return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+	});
+var $author$project$Login$BadRequest = function (a) {
+	return {$: 'BadRequest', a: a};
+};
+var $author$project$Credentials$encodeToken = function (_v0) {
+	var token = _v0.a;
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'token',
+				$elm$json$Json$Encode$string(token))
+			]));
+};
+var $elm$core$List$isEmpty = function (xs) {
+	if (!xs.b) {
+		return true;
+	} else {
+		return false;
+	}
+};
+var $author$project$Login$LoginDone = function (a) {
+	return {$: 'LoginDone', a: a};
+};
+var $author$project$Login$credentialsEncoder = function (credentials) {
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'email',
+				$elm$json$Json$Encode$string(credentials.email)),
+				_Utils_Tuple2(
+				'password',
+				$elm$json$Json$Encode$string(credentials.password))
+			]));
+};
+var $elm$http$Http$jsonBody = function (value) {
+	return A2(
+		_Http_pair,
+		'application/json',
+		A2($elm$json$Json$Encode$encode, 0, value));
+};
 var $elm$http$Http$post = function (r) {
 	return $elm$http$Http$request(
 		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
@@ -8459,8 +8600,6 @@ var $author$project$Profile$FileRead = function (a) {
 var $author$project$Profile$FileRequestProceed = function (a) {
 	return {$: 'FileRequestProceed', a: a};
 };
-var $author$project$Profile$LogoutUser = {$: 'LogoutUser'};
-var $author$project$Profile$SessionExpired = {$: 'SessionExpired'};
 var $elm$core$Basics$composeL = F3(
 	function (g, f, x) {
 		return g(
@@ -8491,40 +8630,6 @@ var $elm$file$File$Select$file = F2(
 			$elm$core$Task$perform,
 			toMsg,
 			_File_uploadOne(mimes));
-	});
-var $elm$json$Json$Decode$float = _Json_decodeFloat;
-var $elm$core$Basics$round = _Basics_round;
-var $simonh1000$elm_jwt$Jwt$getTokenExpirationMillis = function (token) {
-	var decodeExp = $elm$json$Json$Decode$oneOf(
-		_List_fromArray(
-			[
-				$elm$json$Json$Decode$int,
-				A2($elm$json$Json$Decode$map, $elm$core$Basics$round, $elm$json$Json$Decode$float)
-			]));
-	return A2(
-		$elm$core$Result$map,
-		function (exp) {
-			return 1000 * exp;
-		},
-		A2(
-			$simonh1000$elm_jwt$Jwt$decodeToken,
-			A2($elm$json$Json$Decode$field, 'exp', decodeExp),
-			token));
-};
-var $elm$time$Time$posixToMillis = function (_v0) {
-	var millis = _v0.a;
-	return millis;
-};
-var $simonh1000$elm_jwt$Jwt$isExpired = F2(
-	function (now, token) {
-		return A2(
-			$elm$core$Result$map,
-			function (millis) {
-				return _Utils_cmp(
-					$elm$time$Time$posixToMillis(now),
-					millis) > 0;
-			},
-			$simonh1000$elm_jwt$Jwt$getTokenExpirationMillis(token));
 	});
 var $author$project$Credentials$stringToImageString = function (str) {
 	return $elm$core$String$isEmpty(str) ? $author$project$Credentials$ImageString($elm$core$Maybe$Nothing) : $author$project$Credentials$ImageString(
@@ -8596,15 +8701,6 @@ var $elm$core$String$trim = _String_trim;
 var $author$project$Profile$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
-			case 'GotTime':
-				var time = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							time: $elm$core$Maybe$Just(time)
-						}),
-					$elm$core$Platform$Cmd$none);
 			case 'StoreFirstName':
 				var firstName = msg.a;
 				var oldProfile = model.profile;
@@ -8717,54 +8813,6 @@ var $author$project$Profile$update = F2(
 									model.errors)
 							}),
 						$elm$core$Platform$Cmd$none);
-				}
-			case 'CheckSessionExpired':
-				var _v2 = msg.a;
-				var session = _v2.a;
-				var maybeTime = _v2.b;
-				var _v3 = _Utils_Tuple2(
-					maybeTime,
-					$author$project$Credentials$fromSessionToToken(session));
-				if (_v3.a.$ === 'Just') {
-					if (_v3.b.$ === 'Just') {
-						var time = _v3.a.a;
-						var token = _v3.b.a;
-						var tokenString = $author$project$Credentials$fromTokenToString(token);
-						var _v4 = A2($simonh1000$elm_jwt$Jwt$isExpired, time, tokenString);
-						if (_v4.$ === 'Ok') {
-							var isExpired = _v4.a;
-							return isExpired ? _Utils_Tuple2(
-								_Utils_update(
-									model,
-									{userState: $author$project$Profile$SessionExpired}),
-								A2(
-									$elm$core$Task$perform,
-									function (_v5) {
-										return $author$project$Profile$LogoutUser;
-									},
-									$elm$core$Process$sleep(5000))) : _Utils_Tuple2(
-								_Utils_update(
-									model,
-									{
-										userState: $author$project$Profile$Verified(session)
-									}),
-								$elm$core$Platform$Cmd$none);
-						} else {
-							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-						}
-					} else {
-						var _v7 = _v3.b;
-						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-					}
-				} else {
-					if (_v3.b.$ === 'Just') {
-						var _v6 = _v3.a;
-						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-					} else {
-						var _v8 = _v3.a;
-						var _v9 = _v3.b;
-						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-					}
 				}
 			default:
 				return _Utils_Tuple2(model, $author$project$Credentials$logout);
@@ -8920,7 +8968,6 @@ var $author$project$Verification$VerificationDone = {$: 'VerificationDone'};
 var $author$project$Verification$VerifyDone = function (a) {
 	return {$: 'VerifyDone', a: a};
 };
-var $elm$http$Http$emptyBody = _Http_emptyBody;
 var $author$project$Verification$apiCallToVerify = function (session) {
 	var _v0 = $author$project$Credentials$fromSessionToToken(session);
 	if (_v0.$ === 'Just') {
@@ -8992,9 +9039,18 @@ var $author$project$Main$update = F2(
 						$elm$browser$Browser$Navigation$load(href));
 				} else {
 					var url = urlRequest.a;
+					var urlPath = url.path;
 					return _Utils_Tuple2(
 						model,
-						A2(
+						(urlPath === '/chat') ? $elm$core$Platform$Cmd$batch(
+							_List_fromArray(
+								[
+									$elm$browser$Browser$Navigation$reload,
+									A2(
+									$elm$browser$Browser$Navigation$pushUrl,
+									model.key,
+									$elm$url$Url$toString(url))
+								])) : A2(
 							$elm$browser$Browser$Navigation$pushUrl,
 							model.key,
 							$elm$url$Url$toString(url)));
@@ -9063,32 +9119,14 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
-			case 'GotChatMsg':
-				var chatMsg = msg.a;
-				var _v8 = model.page;
-				if (_v8.$ === 'ChatPage') {
-					var chatModel = _v8.a;
-					var _v9 = A2($author$project$Chat$update, chatMsg, chatModel);
-					var chatModelFromChat = _v9.a;
-					var chatMsgFromChat = _v9.b;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								page: $author$project$Main$ChatPage(chatModelFromChat)
-							}),
-						A2($elm$core$Platform$Cmd$map, $author$project$Main$GotChatMsg, chatMsgFromChat));
-				} else {
-					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-				}
 			case 'GotVerificationMsg':
 				var verificationMsg = msg.a;
-				var _v10 = model.page;
-				if (_v10.$ === 'VerificationPage') {
-					var verificationModel = _v10.a;
-					var _v11 = A2($author$project$Verification$update, verificationMsg, verificationModel);
-					var verificationModelFromVerification = _v11.a;
-					var verificationMsgFromVerification = _v11.b;
+				var _v8 = model.page;
+				if (_v8.$ === 'VerificationPage') {
+					var verificationModel = _v8.a;
+					var _v9 = A2($author$project$Verification$update, verificationMsg, verificationModel);
+					var verificationModelFromVerification = _v9.a;
+					var verificationMsgFromVerification = _v9.b;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
@@ -9101,12 +9139,12 @@ var $author$project$Main$update = F2(
 				}
 			case 'GotSignupMsg':
 				var signupMsg = msg.a;
-				var _v12 = model.page;
-				if (_v12.$ === 'SignupPage') {
-					var signupModel = _v12.a;
-					var _v13 = A2($author$project$Signup$update, signupMsg, signupModel);
-					var signupModelFromSignup = _v13.a;
-					var signupMsgFromSignup = _v13.b;
+				var _v10 = model.page;
+				if (_v10.$ === 'SignupPage') {
+					var signupModel = _v10.a;
+					var _v11 = A2($author$project$Signup$update, signupMsg, signupModel);
+					var signupModelFromSignup = _v11.a;
+					var signupMsgFromSignup = _v11.b;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
@@ -9124,15 +9162,15 @@ var $author$project$Main$update = F2(
 						model,
 						{session: session}),
 					function () {
-						var _v14 = $author$project$Credentials$fromSessionToToken(session);
-						if (_v14.$ === 'Just') {
-							var token = _v14.a;
-							var _v15 = A2(
+						var _v12 = $author$project$Credentials$fromSessionToToken(session);
+						if (_v12.$ === 'Just') {
+							var token = _v12.a;
+							var _v13 = A2(
 								$simonh1000$elm_jwt$Jwt$decodeToken,
 								$author$project$Credentials$decodeTokenData,
 								$author$project$Credentials$fromTokenToString(token));
-							if (_v15.$ === 'Ok') {
-								var resultTokenRecord = _v15.a;
+							if (_v13.$ === 'Ok') {
+								var resultTokenRecord = _v13.a;
 								return A2(
 									$elm$browser$Browser$Navigation$pushUrl,
 									model.key,
@@ -9146,23 +9184,87 @@ var $author$project$Main$update = F2(
 					}());
 			case 'GotSubscriptionSocketMsg':
 				var socketMsgObj = msg.a;
-				var _v16 = A2(
-					$author$project$Chat$init,
-					model.session,
-					$elm$core$Maybe$Just(socketMsgObj));
-				var chatModelFromChat = _v16.a;
-				var chatMsgFromChat = _v16.b;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							page: $author$project$Main$ChatPage(chatModelFromChat)
-						}),
-					A2($elm$core$Platform$Cmd$map, $author$project$Main$GotChatMsg, chatMsgFromChat));
+				var _v14 = model.page;
+				if (_v14.$ === 'ChatPage') {
+					var chatModel = _v14.a;
+					var chatMsg = $author$project$Chat$unfoldMessageReceived(socketMsgObj);
+					var _v15 = A2($author$project$Chat$update, chatMsg, chatModel);
+					var chatModelFromChat = _v15.a;
+					var chatMsgFromChat = _v15.b;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								page: $author$project$Main$ChatPage(chatModelFromChat)
+							}),
+						A2($elm$core$Platform$Cmd$map, $author$project$Main$GotChatMsg, chatMsgFromChat));
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			case 'GotChatMsg':
+				var chatMsg = msg.a;
+				var _v16 = model.page;
+				if (_v16.$ === 'ChatPage') {
+					var chatModel = _v16.a;
+					var _v17 = A2($author$project$Chat$update, chatMsg, chatModel);
+					var chatModelFromChat = _v17.a;
+					var chatMsgFromChat = _v17.b;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								page: $author$project$Main$ChatPage(chatModelFromChat)
+							}),
+						A2($elm$core$Platform$Cmd$map, $author$project$Main$GotChatMsg, chatMsgFromChat));
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			case 'CheckSessionExpired':
+				var _v18 = msg.a;
+				var session = _v18.a;
+				var maybeTime = _v18.b;
+				var _v19 = _Utils_Tuple2(
+					maybeTime,
+					$author$project$Credentials$fromSessionToToken(session));
+				if (_v19.a.$ === 'Just') {
+					if (_v19.b.$ === 'Just') {
+						var time = _v19.a.a;
+						var token = _v19.b.a;
+						var tokenString = $author$project$Credentials$fromTokenToString(token);
+						var _v20 = A2($simonh1000$elm_jwt$Jwt$isExpired, time, tokenString);
+						if (_v20.$ === 'Ok') {
+							var isExpired = _v20.a;
+							return isExpired ? _Utils_Tuple2(model, $author$project$Credentials$logout) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+						} else {
+							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+						}
+					} else {
+						var _v22 = _v19.b;
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					}
+				} else {
+					if (_v19.b.$ === 'Just') {
+						var _v21 = _v19.a;
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					} else {
+						var _v23 = _v19.a;
+						var _v24 = _v19.b;
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					}
+				}
 			case 'GetLogout':
 				return _Utils_Tuple2(model, $author$project$Credentials$logout);
 			case 'ChatNewMessage':
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+			case 'GotTime':
+				var time = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							time: $elm$core$Maybe$Just(time)
+						}),
+					$elm$core$Platform$Cmd$none);
 			default:
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -9171,6 +9273,10 @@ var $author$project$Main$update = F2(
 					$elm$core$Platform$Cmd$none);
 		}
 	});
+var $author$project$Main$CheckSessionExpired = function (a) {
+	return {$: 'CheckSessionExpired', a: a};
+};
+var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$virtual_dom$VirtualDom$map = _VirtualDom_map;
 var $elm$html$Html$map = $elm$virtual_dom$VirtualDom$map;
 var $elm$html$Html$p = _VirtualDom_node('p');
@@ -9180,10 +9286,7 @@ var $author$project$Chat$MessageSubmit = {$: 'MessageSubmit'};
 var $author$project$Chat$StoreMessage = function (a) {
 	return {$: 'StoreMessage', a: a};
 };
-var $elm$html$Html$br = _VirtualDom_node('br');
 var $elm$html$Html$button = _VirtualDom_node('button');
-var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$html$Html$form = _VirtualDom_node('form');
 var $elm$html$Html$h2 = _VirtualDom_node('h2');
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
@@ -9240,6 +9343,125 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $elm$html$Html$ul = _VirtualDom_node('ul');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+var $elm$html$Html$li = _VirtualDom_node('li');
+var $elm$time$Time$flooredDiv = F2(
+	function (numerator, denominator) {
+		return $elm$core$Basics$floor(numerator / denominator);
+	});
+var $elm$time$Time$toAdjustedMinutesHelp = F3(
+	function (defaultOffset, posixMinutes, eras) {
+		toAdjustedMinutesHelp:
+		while (true) {
+			if (!eras.b) {
+				return posixMinutes + defaultOffset;
+			} else {
+				var era = eras.a;
+				var olderEras = eras.b;
+				if (_Utils_cmp(era.start, posixMinutes) < 0) {
+					return posixMinutes + era.offset;
+				} else {
+					var $temp$defaultOffset = defaultOffset,
+						$temp$posixMinutes = posixMinutes,
+						$temp$eras = olderEras;
+					defaultOffset = $temp$defaultOffset;
+					posixMinutes = $temp$posixMinutes;
+					eras = $temp$eras;
+					continue toAdjustedMinutesHelp;
+				}
+			}
+		}
+	});
+var $elm$time$Time$toAdjustedMinutes = F2(
+	function (_v0, time) {
+		var defaultOffset = _v0.a;
+		var eras = _v0.b;
+		return A3(
+			$elm$time$Time$toAdjustedMinutesHelp,
+			defaultOffset,
+			A2(
+				$elm$time$Time$flooredDiv,
+				$elm$time$Time$posixToMillis(time),
+				60000),
+			eras);
+	});
+var $elm$time$Time$toHour = F2(
+	function (zone, time) {
+		return A2(
+			$elm$core$Basics$modBy,
+			24,
+			A2(
+				$elm$time$Time$flooredDiv,
+				A2($elm$time$Time$toAdjustedMinutes, zone, time),
+				60));
+	});
+var $elm$time$Time$toMinute = F2(
+	function (zone, time) {
+		return A2(
+			$elm$core$Basics$modBy,
+			60,
+			A2($elm$time$Time$toAdjustedMinutes, zone, time));
+	});
+var $elm$time$Time$toSecond = F2(
+	function (_v0, time) {
+		return A2(
+			$elm$core$Basics$modBy,
+			60,
+			A2(
+				$elm$time$Time$flooredDiv,
+				$elm$time$Time$posixToMillis(time),
+				1000));
+	});
+var $elm$time$Time$utc = A2($elm$time$Time$Zone, 0, _List_Nil);
+var $author$project$Chat$viewMessage = function (messageData) {
+	var second = $elm$core$String$fromInt(
+		A2(
+			$elm$time$Time$toSecond,
+			$elm$time$Time$utc,
+			$elm$time$Time$millisToPosix(messageData.timestamp)));
+	var minute = $elm$core$String$fromInt(
+		A2(
+			$elm$time$Time$toMinute,
+			$elm$time$Time$utc,
+			$elm$time$Time$millisToPosix(messageData.timestamp)));
+	var hour = $elm$core$String$fromInt(
+		A2(
+			$elm$time$Time$toHour,
+			$elm$time$Time$utc,
+			$elm$time$Time$millisToPosix(messageData.timestamp)));
+	return A2(
+		$elm$html$Html$li,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text(messageData.name + ':')
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text(messageData.data.message)
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text(hour + (':' + (minute + (':' + second))))
+							]))
+					]))
+			]));
+};
 var $author$project$Chat$view = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -9261,23 +9483,30 @@ var $author$project$Chat$view = function (model) {
 						A2(
 						$elm$html$Html$ul,
 						_List_Nil,
-						_List_fromArray(
-							[
-								$elm$html$Html$text(model.receivedSocketData.data.message)
-							]))
-					])),
-				A2(
-				$elm$html$Html$form,
-				_List_Nil,
-				_List_fromArray(
-					[
 						A2(
+							$elm$core$List$map,
+							function (m) {
+								return $author$project$Chat$viewMessage(m);
+							},
+							model.receivedMessages))
+					])),
+				function () {
+				var _v0 = model.error;
+				if (_v0.$ === 'Just') {
+					var err = _v0.a;
+					return A2(
 						$elm$html$Html$div,
 						_List_Nil,
 						_List_fromArray(
 							[
-								$elm$html$Html$text('SomeUser:'),
-								A2($elm$html$Html$br, _List_Nil, _List_Nil),
+								$elm$html$Html$text(err)
+							]));
+				} else {
+					return A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
 								A2(
 								$elm$html$Html$input,
 								_List_fromArray(
@@ -9286,20 +9515,21 @@ var $author$project$Chat$view = function (model) {
 										$elm$html$Html$Events$onInput($author$project$Chat$StoreMessage),
 										$elm$html$Html$Attributes$value(model.message)
 									]),
-								_List_Nil)
-							])),
-						A2(
-						$elm$html$Html$button,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$type_('button'),
-								$elm$html$Html$Events$onClick($author$project$Chat$MessageSubmit)
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('Send message')
-							]))
-					]))
+								_List_Nil),
+								A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$type_('button'),
+										$elm$html$Html$Events$onClick($author$project$Chat$MessageSubmit)
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Send message')
+									]))
+							]));
+				}
+			}()
 			]));
 };
 var $author$project$Home$view = function (model) {
@@ -9333,7 +9563,8 @@ var $author$project$Login$StoreEmail = function (a) {
 var $author$project$Login$StorePassword = function (a) {
 	return {$: 'StorePassword', a: a};
 };
-var $elm$html$Html$li = _VirtualDom_node('li');
+var $elm$html$Html$br = _VirtualDom_node('br');
+var $elm$html$Html$form = _VirtualDom_node('form');
 var $author$project$Login$viewError = function (checkErrors) {
 	switch (checkErrors.$) {
 		case 'BadEmail':
@@ -9475,9 +9706,6 @@ var $author$project$Login$view = function (model) {
 					]))
 			]));
 };
-var $author$project$Profile$CheckSessionExpired = function (a) {
-	return {$: 'CheckSessionExpired', a: a};
-};
 var $author$project$Profile$FileRequest = {$: 'FileRequest'};
 var $author$project$Profile$ProfileSubmit = F2(
 	function (a, b) {
@@ -9537,12 +9765,7 @@ var $author$project$Profile$view = function (model) {
 			var session = _v0.a;
 			return A2(
 				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						$elm$html$Html$Events$onClick(
-						$author$project$Profile$CheckSessionExpired(
-							_Utils_Tuple2(session, model.time)))
-					]),
+				_List_Nil,
 				_List_fromArray(
 					[
 						A2(
@@ -10041,53 +10264,61 @@ var $author$project$Verification$view = function (model) {
 	}
 };
 var $author$project$Main$content = function (model) {
-	var _v0 = model.page;
-	switch (_v0.$) {
-		case 'LoginPage':
-			var loginModel = _v0.a;
-			return A2(
-				$elm$html$Html$map,
-				$author$project$Main$GotLoginMsg,
-				$author$project$Login$view(loginModel));
-		case 'SignupPage':
-			var signupModel = _v0.a;
-			return A2(
-				$elm$html$Html$map,
-				$author$project$Main$GotSignupMsg,
-				$author$project$Signup$view(signupModel));
-		case 'ProfilePage':
-			var profileModel = _v0.a;
-			return A2(
-				$elm$html$Html$map,
-				$author$project$Main$GotProfileMsg,
-				$author$project$Profile$view(profileModel));
-		case 'HomePage':
-			var homeModel = _v0.a;
-			return A2(
-				$elm$html$Html$map,
-				$author$project$Main$GotHomeMsg,
-				$author$project$Home$view(homeModel));
-		case 'ChatPage':
-			var chatModel = _v0.a;
-			return A2(
-				$elm$html$Html$map,
-				$author$project$Main$GotChatMsg,
-				$author$project$Chat$view(chatModel));
-		case 'VerificationPage':
-			var verificationModel = _v0.a;
-			return A2(
-				$elm$html$Html$map,
-				$author$project$Main$GotVerificationMsg,
-				$author$project$Verification$view(verificationModel));
-		default:
-			return A2(
-				$elm$html$Html$p,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Page not found buddy -_- sorry')
-					]));
-	}
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				function () {
+				var _v0 = model.page;
+				switch (_v0.$) {
+					case 'LoginPage':
+						var loginModel = _v0.a;
+						return A2(
+							$elm$html$Html$map,
+							$author$project$Main$GotLoginMsg,
+							$author$project$Login$view(loginModel));
+					case 'SignupPage':
+						var signupModel = _v0.a;
+						return A2(
+							$elm$html$Html$map,
+							$author$project$Main$GotSignupMsg,
+							$author$project$Signup$view(signupModel));
+					case 'ProfilePage':
+						var profileModel = _v0.a;
+						return A2(
+							$elm$html$Html$map,
+							$author$project$Main$GotProfileMsg,
+							$author$project$Profile$view(profileModel));
+					case 'HomePage':
+						var homeModel = _v0.a;
+						return A2(
+							$elm$html$Html$map,
+							$author$project$Main$GotHomeMsg,
+							$author$project$Home$view(homeModel));
+					case 'ChatPage':
+						var chatModel = _v0.a;
+						return A2(
+							$elm$html$Html$map,
+							$author$project$Main$GotChatMsg,
+							$author$project$Chat$view(chatModel));
+					case 'VerificationPage':
+						var verificationModel = _v0.a;
+						return A2(
+							$elm$html$Html$map,
+							$author$project$Main$GotVerificationMsg,
+							$author$project$Verification$view(verificationModel));
+					default:
+						return A2(
+							$elm$html$Html$p,
+							_List_Nil,
+							_List_fromArray(
+								[
+									$elm$html$Html$text('Page not found buddy -_- sorry')
+								]));
+				}
+			}()
+			]));
 };
 var $elm$virtual_dom$VirtualDom$lazy = _VirtualDom_lazy;
 var $elm$html$Html$Lazy$lazy = $elm$virtual_dom$VirtualDom$lazy;
@@ -10621,13 +10852,27 @@ var $author$project$Main$viewHeader = function (_v0) {
 				]));
 	}
 };
-var $author$project$Main$view = function (model) {
-	return {
-		body: _List_fromArray(
+var $author$project$Main$app = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Events$onClick(
+				$author$project$Main$CheckSessionExpired(
+					_Utils_Tuple2(model.session, model.time)))
+			]),
+		_List_fromArray(
 			[
 				A2($elm$html$Html$Lazy$lazy, $author$project$Main$viewHeader, model),
 				$author$project$Main$content(model),
 				$author$project$Main$viewFooter
+			]));
+};
+var $author$project$Main$view = function (model) {
+	return {
+		body: _List_fromArray(
+			[
+				$author$project$Main$app(model)
 			]),
 		title: 'My elm app'
 	};

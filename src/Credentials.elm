@@ -7,8 +7,11 @@ port module Credentials exposing
     , UserId
     , VerificationString
     , addHeader
+    , addUserToRoom
+    , decodeSocketMessage
     , decodeToSession
     , decodeTokenData
+    , emitTyping
     , emptyImageString
     , emptyUserId
     , emptyVerificationString
@@ -245,13 +248,19 @@ port storeSession : Maybe String -> Cmd msg
 port onSessionChange : (Value -> msg) -> Sub msg
 
 
-port publishSocketMessage : (Value -> msg) -> Sub msg
+port listenSocketMessage : (Value -> msg) -> Sub msg
 
 
 port initiateSocketChannel : String -> Cmd msg
 
 
 port sendMessageToSocket : String -> Cmd msg
+
+
+port emitTyping : String -> Cmd msg
+
+
+port addUserToRoom : { userName : String, userId : String } -> Cmd msg
 
 
 logout : Cmd msg
@@ -328,8 +337,6 @@ decodeToSocket key value =
             Decode.decodeValue
                 decodeSocketMessage
                 value
-
-        -- |> Result.toMaybe
     in
     case result of
         Ok obj ->
@@ -366,7 +373,7 @@ subscriptionChanges toMsg key =
 
 socketMessageChanges : (SocketMessageData -> msg) -> Nav.Key -> Sub msg
 socketMessageChanges toMsg key =
-    publishSocketMessage (\val -> toMsg (decodeToSocket key val))
+    listenSocketMessage (\val -> toMsg (decodeToSocket key val))
 
 
 addHeader : Token -> Header
