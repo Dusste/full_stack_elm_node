@@ -3,13 +3,14 @@ module Chat exposing (..)
 import Credentials exposing (Session, SocketMessageData, addUserToRoom, decodeSocketMessage, decodeTokenData, emitTyping, fromSessionToToken, fromTokenToString, sendMessageToSocket, userIdToString)
 import Css
 import Css.Global
+import GlobalStyles as Gs
 import Html.Styled as Html exposing (Html, text)
 import Html.Styled.Attributes as Attr
 import Html.Styled.Events as Event
 import Http
 import Json.Decode as Decode exposing (Decoder)
 import Jwt
-import Tailwind.Breakpoints as Breakpoints
+import Tailwind.Breakpoints as Bp
 import Tailwind.Theme as Tw
 import Tailwind.Utilities as Tw
 import Time
@@ -136,30 +137,43 @@ roomIdDecoder =
 view : Model -> Html Msg
 view model =
     Html.div
-        []
-        [ Html.h2 []
-            [ text "Chat" ]
-        , Html.div []
-            [ Html.ul [] (List.map (\m -> viewMessage m) model.receivedMessages)
-            ]
-        , case model.error of
-            Just err ->
-                Html.div [] [ text err ]
-
-            Nothing ->
-                Html.div []
-                    [ Html.input
-                        [ Attr.type_ "text"
-                        , Event.onInput StoreMessage
-                        , Attr.value model.message
-                        ]
-                        []
-                    , Html.button
-                        [ Attr.type_ "button"
-                        , Event.onClick MessageSubmit
-                        ]
-                        [ text "Send message" ]
+        [ Attr.css [ Tw.flex, Tw.flex_col ] ]
+        [ Html.div [ Attr.css [ Tw.flex, Tw.gap_4, Tw.mx_2 ] ]
+            [ Html.div [ Attr.css [ Tw.w_80, Tw.bg_color Tw.sky_200, Tw.p_4, Tw.rounded ] ]
+                [ Html.h3 [ Attr.css [ Tw.m_0 ] ] [ text "Participants" ]
+                , Html.div []
+                    [ Html.ul []
+                        ([ "User1", "USer2", "USer3" ]
+                            |> List.map
+                                (\user ->
+                                    Html.li [] [ text user ]
+                                )
+                        )
                     ]
+                ]
+            , Html.div [ Attr.css [ Tw.flex_grow ] ]
+                [ Html.div [ Attr.class "customHeight" ] [ Html.ul [] (List.map (\m -> viewMessage m) model.receivedMessages) ]
+                , case model.error of
+                    Just err ->
+                        Html.div [] [ text err ]
+
+                    Nothing ->
+                        Html.div [ Attr.css [ Tw.py_4, Tw.flex, Tw.gap_4 ] ]
+                            [ Html.textarea
+                                [ Attr.css Gs.inputStyle
+                                , Event.onInput StoreMessage
+                                , Attr.value model.message
+                                ]
+                                []
+                            , Html.button
+                                [ Attr.type_ "button"
+                                , Attr.css Gs.buttonStyle
+                                , Event.onClick MessageSubmit
+                                ]
+                                [ text "Send" ]
+                            ]
+                ]
+            ]
         ]
 
 
@@ -171,14 +185,13 @@ viewMessage messageData =
 
         minute =
             String.fromInt (Time.toMinute Time.utc (Time.millisToPosix messageData.timestamp))
-
-        second =
-            String.fromInt (Time.toSecond Time.utc (Time.millisToPosix messageData.timestamp))
     in
-    Html.li []
-        [ Html.div []
-            [ Html.div [] [ text <| messageData.name ++ ":" ]
-            , Html.div [] [ text <| messageData.data.message ]
-            , Html.div [] [ text <| hour ++ ":" ++ minute ++ ":" ++ second ]
+    Html.li [ Attr.css [ Tw.bg_color Tw.sky_200, Tw.p_2, Tw.rounded, Tw.mb_4 ] ]
+        [ Html.div [ Attr.css [ Tw.flex, Tw.justify_between, Tw.items_center ] ]
+            [ Html.div [ Attr.css [ Tw.flex, Tw.flex_col, Tw.gap_1 ] ]
+                [ Html.div [ Attr.css [ Tw.text_color Tw.black ] ] [ text <| messageData.name ++ ":" ]
+                , Html.div [] [ text <| messageData.data.message ]
+                ]
+            , Html.div [] [ text <| hour ++ ":" ++ minute ]
             ]
         ]

@@ -25,6 +25,7 @@ import Css
 import Css.Global
 import File exposing (File)
 import File.Select as Select
+import GlobalStyles as Gs
 import Html.Styled as Html exposing (Html, text)
 import Html.Styled.Attributes as Attr exposing (src, type_, value)
 import Html.Styled.Events exposing (onClick, onInput)
@@ -32,7 +33,7 @@ import Http
 import Json.Encode as Encode exposing (encode)
 import Jwt
 import Process
-import Tailwind.Breakpoints as Breakpoints
+import Tailwind.Breakpoints as Bp
 import Tailwind.Theme as Tw
 import Tailwind.Utilities as Tw
 import Task
@@ -139,14 +140,14 @@ view model =
     case model.userState of
         Verified session ->
             Html.div
-                []
-                [ Html.h2 [] [ text "Hello" ]
-                , Html.form []
-                    [ Html.div []
+                [ Attr.css [ Tw.flex, Tw.flex_col, Tw.items_center, Tw.m_6, Bp.sm [ Tw.m_20 ] ] ]
+                [ Html.h2 [ Attr.css [ Tw.text_3xl ] ] [ text "Hello" ]
+                , Html.form [ Attr.css [ Tw.flex, Tw.flex_col, Tw.gap_5, Tw.text_xl, Tw.w_full, Bp.md [ Tw.w_60 ] ] ]
+                    [ Html.div [ Attr.css [ Tw.flex, Tw.flex_col, Tw.gap_3 ] ]
                         [ text "First Name"
-                        , Html.br [] []
                         , Html.input
-                            [ type_ "text"
+                            [ Attr.css Gs.inputStyle
+                            , type_ "text"
                             , onInput StoreFirstName
                             , value model.profile.firstname
                             ]
@@ -164,24 +165,33 @@ view model =
                     --         []
                     --     ]
                     -- , br [] []
-                    , Html.br [] []
-                    , Html.div []
-                        [ text "Upload a avatar (Size limit is 3mb)"
-                        , Html.br [] []
-                        , Html.input [ type_ "file", onClick FileRequest ] []
+                    , Html.div [ Attr.css [ Tw.flex, Tw.gap_3 ] ]
+                        [ Html.div [ Attr.css [ Tw.flex, Tw.flex_col ] ]
+                            [ Html.p [ Attr.css [ Tw.m_0 ] ] [ text "Upload an avatar" ]
+                            , Html.p [ Attr.css [ Tw.m_0, Tw.text_sm, Tw.text_color Tw.gray_400 ] ] [ text "(Size limit is 3 mb)" ]
+                            ]
+                        , Html.label [ Attr.for "file", Attr.css <| Gs.buttonStyle ++ [ Tw.overflow_hidden ] ]
+                            [ text "Choose file"
+                            , Html.input
+                                [ Attr.css [ Tw.w_1, Tw.h_1, Tw.overflow_hidden, Tw.opacity_0, Tw.absolute, Tw.z_0 ]
+                                , Attr.id "file"
+                                , type_ "file"
+                                , onClick FileRequest
+                                ]
+                                []
+                            ]
                         ]
-                    , Html.br [] []
-                    , Html.div []
-                        [ text "Your avatar preview"
-                        , case imageStringToMaybeString model.imageFile of
-                            Just imageString ->
-                                Html.img
-                                    [ src imageString ]
+                    , case imageStringToMaybeString model.imageFile of
+                        Just imageString ->
+                            Html.div [ Attr.css [ Tw.flex, Tw.flex_col, Tw.gap_3 ] ]
+                                [ text "Your avatar preview"
+                                , Html.img
+                                    [ Attr.css [ Tw.rounded ], src imageString ]
                                     []
+                                ]
 
-                            Nothing ->
-                                text ""
-                        ]
+                        Nothing ->
+                            text ""
 
                     -- , div []
                     --     [ text "Admin"
@@ -192,8 +202,7 @@ view model =
                     --         ]
                     --         []
                     --     ]
-                    , Html.br [] []
-                    , Html.div []
+                    , Html.div [ Attr.css [ Tw.flex, Tw.flex_col, Tw.gap_3 ] ]
                         [ let
                             { firstname, email } =
                                 model.profile
@@ -202,7 +211,8 @@ view model =
                                 model
                           in
                           Html.button
-                            [ type_ "button"
+                            [ Attr.css Gs.buttonStyle
+                            , type_ "button"
                             , onClick (ProfileSubmit session { firstname = firstname, email = email, imagefile = imageFile })
                             ]
                             [ text "Submit" ]

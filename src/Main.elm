@@ -145,7 +145,7 @@ view model =
 
 viewFooter : Html Msg
 viewFooter =
-    Html.footer [ Attr.css [ Tw.bg_color Tw.black, Tw.text_color Tw.white, Tw.p_10, Tw.absolute, Tw.bottom_0, Tw.w_full ] ]
+    Html.footer [ Attr.css [ Tw.bg_color Tw.black, Tw.text_color Tw.white, Tw.p_10, Tw.w_full ] ]
         [ text "This is footer"
         ]
 
@@ -195,13 +195,13 @@ viewHeader { page, session, openDropdown, key } =
                                                 ]
                                             ]
                                     , Html.ul
-                                        [ Attr.css [ Tw.absolute, Tw.mt_3, Tw.flex_col, Tw.gap_1 ]
-                                        , style "display"
+                                        [ Attr.css [ Tw.flex, Tw.absolute, Tw.mt_3, Tw.flex_col, Tw.gap_1, Tw.overflow_hidden, Tw.transition_all, Tw.duration_500 ]
+                                        , style "height"
                                             (if openDropdown then
-                                                "flex"
+                                                "90px"
 
                                              else
-                                                "none"
+                                                "0"
                                             )
                                         ]
                                         [ Html.li

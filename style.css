@@ -25,3 +25,8 @@ ul {
     margin: 0;
     padding: 0;
 }
+
+.customHeight {
+    height: calc(100vh - 250px);
+    overflow-y: scroll;
+}
