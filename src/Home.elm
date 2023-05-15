@@ -1,6 +1,12 @@
 module Home exposing (..)
 
-import Html exposing (..)
+import Css
+import Css.Global
+import Html.Styled as Html exposing (Html, text)
+import Html.Styled.Attributes as Attr
+import Tailwind.Breakpoints as Bp
+import Tailwind.Theme as Tw
+import Tailwind.Utilities as Tw
 
 
 type alias Model =
@@ -30,11 +36,11 @@ type Msg
 
 view : Model -> Html Msg
 view model =
-    div
-        []
-        [ h2 []
+    Html.div
+        [ Attr.css [ Tw.flex, Tw.flex_col, Tw.items_center, Tw.m_20 ] ]
+        [ Html.h2 []
             [ text "Hello and welcome to our awesome website !" ]
-        , p
+        , Html.p
             []
             [ text "which is still under construction" ]
         ]

@@ -13,11 +13,18 @@ import Credentials
         , tokenDecoder
         , verificationToString
         )
-import Html exposing (..)
+import Css
+import Css.Global
+import Html.Styled as Html exposing (Html, text)
+import Html.Styled.Attributes as Attr
+import Html.Styled.Events as Event
 import Http
 import Json.Encode exposing (encode)
 import Jwt
 import Process
+import Tailwind.Breakpoints as Breakpoints
+import Tailwind.Theme as Tw
+import Tailwind.Utilities as Tw
 import Task
 
 
@@ -142,33 +149,33 @@ view : Model -> Html Msg
 view model =
     case model.userState of
         VerificationPending ->
-            div []
-                [ h2 [] [ text "Give us a moment to verify your account ! " ]
-                , p [] [ text "Soon you will have access to a all profile features" ]
-                , p [] [ text "LOADING..." ]
+            Html.div []
+                [ Html.h2 [] [ text "Give us a moment to verify your account ! " ]
+                , Html.p [] [ text "Soon you will have access to a all profile features" ]
+                , Html.p [] [ text "LOADING..." ]
                 ]
 
         VerificationDone ->
-            div []
-                [ h2 [] [ text "Thanks for verifying your email ! " ]
-                , p [] [ text "Now you will be redirected to your profile page and have full access to all app's features" ]
-                , p [] [ text "LOADING..." ]
+            Html.div []
+                [ Html.h2 [] [ text "Thanks for verifying your email ! " ]
+                , Html.p [] [ text "Now you will be redirected to your profile page and have full access to all app's features" ]
+                , Html.p [] [ text "LOADING..." ]
                 ]
 
         VerificationFail ->
-            div []
-                [ h2 [] [ text "UPS seems that something is off !" ]
-                , p [] [ text "Try to re-login or refresh the page" ]
+            Html.div []
+                [ Html.h2 [] [ text "UPS seems that something is off !" ]
+                , Html.p [] [ text "Try to re-login or refresh the page" ]
                 ]
 
         Verified ->
-            div []
-                [ h2 [] [ text "HMMm seems that you're already verified !" ]
-                , p [] [ text "Please proceed to you profile" ]
+            Html.div []
+                [ Html.h2 [] [ text "HMMm seems that you're already verified !" ]
+                , Html.p [] [ text "Please proceed to you profile" ]
                 ]
 
         Sessionless ->
-            div []
-                [ h2 [] [ text "You are not logged in !" ]
-                , p [] [ text "Please proceed to login" ]
+            Html.div []
+                [ Html.h2 [] [ text "You are not logged in !" ]
+                , Html.p [] [ text "Please proceed to login" ]
                 ]

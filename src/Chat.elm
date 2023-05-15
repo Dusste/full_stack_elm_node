@@ -1,12 +1,17 @@
 module Chat exposing (..)
 
 import Credentials exposing (Session, SocketMessageData, addUserToRoom, decodeSocketMessage, decodeTokenData, emitTyping, fromSessionToToken, fromTokenToString, sendMessageToSocket, userIdToString)
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
+import Css
+import Css.Global
+import Html.Styled as Html exposing (Html, text)
+import Html.Styled.Attributes as Attr
+import Html.Styled.Events as Event
 import Http
 import Json.Decode as Decode exposing (Decoder)
 import Jwt
+import Tailwind.Breakpoints as Breakpoints
+import Tailwind.Theme as Tw
+import Tailwind.Utilities as Tw
 import Time
 import Utils exposing (buildErrorMessage)
 
@@ -130,28 +135,28 @@ roomIdDecoder =
 
 view : Model -> Html Msg
 view model =
-    div
+    Html.div
         []
-        [ h2 []
+        [ Html.h2 []
             [ text "Chat" ]
-        , div []
-            [ ul [] (List.map (\m -> viewMessage m) model.receivedMessages)
+        , Html.div []
+            [ Html.ul [] (List.map (\m -> viewMessage m) model.receivedMessages)
             ]
         , case model.error of
             Just err ->
-                div [] [ text err ]
+                Html.div [] [ text err ]
 
             Nothing ->
-                div []
-                    [ input
-                        [ type_ "text"
-                        , onInput StoreMessage
-                        , value model.message
+                Html.div []
+                    [ Html.input
+                        [ Attr.type_ "text"
+                        , Event.onInput StoreMessage
+                        , Attr.value model.message
                         ]
                         []
-                    , button
-                        [ type_ "button"
-                        , onClick MessageSubmit
+                    , Html.button
+                        [ Attr.type_ "button"
+                        , Event.onClick MessageSubmit
                         ]
                         [ text "Send message" ]
                     ]
@@ -170,10 +175,10 @@ viewMessage messageData =
         second =
             String.fromInt (Time.toSecond Time.utc (Time.millisToPosix messageData.timestamp))
     in
-    li []
-        [ div []
-            [ div [] [ text <| messageData.name ++ ":" ]
-            , div [] [ text <| messageData.data.message ]
-            , div [] [ text <| hour ++ ":" ++ minute ++ ":" ++ second ]
+    Html.li []
+        [ Html.div []
+            [ Html.div [] [ text <| messageData.name ++ ":" ]
+            , Html.div [] [ text <| messageData.data.message ]
+            , Html.div [] [ text <| hour ++ ":" ++ minute ++ ":" ++ second ]
             ]
         ]

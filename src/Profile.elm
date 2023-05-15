@@ -21,15 +21,20 @@ import Credentials
         , stringToImageString
         , tokenDecoder
         )
+import Css
+import Css.Global
 import File exposing (File)
 import File.Select as Select
-import Html exposing (..)
-import Html.Attributes exposing (src, type_, value)
-import Html.Events exposing (onClick, onInput)
+import Html.Styled as Html exposing (Html, text)
+import Html.Styled.Attributes as Attr exposing (src, type_, value)
+import Html.Styled.Events exposing (onClick, onInput)
 import Http
 import Json.Encode as Encode exposing (encode)
 import Jwt
 import Process
+import Tailwind.Breakpoints as Breakpoints
+import Tailwind.Theme as Tw
+import Tailwind.Utilities as Tw
 import Task
 import Time
 import Utils exposing (buildErrorMessage)
@@ -133,14 +138,14 @@ view : Model -> Html Msg
 view model =
     case model.userState of
         Verified session ->
-            div
+            Html.div
                 []
-                [ h2 [] [ text "Hello" ]
+                [ Html.h2 [] [ text "Hello" ]
                 , Html.form []
-                    [ div []
+                    [ Html.div []
                         [ text "First Name"
-                        , br [] []
-                        , input
+                        , Html.br [] []
+                        , Html.input
                             [ type_ "text"
                             , onInput StoreFirstName
                             , value model.profile.firstname
@@ -159,19 +164,19 @@ view model =
                     --         []
                     --     ]
                     -- , br [] []
-                    , br [] []
-                    , div []
+                    , Html.br [] []
+                    , Html.div []
                         [ text "Upload a avatar (Size limit is 3mb)"
-                        , br [] []
-                        , input [ type_ "file", onClick FileRequest ] []
+                        , Html.br [] []
+                        , Html.input [ type_ "file", onClick FileRequest ] []
                         ]
-                    , br [] []
-                    , div []
+                    , Html.br [] []
+                    , Html.div []
                         [ text "Your avatar preview"
                         , case imageStringToMaybeString model.imageFile of
                             Just imageString ->
-                                img
-                                    [ Html.Attributes.style "height" "40px", src imageString ]
+                                Html.img
+                                    [ src imageString ]
                                     []
 
                             Nothing ->
@@ -187,8 +192,8 @@ view model =
                     --         ]
                     --         []
                     --     ]
-                    , br [] []
-                    , div []
+                    , Html.br [] []
+                    , Html.div []
                         [ let
                             { firstname, email } =
                                 model.profile
@@ -196,43 +201,43 @@ view model =
                             { imageFile } =
                                 model
                           in
-                          button
+                          Html.button
                             [ type_ "button"
                             , onClick (ProfileSubmit session { firstname = firstname, email = email, imagefile = imageFile })
                             ]
                             [ text "Submit" ]
                         ]
-                    , ul []
+                    , Html.ul []
                         (List.map viewError model.errors)
                     ]
                 ]
 
         NotVerified ->
-            div []
-                [ h2 [] [ text "Please verify your email ! " ]
-                , p []
+            Html.div []
+                [ Html.h2 [] [ text "Please verify your email ! " ]
+                , Html.p []
                     [ text "You can't access your profile until you verify your email" ]
                 ]
 
         Intruder ->
-            div []
-                [ h2 [] [ text "Hmm seems you are not logged in" ]
-                , p []
+            Html.div []
+                [ Html.h2 [] [ text "Hmm seems you are not logged in" ]
+                , Html.p []
                     [ text "Please create account or login" ]
                 ]
 
         SessionExpired ->
-            div []
-                [ h2 [] [ text "Your session have expired" ]
-                , p []
+            Html.div []
+                [ Html.h2 [] [ text "Your session have expired" ]
+                , Html.p []
                     [ text "Please login again" ]
                 ]
 
 
 viewError : CheckErrors -> Html Msg
 viewError checkErrors =
-    li []
-        [ p []
+    Html.li []
+        [ Html.p []
             [ text
                 (case checkErrors of
                     BadInput err ->

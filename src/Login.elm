@@ -1,12 +1,20 @@
 module Login exposing (Model, Msg, init, update, view)
 
 import Credentials exposing (Token, encodeToken, storeSession, tokenDecoder)
-import Html exposing (..)
-import Html.Attributes exposing (type_, value)
-import Html.Events exposing (onClick, onInput)
+import Css
+import Css.Global
+import GlobalStyles as Gs
+import Html.Styled as Html exposing (Html, text)
+import Html.Styled.Attributes as Attr exposing (type_, value)
+import Html.Styled.Events exposing (onClick, onInput)
 import Http
 import Json.Encode as Encode exposing (encode)
+import Process
 import Regex
+import Tailwind.Breakpoints as Bp
+import Tailwind.Theme as Tw
+import Tailwind.Utilities as Tw
+import Task
 import Utils exposing (buildErrorMessage, validEmail)
 
 
@@ -42,6 +50,7 @@ type Msg
     | StorePassword String
     | LoginSubmit Credentials
     | LoginDone (Result Http.Error Token)
+    | HideError
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -76,7 +85,10 @@ update msg model =
                 ( { model | errors = [], isLoading = True }, submitLogin cred )
 
             else
-                ( { model | errors = errorsList, isLoading = False }, Cmd.none )
+                ( { model | errors = errorsList, isLoading = False }, Process.sleep 4000 |> Task.perform (\_ -> HideError) )
+
+        HideError ->
+            ( { model | errors = model.errors |> List.drop 1 }, Cmd.none )
 
         LoginDone (Ok token) ->
             let
@@ -139,34 +151,35 @@ credentialsEncoder credentials =
 
 view : Model -> Html Msg
 view model =
-    div
-        []
-        [ h2 [] [ text "Login" ]
-        , ul []
-            (List.map viewError model.errors)
-        , Html.form []
-            [ div []
-                [ text "Email"
-                , br [] []
-                , input [ type_ "text", onInput StoreEmail, value model.loginCredentials.email ] []
+    Html.div
+        [ Attr.css [ Tw.flex, Tw.flex_col, Tw.items_center, Tw.m_6, Bp.md [ Tw.m_20 ] ] ]
+        [ Html.h2 [ Attr.css [ Tw.text_3xl ] ] [ text "Login" ]
+        , Html.form [ Attr.css [ Tw.flex, Tw.flex_col, Tw.gap_5, Tw.text_xl, Tw.w_full, Bp.md [ Tw.w_60 ] ] ]
+            [ Html.div [ Attr.css [ Tw.flex, Tw.flex_col, Tw.gap_3 ] ]
+                [ Html.label [] [ text "Email" ]
+                , Html.input [ Attr.css Gs.inputStyle, type_ "text", onInput StoreEmail, value model.loginCredentials.email ] []
                 ]
-            , br [] []
-            , div []
-                [ text "Password"
-                , br [] []
-                , input [ type_ "password", onInput StorePassword, value model.loginCredentials.password ] []
+            , Html.div [ Attr.css [ Tw.flex, Tw.flex_col, Tw.gap_3 ] ]
+                [ Html.label [ Attr.css [] ] [ text "Password" ]
+                , Html.input [ Attr.css Gs.inputStyle, type_ "password", onInput StorePassword, value model.loginCredentials.password ] []
                 ]
-            , br [] []
-            , div []
-                [ button [ type_ "button", onClick (LoginSubmit model.loginCredentials) ]
+            , Html.div [ Attr.css [ Tw.flex, Tw.gap_3, Tw.items_center ] ]
+                [ Html.button [ Attr.css Gs.buttonStyle, type_ "button", onClick (LoginSubmit model.loginCredentials) ]
                     [ text "Sign in" ]
-                ]
-            , if model.isLoading then
-                div [] [ text "LOADING ... " ]
+                , if model.isLoading then
+                    Html.div [ Attr.css [ Tw.relative, Tw.h_5, Tw.w_5, Tw.flex ] ]
+                        [ Html.span
+                            [ Attr.css [ Tw.animate_ping, Tw.absolute, Tw.inline_flex, Tw.h_full, Tw.w_full, Tw.rounded_full, Tw.bg_color Tw.sky_400, Tw.opacity_75 ] ]
+                            []
+                        , Html.span [ Attr.css [ Tw.relative, Tw.inline_flex, Tw.rounded_full, Tw.h_5, Tw.w_5, Tw.bg_color Tw.sky_500 ] ] []
+                        ]
 
-              else
-                div [] [ text "" ]
+                  else
+                    text ""
+                ]
             ]
+        , Html.ul []
+            (List.map viewError model.errors)
         ]
 
 
@@ -174,13 +187,13 @@ viewError : CheckErrors -> Html Msg
 viewError checkErrors =
     case checkErrors of
         BadEmail err ->
-            li [] [ p [] [ text err ] ]
+            Html.li [ Attr.css [ Tw.text_color Tw.red_400 ] ] [ Html.p [] [ text err ] ]
 
         BadPassword err ->
-            li [] [ p [] [ text err ] ]
+            Html.li [ Attr.css [ Tw.text_color Tw.red_400 ] ] [ Html.p [] [ text err ] ]
 
         BadRequest err ->
-            li [] [ p [] [ text err ] ]
+            Html.li [ Attr.css [ Tw.text_color Tw.red_400 ] ] [ Html.p [] [ text err ] ]
 
 
 init : () -> ( Model, Cmd Msg )

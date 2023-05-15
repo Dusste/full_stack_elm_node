@@ -21,17 +21,24 @@ import Credentials
         , userIdToString
         , verifictionStringParser
         )
+import Css
+import Css.Global
 import Home
-import Html exposing (Html, a, div, footer, h1, img, li, nav, p, span, text, ul)
-import Html.Attributes exposing (classList, href, src, style, width)
-import Html.Events exposing (onClick)
 import Html.Lazy exposing (lazy)
+import Html.Styled as Html exposing (Html, text)
+import Html.Styled.Attributes as Attr exposing (classList, href, src, style, width)
+import Html.Styled.Events exposing (onClick)
 import Json.Decode exposing (Value)
 import Jwt
 import Login
 import Minidenticons exposing (identicon)
 import Profile
 import Signup
+import Svg exposing (svg)
+import Svg.Attributes as SvgAttr exposing (path)
+import Tailwind.Breakpoints as Bp
+import Tailwind.Theme as Tw
+import Tailwind.Utilities as Tw
 import Task
 import Time
 import Url exposing (Url)
@@ -88,7 +95,7 @@ type Msg
 
 content : Model -> Html Msg
 content model =
-    div []
+    Html.div []
         [ case model.page of
             LoginPage loginModel ->
                 Login.view loginModel
@@ -115,14 +122,14 @@ content model =
                     |> Html.map GotVerificationMsg
 
             NotFoundPage ->
-                p [] [ text "Page not found buddy -_- sorry" ]
+                Html.p [] [ text "Page not found buddy -_- sorry" ]
         ]
 
 
 app : Model -> Html Msg
 app model =
-    div [ onClick <| CheckSessionExpired ( model.session, model.time ) ]
-        [ lazy viewHeader model
+    Html.div [ onClick <| CheckSessionExpired ( model.session, model.time ) ]
+        [ viewHeader model
         , content model
         , viewFooter
         ]
@@ -132,126 +139,129 @@ view : Model -> Document Msg
 view model =
     { title = "My elm app"
     , body =
-        [ app model ]
+        [ Html.toUnstyled <| app model ]
     }
 
 
-viewFooter : Html msg
+viewFooter : Html Msg
 viewFooter =
-    footer []
+    Html.footer [ Attr.css [ Tw.bg_color Tw.black, Tw.text_color Tw.white, Tw.p_10, Tw.absolute, Tw.bottom_0, Tw.w_full ] ]
         [ text "This is footer"
         ]
 
 
 viewHeader : Model -> Html Msg
 viewHeader { page, session, openDropdown, key } =
-    case fromSessionToToken session of
-        Just token ->
-            nav []
-                [ h1 [] [ a [ href "/" ] [ text "My elm app" ] ]
-                , ul []
+    Html.nav [ Attr.css [ Tw.flex, Tw.p_5, Tw.justify_between, Tw.items_center ] ]
+        [ Html.h1 [] [ Html.a [ href "/" ] [ text "My elm app" ] ]
+        , case fromSessionToToken session of
+            Just token ->
+                Html.ul [ Attr.css [ Tw.flex, Tw.justify_between, Tw.gap_4, Tw.items_end ] ]
                     [ case Jwt.decodeToken decodeTokenData <| fromTokenToString token of
                         Ok resultTokenRecord ->
-                            li
-                                [ classList
-                                    [ ( "active"
-                                      , isActive { link = Profile resultTokenRecord.id, page = page }
-                                      )
-                                    ]
-                                ]
-                                [ div []
+                            Html.li
+                                [ Attr.css [ Tw.cursor_pointer ] ]
+                                [ Html.div [ Attr.css [ Tw.relative ] ]
                                     [ if String.isEmpty resultTokenRecord.firstname == False then
-                                        div
-                                            [ onClick OpenDropdown ]
-                                            [ span [] [ text (resultTokenRecord.firstname ++ " ⌄") ]
-                                            , div [ style "width" "60px" ]
+                                        Html.div
+                                            [ Attr.css [ Tw.flex, Tw.items_center ], onClick OpenDropdown ]
+                                            [ Html.div [ Attr.css [ Tw.w_10, Tw.h_10, Tw.overflow_hidden, Tw.rounded_full ] ]
                                                 [ case imageStringToMaybeString resultTokenRecord.profilepicurl of
                                                     Just imageString ->
-                                                        img [ src imageString, width 60 ] []
+                                                        Html.img [ Attr.css [ Tw.w_10 ], src imageString ] []
 
                                                     Nothing ->
-                                                        identicon 50 50 resultTokenRecord.firstname
+                                                        -- identicon 50 50 resultTokenRecord.firstname
+                                                        text ""
                                                 ]
+                                            , Html.span [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl ] ] [ text resultTokenRecord.firstname, Html.sup [ Attr.css [ Tw.ml_1 ] ] [ text "⌄" ] ]
                                             ]
 
                                       else
-                                        div
+                                        Html.div
                                             [ onClick OpenDropdown ]
-                                            [ span []
+                                            [ Html.span []
                                                 [ text
                                                     (resultTokenRecord.email ++ " ⌄")
                                                 ]
-                                            , div [ style "width" "60px" ]
+                                            , Html.div []
                                                 [ case imageStringToMaybeString resultTokenRecord.profilepicurl of
                                                     Just imageString ->
-                                                        img [ src imageString, width 60 ] []
+                                                        Html.img [ src imageString, width 60 ] []
 
                                                     Nothing ->
-                                                        identicon 50 50 resultTokenRecord.email
+                                                        -- identicon 50 50 resultTokenRecord.email
+                                                        text ""
                                                 ]
                                             ]
-                                    , ul
-                                        [ style "display"
+                                    , Html.ul
+                                        [ Attr.css [ Tw.absolute, Tw.mt_3, Tw.flex_col, Tw.gap_1 ]
+                                        , style "display"
                                             (if openDropdown then
-                                                "block"
+                                                "flex"
 
                                              else
                                                 "none"
                                             )
                                         ]
-                                        [ li [ onClick OpenDropdown ] [ a [ href <| "/profile/" ++ userIdToString resultTokenRecord.id ] [ text "My profile" ] ]
-                                        , li [ onClick OpenDropdown ] [ text "option2" ]
-                                        , li [ onClick OpenDropdown ] [ text "option3" ]
+                                        [ Html.li
+                                            [ classList
+                                                [ ( "active"
+                                                  , isActive { link = Profile resultTokenRecord.id, page = page }
+                                                  )
+                                                ]
+                                            , onClick OpenDropdown
+                                            ]
+                                            [ Html.a [ Attr.css [ Tw.flex, Tw.py_1, Tw.px_4, Tw.rounded ], href <| "/profile/" ++ userIdToString resultTokenRecord.id ] [ text "My profile" ] ]
+                                        , Html.li [ onClick OpenDropdown ] [ Html.a [ Attr.css [ Tw.flex, Tw.py_1, Tw.px_4, Tw.rounded ] ] [ text "option2" ] ]
+                                        , Html.li [ onClick OpenDropdown ] [ Html.a [ Attr.css [ Tw.flex, Tw.py_1, Tw.px_4, Tw.rounded ] ] [ text "option3" ] ]
                                         ]
                                     ]
                                 ]
 
                         Err err ->
-                            li [] [ text (Debug.toString err) ]
-                    , li
+                            Html.li [] [ text (Debug.toString err) ]
+                    , Html.li
                         [ classList
                             [ ( "active"
                               , isActive { link = Chat, page = page }
                               )
                             ]
                         ]
-                        [ a [ href "/chat" ] [ text "Chat" ] ]
-                    , li
+                        [ Html.a [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl, Tw.rounded, Tw.flex ], href "/chat" ] [ text "Chat" ] ]
+                    , Html.li
                         []
-                        [ a [ href "/", onClick GetLogout ] [ text "logout" ] ]
+                        [ Html.a [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl, Tw.rounded, Tw.flex ], href "/", onClick GetLogout ] [ text "logout" ] ]
                     ]
-                ]
 
-        Nothing ->
-            nav []
-                [ h1 [] [ a [ href "/" ] [ text "My elm app" ] ]
-                , ul []
-                    [ li
-                        [ classList
-                            [ ( "active"
-                              , isActive { link = Login, page = page }
-                              )
-                            ]
-                        ]
-                        [ a [ href "/login" ] [ text "login" ] ]
-                    , li
-                        [ classList
-                            [ ( "active"
-                              , isActive { link = Signup, page = page }
-                              )
-                            ]
-                        ]
-                        [ a [ href "/signup" ] [ text "sign up" ] ]
-                    , li
+            Nothing ->
+                Html.ul [ Attr.css [ Tw.flex, Tw.justify_between, Tw.gap_4 ] ]
+                    [ Html.li
                         [ classList
                             [ ( "active"
                               , isActive { link = Home, page = page }
                               )
                             ]
                         ]
-                        [ a [ href "/" ] [ text "home" ] ]
+                        [ Html.a [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl, Tw.rounded, Tw.flex ], href "/" ] [ text "home" ] ]
+                    , Html.li
+                        [ classList
+                            [ ( "active"
+                              , isActive { link = Login, page = page }
+                              )
+                            ]
+                        ]
+                        [ Html.a [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl, Tw.rounded, Tw.flex ], href "/login" ] [ text "login" ] ]
+                    , Html.li
+                        [ classList
+                            [ ( "active"
+                              , isActive { link = Signup, page = page }
+                              )
+                            ]
+                        ]
+                        [ Html.a [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl, Tw.rounded, Tw.flex ], href "/signup" ] [ text "sign up" ] ]
                     ]
-                ]
+        ]
 
 
 isActive : { link : Route, page : Page } -> Bool
