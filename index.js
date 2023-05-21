@@ -6672,9 +6672,47 @@ var $author$project$Credentials$decodeTokenData = A7(
 		_List_fromArray(
 			['profilepicurl']),
 		$author$project$Credentials$imageStringDecoder));
-var $author$project$Chat$SocketEstablished = function (a) {
-	return {$: 'SocketEstablished', a: a};
+var $author$project$Chat$ChatMessages = function (a) {
+	return {$: 'ChatMessages', a: a};
 };
+var $author$project$Credentials$SocketMessageData = F6(
+	function (name, id, clientId, connectionId, timestamp, data) {
+		return {clientId: clientId, connectionId: connectionId, data: data, id: id, name: name, timestamp: timestamp};
+	});
+var $author$project$Credentials$DataMessage = function (message) {
+	return {message: message};
+};
+var $author$project$Credentials$decodeMessage = A3(
+	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+	'message',
+	$elm$json$Json$Decode$string,
+	$elm$json$Json$Decode$succeed($author$project$Credentials$DataMessage));
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $author$project$Credentials$decodeSocketMessage = A3(
+	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+	'data',
+	$author$project$Credentials$decodeMessage,
+	A3(
+		$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+		'timestamp',
+		$elm$json$Json$Decode$int,
+		A3(
+			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+			'connectionId',
+			$elm$json$Json$Decode$string,
+			A3(
+				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+				'clientId',
+				$elm$json$Json$Decode$string,
+				A3(
+					$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+					'id',
+					$elm$json$Json$Decode$string,
+					A3(
+						$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+						'name',
+						$elm$json$Json$Decode$string,
+						$elm$json$Json$Decode$succeed($author$project$Credentials$SocketMessageData)))))));
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
 		return {$: 'BadStatus_', a: a, b: b};
@@ -7445,54 +7483,6 @@ var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
-var $author$project$Chat$Int = {$: 'Int'};
-var $author$project$Chat$roomIdDecoder = $elm$json$Json$Decode$succeed($author$project$Chat$Int);
-var $author$project$Chat$establishSocketConnection = $elm$http$Http$get(
-	{
-		expect: A2($elm$http$Http$expectJson, $author$project$Chat$SocketEstablished, $author$project$Chat$roomIdDecoder),
-		url: '/api/socket?roomId=123'
-	});
-var $author$project$Chat$ChatMessages = function (a) {
-	return {$: 'ChatMessages', a: a};
-};
-var $author$project$Credentials$SocketMessageData = F6(
-	function (name, id, clientId, connectionId, timestamp, data) {
-		return {clientId: clientId, connectionId: connectionId, data: data, id: id, name: name, timestamp: timestamp};
-	});
-var $author$project$Credentials$DataMessage = function (message) {
-	return {message: message};
-};
-var $author$project$Credentials$decodeMessage = A3(
-	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-	'message',
-	$elm$json$Json$Decode$string,
-	$elm$json$Json$Decode$succeed($author$project$Credentials$DataMessage));
-var $elm$json$Json$Decode$int = _Json_decodeInt;
-var $author$project$Credentials$decodeSocketMessage = A3(
-	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-	'data',
-	$author$project$Credentials$decodeMessage,
-	A3(
-		$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-		'timestamp',
-		$elm$json$Json$Decode$int,
-		A3(
-			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-			'connectionId',
-			$elm$json$Json$Decode$string,
-			A3(
-				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-				'clientId',
-				$elm$json$Json$Decode$string,
-				A3(
-					$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-					'id',
-					$elm$json$Json$Decode$string,
-					A3(
-						$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
-						'name',
-						$elm$json$Json$Decode$string,
-						$elm$json$Json$Decode$succeed($author$project$Credentials$SocketMessageData)))))));
 var $elm$json$Json$Decode$list = _Json_decodeList;
 var $author$project$Chat$fetchChatMessages = $elm$http$Http$get(
 	{
@@ -7501,6 +7491,24 @@ var $author$project$Chat$fetchChatMessages = $elm$http$Http$get(
 			$author$project$Chat$ChatMessages,
 			$elm$json$Json$Decode$list($author$project$Credentials$decodeSocketMessage)),
 		url: '/api/messages'
+	});
+var $author$project$Chat$FetchUsers = function (a) {
+	return {$: 'FetchUsers', a: a};
+};
+var $author$project$Chat$User = F2(
+	function (firstname, email) {
+		return {email: email, firstname: firstname};
+	});
+var $author$project$Chat$userDecoder = A3(
+	$elm$json$Json$Decode$map2,
+	$author$project$Chat$User,
+	A2($elm$json$Json$Decode$field, 'firstname', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'email', $elm$json$Json$Decode$string));
+var $author$project$Chat$usersDecoder = $elm$json$Json$Decode$list($author$project$Chat$userDecoder);
+var $author$project$Chat$fetchUsers = $elm$http$Http$get(
+	{
+		expect: A2($elm$http$Http$expectJson, $author$project$Chat$FetchUsers, $author$project$Chat$usersDecoder),
+		url: '/api/socket?roomId=123'
 	});
 var $author$project$Credentials$fromSessionToToken = function (session) {
 	if (session.$ === 'LoggedIn') {
@@ -7514,12 +7522,13 @@ var $author$project$Credentials$fromTokenToString = function (_v0) {
 	var string = _v0.a;
 	return string;
 };
-var $author$project$Chat$initialModel = {error: $elm$core$Maybe$Nothing, message: '', receivedMessages: _List_Nil};
+var $author$project$Chat$initialModel = {error: $elm$core$Maybe$Nothing, message: '', receivedMessages: _List_Nil, users: _List_Nil};
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
-var $author$project$Chat$takeNameOrEmail = F2(
-	function (name, email) {
-		return $elm$core$String$isEmpty(name) ? email : name;
-	});
+var $author$project$Chat$takeNameOrEmail = function (_v0) {
+	var firstname = _v0.firstname;
+	var email = _v0.email;
+	return $elm$core$String$isEmpty(firstname) ? email : firstname;
+};
 var $author$project$Credentials$userIdToString = function (_v0) {
 	var id = _v0.a;
 	return id;
@@ -7539,11 +7548,12 @@ var $author$project$Chat$init = function (session) {
 				$elm$core$Platform$Cmd$batch(
 					_List_fromArray(
 						[
-							$author$project$Chat$establishSocketConnection,
+							$author$project$Chat$fetchUsers,
 							$author$project$Credentials$addUserToRoom(
 							{
 								userId: $author$project$Credentials$userIdToString(resultTokenRecord.id),
-								userName: A2($author$project$Chat$takeNameOrEmail, resultTokenRecord.firstname, resultTokenRecord.email)
+								userName: $author$project$Chat$takeNameOrEmail(
+									{email: resultTokenRecord.email, firstname: resultTokenRecord.firstname})
 							}),
 							$author$project$Chat$fetchChatMessages
 						])));
@@ -8335,7 +8345,7 @@ var $author$project$Chat$MessageReceived = function (a) {
 var $author$project$Chat$unfoldMessageReceived = function (socketData) {
 	return $author$project$Chat$MessageReceived(socketData);
 };
-var $author$project$Utils$buildErrorMessage = function (httpError) {
+var $author$project$Helpers$buildErrorMessage = function (httpError) {
 	switch (httpError.$) {
 		case 'BadUrl':
 			var message = httpError.a;
@@ -8382,10 +8392,14 @@ var $author$project$Chat$update = F2(
 									[message]))
 						}),
 					$elm$core$Platform$Cmd$none);
-			case 'SocketEstablished':
+			case 'FetchUsers':
 				if (msg.a.$ === 'Ok') {
-					var roomId = msg.a.a;
-					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					var users = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{users: users}),
+						$elm$core$Platform$Cmd$none);
 				} else {
 					var err = msg.a.a;
 					return _Utils_Tuple2(
@@ -8393,7 +8407,7 @@ var $author$project$Chat$update = F2(
 							model,
 							{
 								error: $elm$core$Maybe$Just(
-									$author$project$Utils$buildErrorMessage(err))
+									$author$project$Helpers$buildErrorMessage(err))
 							}),
 						$elm$core$Platform$Cmd$none);
 				}
@@ -8414,7 +8428,7 @@ var $author$project$Chat$update = F2(
 							model,
 							{
 								error: $elm$core$Maybe$Just(
-									$author$project$Utils$buildErrorMessage(err))
+									$author$project$Helpers$buildErrorMessage(err))
 							}),
 						$elm$core$Platform$Cmd$none);
 				}
@@ -8522,7 +8536,7 @@ var $elm$core$Maybe$withDefault = F2(
 			return _default;
 		}
 	});
-var $author$project$Utils$validEmail = A2(
+var $author$project$Helpers$validEmail = A2(
 	$elm$core$Maybe$withDefault,
 	$elm$regex$Regex$never,
 	A2(
@@ -8532,7 +8546,7 @@ var $author$project$Utils$validEmail = A2(
 var $author$project$Login$sumOfErrors = function (model) {
 	var isPasswordInvalid = $elm$core$String$length(model.loginCredentials.password) < 10;
 	var isPasswordEmpty = $elm$core$String$isEmpty(model.loginCredentials.password);
-	var isEmailValid = A2($elm$regex$Regex$contains, $author$project$Utils$validEmail, model.loginCredentials.email);
+	var isEmailValid = A2($elm$regex$Regex$contains, $author$project$Helpers$validEmail, model.loginCredentials.email);
 	var isEmailEmpty = $elm$core$String$isEmpty(model.loginCredentials.email);
 	return isEmailEmpty ? A2(
 		$elm$core$List$cons,
@@ -8618,7 +8632,7 @@ var $author$project$Login$update = F2(
 								errors: A2(
 									$elm$core$List$cons,
 									$author$project$Login$BadRequest(
-										$author$project$Utils$buildErrorMessage(error)),
+										$author$project$Helpers$buildErrorMessage(error)),
 									model.errors),
 								isLoading: false
 							}),
@@ -8844,7 +8858,7 @@ var $author$project$Profile$update = F2(
 								errors: A2(
 									$elm$core$List$cons,
 									$author$project$Profile$BadRequest(
-										$author$project$Utils$buildErrorMessage(error)),
+										$author$project$Helpers$buildErrorMessage(error)),
 									model.errors)
 							}),
 						$elm$core$Platform$Cmd$none);
@@ -8894,7 +8908,7 @@ var $author$project$Signup$sumOfErrors = function (model) {
 	var passwordsMissmatch = !_Utils_eq(model.signupCredentials.password, model.signupCredentials.confirmPassword);
 	var isPasswordInvalid = $elm$core$String$length(model.signupCredentials.password) < 10;
 	var isPasswordEmpty = $elm$core$String$isEmpty(model.signupCredentials.password);
-	var isEmailValid = A2($elm$regex$Regex$contains, $author$project$Utils$validEmail, model.signupCredentials.email);
+	var isEmailValid = A2($elm$regex$Regex$contains, $author$project$Helpers$validEmail, model.signupCredentials.email);
 	var isEmailEmpty = $elm$core$String$isEmpty(model.signupCredentials.email);
 	var isConfirmPasswordInvalid = $elm$core$String$length(model.signupCredentials.confirmPassword) < 10;
 	var isConfirmPasswordEmpty = $elm$core$String$isEmpty(model.signupCredentials.confirmPassword);
@@ -9016,7 +9030,7 @@ var $author$project$Signup$update = F2(
 								errors: A2(
 									$elm$core$List$cons,
 									$author$project$Signup$BadRequest(
-										$author$project$Utils$buildErrorMessage(error)),
+										$author$project$Helpers$buildErrorMessage(error)),
 									model.errors),
 								isLoading: false
 							}),
@@ -11513,6 +11527,7 @@ var $author$project$GlobalStyles$inputStyle = _List_fromArray(
 	]);
 var $rtfeldman$elm_css$Html$Styled$li = $rtfeldman$elm_css$Html$Styled$node('li');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_0 = A2($rtfeldman$elm_css$Css$property, 'margin', '0px');
+var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$mt_4 = A2($rtfeldman$elm_css$Css$property, 'margin-top', '1rem');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$mx_2 = $rtfeldman$elm_css$Css$batch(
 	_List_fromArray(
 		[
@@ -11585,6 +11600,7 @@ var $rtfeldman$elm_css$Html$Styled$ul = $rtfeldman$elm_css$Html$Styled$node('ul'
 var $rtfeldman$elm_css$Html$Styled$Attributes$value = $rtfeldman$elm_css$Html$Styled$Attributes$stringProperty('value');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Theme$black = A5($matheus23$elm_tailwind_modules_base$Tailwind$Color$Color, 'rgb', '0', '0', '0', $matheus23$elm_tailwind_modules_base$Tailwind$Color$ViaVariable);
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_1 = A2($rtfeldman$elm_css$Css$property, 'gap', '0.25rem');
+var $matheus23$elm_default_tailwind_modules$Tailwind$Theme$gray_400 = A5($matheus23$elm_tailwind_modules_base$Tailwind$Color$Color, 'rgb', '156', '163', '175', $matheus23$elm_tailwind_modules_base$Tailwind$Color$ViaVariable);
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center = A2($rtfeldman$elm_css$Css$property, 'align-items', 'center');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$justify_between = A2($rtfeldman$elm_css$Css$property, 'justify-content', 'space-between');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$mb_4 = A2($rtfeldman$elm_css$Css$property, 'margin-bottom', '1rem');
@@ -11717,7 +11733,14 @@ var $author$project$Chat$viewMessage = function (messageData) {
 							])),
 						A2(
 						$rtfeldman$elm_css$Html$Styled$div,
-						_List_Nil,
+						_List_fromArray(
+							[
+								$rtfeldman$elm_css$Html$Styled$Attributes$css(
+								_List_fromArray(
+									[
+										$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$gray_400)
+									]))
+							]),
 						_List_fromArray(
 							[
 								$rtfeldman$elm_css$Html$Styled$text(hour + (':' + minute))
@@ -11781,20 +11804,30 @@ var $author$project$Chat$view = function (model) {
 									[
 										A2(
 										$rtfeldman$elm_css$Html$Styled$ul,
-										_List_Nil,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Attributes$css(
+												_List_fromArray(
+													[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$mt_4]))
+											]),
 										A2(
 											$elm$core$List$map,
 											function (user) {
 												return A2(
 													$rtfeldman$elm_css$Html$Styled$li,
-													_List_Nil,
 													_List_fromArray(
 														[
-															$rtfeldman$elm_css$Html$Styled$text(user)
+															$rtfeldman$elm_css$Html$Styled$Attributes$css(
+															_List_fromArray(
+																[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$mt_4]))
+														]),
+													_List_fromArray(
+														[
+															$rtfeldman$elm_css$Html$Styled$text(
+															$author$project$Chat$takeNameOrEmail(user))
 														]));
 											},
-											_List_fromArray(
-												['User1', 'USer2', 'USer3'])))
+											model.users))
 									]))
 							])),
 						A2(
@@ -11818,12 +11851,7 @@ var $author$project$Chat$view = function (model) {
 										A2(
 										$rtfeldman$elm_css$Html$Styled$ul,
 										_List_Nil,
-										A2(
-											$elm$core$List$map,
-											function (m) {
-												return $author$project$Chat$viewMessage(m);
-											},
-											model.receivedMessages))
+										A2($elm$core$List$map, $author$project$Chat$viewMessage, model.receivedMessages))
 									])),
 								function () {
 								var _v0 = model.error;
@@ -11936,6 +11964,11 @@ var $author$project$Login$StoreEmail = function (a) {
 var $author$project$Login$StorePassword = function (a) {
 	return {$: 'StorePassword', a: a};
 };
+var $rtfeldman$elm_css$Html$Styled$form = $rtfeldman$elm_css$Html$Styled$node('form');
+var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_3 = A2($rtfeldman$elm_css$Css$property, 'gap', '0.75rem');
+var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_5 = A2($rtfeldman$elm_css$Css$property, 'gap', '1.25rem');
+var $rtfeldman$elm_css$Html$Styled$input = $rtfeldman$elm_css$Html$Styled$node('input');
+var $rtfeldman$elm_css$Html$Styled$label = $rtfeldman$elm_css$Html$Styled$node('label');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$absolute = A2($rtfeldman$elm_css$Css$property, 'position', 'absolute');
 var $rtfeldman$elm_css$Css$Preprocess$WithKeyframes = function (a) {
 	return {$: 'WithKeyframes', a: a};
@@ -12009,22 +12042,63 @@ var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$animate_ping = $r
 							]))
 					])))
 		]));
-var $rtfeldman$elm_css$Html$Styled$form = $rtfeldman$elm_css$Html$Styled$node('form');
-var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_3 = A2($rtfeldman$elm_css$Css$property, 'gap', '0.75rem');
-var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_5 = A2($rtfeldman$elm_css$Css$property, 'gap', '1.25rem');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_5 = A2($rtfeldman$elm_css$Css$property, 'height', '1.25rem');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_full = A2($rtfeldman$elm_css$Css$property, 'height', '100%');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$inline_flex = A2($rtfeldman$elm_css$Css$property, 'display', 'inline-flex');
-var $rtfeldman$elm_css$Html$Styled$input = $rtfeldman$elm_css$Html$Styled$node('input');
-var $rtfeldman$elm_css$Html$Styled$label = $rtfeldman$elm_css$Html$Styled$node('label');
-var $matheus23$elm_default_tailwind_modules$Tailwind$Breakpoints$md = $rtfeldman$elm_css$Css$Media$withMediaQuery(
-	_List_fromArray(
-		['(min-width: 768px)']));
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$opacity_75 = A2($rtfeldman$elm_css$Css$property, 'opacity', '0.75');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$relative = A2($rtfeldman$elm_css$Css$property, 'position', 'relative');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded_full = A2($rtfeldman$elm_css$Css$property, 'border-radius', '9999px');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Theme$sky_500 = A5($matheus23$elm_tailwind_modules_base$Tailwind$Color$Color, 'rgb', '14', '165', '233', $matheus23$elm_tailwind_modules_base$Tailwind$Color$ViaVariable);
 var $rtfeldman$elm_css$Html$Styled$span = $rtfeldman$elm_css$Html$Styled$node('span');
+var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_5 = A2($rtfeldman$elm_css$Css$property, 'width', '1.25rem');
+var $author$project$Helpers$loadingElement = A2(
+	$rtfeldman$elm_css$Html$Styled$div,
+	_List_fromArray(
+		[
+			$rtfeldman$elm_css$Html$Styled$Attributes$css(
+			_List_fromArray(
+				[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$relative, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_5, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_5, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex]))
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$rtfeldman$elm_css$Html$Styled$span,
+			_List_fromArray(
+				[
+					$rtfeldman$elm_css$Html$Styled$Attributes$css(
+					_List_fromArray(
+						[
+							$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$animate_ping,
+							$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$absolute,
+							$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$inline_flex,
+							$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_full,
+							$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_full,
+							$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded_full,
+							$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$sky_400),
+							$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$opacity_75
+						]))
+				]),
+			_List_Nil),
+			A2(
+			$rtfeldman$elm_css$Html$Styled$span,
+			_List_fromArray(
+				[
+					$rtfeldman$elm_css$Html$Styled$Attributes$css(
+					_List_fromArray(
+						[
+							$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$relative,
+							$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$inline_flex,
+							$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded_full,
+							$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_5,
+							$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_5,
+							$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$sky_500)
+						]))
+				]),
+			_List_Nil)
+		]));
+var $matheus23$elm_default_tailwind_modules$Tailwind$Breakpoints$md = $rtfeldman$elm_css$Css$Media$withMediaQuery(
+	_List_fromArray(
+		['(min-width: 768px)']));
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_3xl = $rtfeldman$elm_css$Css$batch(
 	_List_fromArray(
 		[
@@ -12102,7 +12176,6 @@ var $author$project$Login$viewError = function (checkErrors) {
 					]));
 	}
 };
-var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_5 = A2($rtfeldman$elm_css$Css$property, 'width', '1.25rem');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_60 = A2($rtfeldman$elm_css$Css$property, 'width', '15rem');
 var $author$project$Login$view = function (model) {
 	return A2(
@@ -12236,51 +12309,7 @@ var $author$project$Login$view = function (model) {
 									[
 										$rtfeldman$elm_css$Html$Styled$text('Sign in')
 									])),
-								model.isLoading ? A2(
-								$rtfeldman$elm_css$Html$Styled$div,
-								_List_fromArray(
-									[
-										$rtfeldman$elm_css$Html$Styled$Attributes$css(
-										_List_fromArray(
-											[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$relative, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_5, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_5, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex]))
-									]),
-								_List_fromArray(
-									[
-										A2(
-										$rtfeldman$elm_css$Html$Styled$span,
-										_List_fromArray(
-											[
-												$rtfeldman$elm_css$Html$Styled$Attributes$css(
-												_List_fromArray(
-													[
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$animate_ping,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$absolute,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$inline_flex,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_full,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_full,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded_full,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$sky_400),
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$opacity_75
-													]))
-											]),
-										_List_Nil),
-										A2(
-										$rtfeldman$elm_css$Html$Styled$span,
-										_List_fromArray(
-											[
-												$rtfeldman$elm_css$Html$Styled$Attributes$css(
-												_List_fromArray(
-													[
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$relative,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$inline_flex,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded_full,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_5,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_5,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$sky_500)
-													]))
-											]),
-										_List_Nil)
-									])) : $rtfeldman$elm_css$Html$Styled$text('')
+								model.isLoading ? $author$project$Helpers$loadingElement : $rtfeldman$elm_css$Html$Styled$text('')
 							]))
 					])),
 				A2(
@@ -12298,7 +12327,6 @@ var $author$project$Profile$StoreFirstName = function (a) {
 	return {$: 'StoreFirstName', a: a};
 };
 var $rtfeldman$elm_css$Html$Styled$Attributes$for = $rtfeldman$elm_css$Html$Styled$Attributes$stringProperty('htmlFor');
-var $matheus23$elm_default_tailwind_modules$Tailwind$Theme$gray_400 = A5($matheus23$elm_tailwind_modules_base$Tailwind$Color$Color, 'rgb', '156', '163', '175', $matheus23$elm_tailwind_modules_base$Tailwind$Color$ViaVariable);
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_1 = A2($rtfeldman$elm_css$Css$property, 'height', '0.25rem');
 var $rtfeldman$elm_css$Html$Styled$Attributes$id = $rtfeldman$elm_css$Html$Styled$Attributes$stringProperty('id');
 var $author$project$Credentials$imageStringToMaybeString = function (_v0) {
@@ -12576,7 +12604,20 @@ var $author$project$Profile$view = function (model) {
 		case 'NotVerified':
 			return A2(
 				$rtfeldman$elm_css$Html$Styled$div,
-				_List_Nil,
+				_List_fromArray(
+					[
+						$rtfeldman$elm_css$Html$Styled$Attributes$css(
+						_List_fromArray(
+							[
+								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex,
+								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex_col,
+								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center,
+								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_6,
+								$matheus23$elm_default_tailwind_modules$Tailwind$Breakpoints$sm(
+								_List_fromArray(
+									[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_20]))
+							]))
+					]),
 				_List_fromArray(
 					[
 						A2(
@@ -12597,7 +12638,20 @@ var $author$project$Profile$view = function (model) {
 		case 'Intruder':
 			return A2(
 				$rtfeldman$elm_css$Html$Styled$div,
-				_List_Nil,
+				_List_fromArray(
+					[
+						$rtfeldman$elm_css$Html$Styled$Attributes$css(
+						_List_fromArray(
+							[
+								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex,
+								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex_col,
+								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center,
+								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_6,
+								$matheus23$elm_default_tailwind_modules$Tailwind$Breakpoints$sm(
+								_List_fromArray(
+									[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_20]))
+							]))
+					]),
 				_List_fromArray(
 					[
 						A2(
@@ -12618,7 +12672,20 @@ var $author$project$Profile$view = function (model) {
 		default:
 			return A2(
 				$rtfeldman$elm_css$Html$Styled$div,
-				_List_Nil,
+				_List_fromArray(
+					[
+						$rtfeldman$elm_css$Html$Styled$Attributes$css(
+						_List_fromArray(
+							[
+								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex,
+								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex_col,
+								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center,
+								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_6,
+								$matheus23$elm_default_tailwind_modules$Tailwind$Breakpoints$sm(
+								_List_fromArray(
+									[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_20]))
+							]))
+					]),
 				_List_fromArray(
 					[
 						A2(
@@ -12903,51 +12970,7 @@ var $author$project$Signup$view = function (model) {
 									[
 										$rtfeldman$elm_css$Html$Styled$text('Sign up')
 									])),
-								model.isLoading ? A2(
-								$rtfeldman$elm_css$Html$Styled$div,
-								_List_fromArray(
-									[
-										$rtfeldman$elm_css$Html$Styled$Attributes$css(
-										_List_fromArray(
-											[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$relative, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_5, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_5, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex]))
-									]),
-								_List_fromArray(
-									[
-										A2(
-										$rtfeldman$elm_css$Html$Styled$span,
-										_List_fromArray(
-											[
-												$rtfeldman$elm_css$Html$Styled$Attributes$css(
-												_List_fromArray(
-													[
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$animate_ping,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$absolute,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$inline_flex,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_full,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_full,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded_full,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$sky_400),
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$opacity_75
-													]))
-											]),
-										_List_Nil),
-										A2(
-										$rtfeldman$elm_css$Html$Styled$span,
-										_List_fromArray(
-											[
-												$rtfeldman$elm_css$Html$Styled$Attributes$css(
-												_List_fromArray(
-													[
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$relative,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$inline_flex,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded_full,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_5,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_5,
-														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$sky_500)
-													]))
-											]),
-										_List_Nil)
-									])) : $rtfeldman$elm_css$Html$Styled$text('')
+								model.isLoading ? $author$project$Helpers$loadingElement : $rtfeldman$elm_css$Html$Styled$text('')
 							]))
 					])),
 				A2(
@@ -12957,128 +12980,137 @@ var $author$project$Signup$view = function (model) {
 			]));
 };
 var $author$project$Verification$view = function (model) {
-	var _v0 = model.userState;
-	switch (_v0.$) {
-		case 'VerificationPending':
-			return A2(
-				$rtfeldman$elm_css$Html$Styled$div,
-				_List_Nil,
+	return A2(
+		$rtfeldman$elm_css$Html$Styled$div,
+		_List_fromArray(
+			[
+				$rtfeldman$elm_css$Html$Styled$Attributes$css(
 				_List_fromArray(
 					[
-						A2(
-						$rtfeldman$elm_css$Html$Styled$h2,
-						_List_Nil,
+						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex,
+						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex_col,
+						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center,
+						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_6,
+						$matheus23$elm_default_tailwind_modules$Tailwind$Breakpoints$sm(
 						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text('Give us a moment to verify your account ! ')
-							])),
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text('Soon you will have access to a all profile features')
-							])),
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text('LOADING...')
-							]))
-					]));
-		case 'VerificationDone':
-			return A2(
-				$rtfeldman$elm_css$Html$Styled$div,
-				_List_Nil,
-				_List_fromArray(
-					[
-						A2(
-						$rtfeldman$elm_css$Html$Styled$h2,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text('Thanks for verifying your email ! ')
-							])),
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text('Now you will be redirected to your profile page and have full access to all app\'s features')
-							])),
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text('LOADING...')
-							]))
-					]));
-		case 'VerificationFail':
-			return A2(
-				$rtfeldman$elm_css$Html$Styled$div,
-				_List_Nil,
-				_List_fromArray(
-					[
-						A2(
-						$rtfeldman$elm_css$Html$Styled$h2,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text('UPS seems that something is off !')
-							])),
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text('Try to re-login or refresh the page')
-							]))
-					]));
-		case 'Verified':
-			return A2(
-				$rtfeldman$elm_css$Html$Styled$div,
-				_List_Nil,
-				_List_fromArray(
-					[
-						A2(
-						$rtfeldman$elm_css$Html$Styled$h2,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text('HMMm seems that you\'re already verified !')
-							])),
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text('Please proceed to you profile')
-							]))
-					]));
-		default:
-			return A2(
-				$rtfeldman$elm_css$Html$Styled$div,
-				_List_Nil,
-				_List_fromArray(
-					[
-						A2(
-						$rtfeldman$elm_css$Html$Styled$h2,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text('You are not logged in !')
-							])),
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text('Please proceed to login')
-							]))
-					]));
-	}
+							[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_20]))
+					]))
+			]),
+		_List_fromArray(
+			[
+				function () {
+				var _v0 = model.userState;
+				switch (_v0.$) {
+					case 'VerificationPending':
+						return A2(
+							$rtfeldman$elm_css$Html$Styled$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$rtfeldman$elm_css$Html$Styled$h2,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$rtfeldman$elm_css$Html$Styled$text('Give us a moment to verify your account ! ')
+										])),
+									A2(
+									$rtfeldman$elm_css$Html$Styled$p,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$rtfeldman$elm_css$Html$Styled$text('Soon you will have access to a all profile features')
+										])),
+									$author$project$Helpers$loadingElement
+								]));
+					case 'VerificationDone':
+						return A2(
+							$rtfeldman$elm_css$Html$Styled$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$rtfeldman$elm_css$Html$Styled$h2,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$rtfeldman$elm_css$Html$Styled$text('Thanks for verifying your email ! ')
+										])),
+									A2(
+									$rtfeldman$elm_css$Html$Styled$p,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$rtfeldman$elm_css$Html$Styled$text('Now you will be redirected to your profile page and have full access to all app\'s features')
+										])),
+									$author$project$Helpers$loadingElement
+								]));
+					case 'VerificationFail':
+						return A2(
+							$rtfeldman$elm_css$Html$Styled$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$rtfeldman$elm_css$Html$Styled$h2,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$rtfeldman$elm_css$Html$Styled$text('UPS seems that something is off !')
+										])),
+									A2(
+									$rtfeldman$elm_css$Html$Styled$p,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$rtfeldman$elm_css$Html$Styled$text('Try to re-login or refresh the page')
+										]))
+								]));
+					case 'Verified':
+						return A2(
+							$rtfeldman$elm_css$Html$Styled$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$rtfeldman$elm_css$Html$Styled$h2,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$rtfeldman$elm_css$Html$Styled$text('HMMm seems that you\'re already verified !')
+										])),
+									A2(
+									$rtfeldman$elm_css$Html$Styled$p,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$rtfeldman$elm_css$Html$Styled$text('Please proceed to you profile')
+										]))
+								]));
+					default:
+						return A2(
+							$rtfeldman$elm_css$Html$Styled$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$rtfeldman$elm_css$Html$Styled$h2,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$rtfeldman$elm_css$Html$Styled$text('You are not logged in !')
+										])),
+									A2(
+									$rtfeldman$elm_css$Html$Styled$p,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$rtfeldman$elm_css$Html$Styled$text('Please proceed to login')
+										]))
+								]));
+				}
+			}()
+			]));
 };
 var $author$project$Main$content = function (model) {
 	return A2(
@@ -13137,25 +13169,6 @@ var $author$project$Main$content = function (model) {
 			}()
 			]));
 };
-var $rtfeldman$elm_css$Html$Styled$footer = $rtfeldman$elm_css$Html$Styled$node('footer');
-var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$p_10 = A2($rtfeldman$elm_css$Css$property, 'padding', '2.5rem');
-var $author$project$Main$viewFooter = A2(
-	$rtfeldman$elm_css$Html$Styled$footer,
-	_List_fromArray(
-		[
-			$rtfeldman$elm_css$Html$Styled$Attributes$css(
-			_List_fromArray(
-				[
-					$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$black),
-					$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$white),
-					$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$p_10,
-					$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_full
-				]))
-		]),
-	_List_fromArray(
-		[
-			$rtfeldman$elm_css$Html$Styled$text('This is footer')
-		]));
 var $author$project$Main$GetLogout = {$: 'GetLogout'};
 var $author$project$Main$OpenDropdown = {$: 'OpenDropdown'};
 var $rtfeldman$elm_css$Html$Styled$a = $rtfeldman$elm_css$Html$Styled$node('a');
@@ -13415,10 +13428,27 @@ var $author$project$Main$viewHeader = function (_v0) {
 															[
 																A2(
 																$rtfeldman$elm_css$Html$Styled$span,
-																_List_Nil,
 																_List_fromArray(
 																	[
-																		$rtfeldman$elm_css$Html$Styled$text(resultTokenRecord.email + ' ⌄')
+																		$rtfeldman$elm_css$Html$Styled$Attributes$css(
+																		_List_fromArray(
+																			[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_xl]))
+																	]),
+																_List_fromArray(
+																	[
+																		$rtfeldman$elm_css$Html$Styled$text(resultTokenRecord.email),
+																		A2(
+																		$rtfeldman$elm_css$Html$Styled$sup,
+																		_List_fromArray(
+																			[
+																				$rtfeldman$elm_css$Html$Styled$Attributes$css(
+																				_List_fromArray(
+																					[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$ml_1]))
+																			]),
+																		_List_fromArray(
+																			[
+																				$rtfeldman$elm_css$Html$Styled$text('⌄')
+																			]))
 																	])),
 																A2(
 																$rtfeldman$elm_css$Html$Styled$div,
@@ -13449,7 +13479,17 @@ var $author$project$Main$viewHeader = function (_v0) {
 															[
 																$rtfeldman$elm_css$Html$Styled$Attributes$css(
 																_List_fromArray(
-																	[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$absolute, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$mt_3, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex_col, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$overflow_hidden, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$transition_all, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$duration_500])),
+																	[
+																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex,
+																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$absolute,
+																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$mt_3,
+																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex_col,
+																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_1,
+																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$overflow_hidden,
+																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$transition_all,
+																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$duration_500,
+																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$white)
+																	])),
 																A2(
 																$rtfeldman$elm_css$Html$Styled$Attributes$style,
 																'height',
@@ -13713,8 +13753,7 @@ var $author$project$Main$app = function (model) {
 		_List_fromArray(
 			[
 				$author$project$Main$viewHeader(model),
-				$author$project$Main$content(model),
-				$author$project$Main$viewFooter
+				$author$project$Main$content(model)
 			]));
 };
 var $rtfeldman$elm_css$VirtualDom$Styled$UnscopedStyles = function (a) {

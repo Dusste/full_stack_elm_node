@@ -4,6 +4,7 @@ import Credentials exposing (Token, encodeToken, storeSession, tokenDecoder)
 import Css
 import Css.Global
 import GlobalStyles as Gs
+import Helpers exposing (buildErrorMessage, loadingElement, validEmail)
 import Html.Styled as Html exposing (Html, text)
 import Html.Styled.Attributes as Attr exposing (type_, value)
 import Html.Styled.Events exposing (onClick, onInput)
@@ -15,7 +16,6 @@ import Tailwind.Breakpoints as Bp
 import Tailwind.Theme as Tw
 import Tailwind.Utilities as Tw
 import Task
-import Utils exposing (buildErrorMessage, validEmail)
 
 
 type alias Model =
@@ -232,12 +232,7 @@ view model =
                     ]
                     [ text "Sign up" ]
                 , if model.isLoading then
-                    Html.div [ Attr.css [ Tw.relative, Tw.h_5, Tw.w_5, Tw.flex ] ]
-                        [ Html.span
-                            [ Attr.css [ Tw.animate_ping, Tw.absolute, Tw.inline_flex, Tw.h_full, Tw.w_full, Tw.rounded_full, Tw.bg_color Tw.sky_400, Tw.opacity_75 ] ]
-                            []
-                        , Html.span [ Attr.css [ Tw.relative, Tw.inline_flex, Tw.rounded_full, Tw.h_5, Tw.w_5, Tw.bg_color Tw.sky_500 ] ] []
-                        ]
+                    loadingElement
 
                   else
                     text ""

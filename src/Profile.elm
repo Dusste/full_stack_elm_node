@@ -26,19 +26,17 @@ import Css.Global
 import File exposing (File)
 import File.Select as Select
 import GlobalStyles as Gs
+import Helpers exposing (buildErrorMessage)
 import Html.Styled as Html exposing (Html, text)
 import Html.Styled.Attributes as Attr exposing (src, type_, value)
 import Html.Styled.Events exposing (onClick, onInput)
 import Http
 import Json.Encode as Encode exposing (encode)
 import Jwt
-import Process
 import Tailwind.Breakpoints as Bp
 import Tailwind.Theme as Tw
 import Tailwind.Utilities as Tw
 import Task
-import Time
-import Utils exposing (buildErrorMessage)
 
 
 type alias Model =
@@ -223,21 +221,21 @@ view model =
                 ]
 
         NotVerified ->
-            Html.div []
+            Html.div [ Attr.css [ Tw.flex, Tw.flex_col, Tw.items_center, Tw.m_6, Bp.sm [ Tw.m_20 ] ] ]
                 [ Html.h2 [] [ text "Please verify your email ! " ]
                 , Html.p []
                     [ text "You can't access your profile until you verify your email" ]
                 ]
 
         Intruder ->
-            Html.div []
+            Html.div [ Attr.css [ Tw.flex, Tw.flex_col, Tw.items_center, Tw.m_6, Bp.sm [ Tw.m_20 ] ] ]
                 [ Html.h2 [] [ text "Hmm seems you are not logged in" ]
                 , Html.p []
                     [ text "Please create account or login" ]
                 ]
 
         SessionExpired ->
-            Html.div []
+            Html.div [ Attr.css [ Tw.flex, Tw.flex_col, Tw.items_center, Tw.m_6, Bp.sm [ Tw.m_20 ] ] ]
                 [ Html.h2 [] [ text "Your session have expired" ]
                 , Html.p []
                     [ text "Please login again" ]

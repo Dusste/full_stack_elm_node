@@ -131,7 +131,8 @@ app model =
     Html.div [ onClick <| CheckSessionExpired ( model.session, model.time ) ]
         [ viewHeader model
         , content model
-        , viewFooter
+
+        -- , viewFooter @TODO add when its necessery
         ]
 
 
@@ -180,9 +181,10 @@ viewHeader { page, session, openDropdown, key } =
                                       else
                                         Html.div
                                             [ onClick OpenDropdown ]
-                                            [ Html.span []
+                                            [ Html.span [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl ] ]
                                                 [ text
-                                                    (resultTokenRecord.email ++ " ⌄")
+                                                    resultTokenRecord.email
+                                                , Html.sup [ Attr.css [ Tw.ml_1 ] ] [ text "⌄" ]
                                                 ]
                                             , Html.div []
                                                 [ case imageStringToMaybeString resultTokenRecord.profilepicurl of
@@ -195,7 +197,7 @@ viewHeader { page, session, openDropdown, key } =
                                                 ]
                                             ]
                                     , Html.ul
-                                        [ Attr.css [ Tw.flex, Tw.absolute, Tw.mt_3, Tw.flex_col, Tw.gap_1, Tw.overflow_hidden, Tw.transition_all, Tw.duration_500 ]
+                                        [ Attr.css [ Tw.flex, Tw.absolute, Tw.mt_3, Tw.flex_col, Tw.gap_1, Tw.overflow_hidden, Tw.transition_all, Tw.duration_500, Tw.bg_color Tw.white ]
                                         , style "height"
                                             (if openDropdown then
                                                 "90px"

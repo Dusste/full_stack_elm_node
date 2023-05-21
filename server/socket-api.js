@@ -26,11 +26,30 @@ exports.module = {
                     : process.env.ASTRA_DB_KEYSPACE_PROD
             }.users WHERE id = ? ALLOW FILTERING;`;
             try {
-                const result = await client.execute(query, parameters, { prepare: true });
+                const result = await client.execute(query, parameters, {
+                    prepare: true,
+                });
 
                 return result;
             } catch (ex) {
                 console.log('Error in finduser', ex.toString());
+            }
+        };
+
+        const getAllNamesAndEmails = async () => {
+            const query = `SELECT firstname, email FROM ${
+                process.env.NODE_ENV === 'development'
+                    ? process.env.ASTRA_DB_KEYSPACE
+                    : process.env.ASTRA_DB_KEYSPACE_PROD
+            }.users;`;
+            try {
+                const result = await client.execute(query, [], {
+                    prepare: true,
+                });
+
+                return result;
+            } catch (ex) {
+                console.log('Error in get all names', ex.toString());
             }
         };
 
@@ -41,8 +60,10 @@ exports.module = {
                     : process.env.ASTRA_DB_KEYSPACE_PROD
             }.chat (userid, messages) VALUES (?, ?);`;
             try {
-                const result = await client.execute(query, parameters, { prepare: true });
-                //  result would be undefined but query would be executed and entery is wirtten in the DB
+                const result = await client.execute(query, parameters, {
+                    prepare: true,
+                });
+                //  result would be undefined but query would be executed and entry is written in the DB
                 return result;
             } catch (ex) {
                 console.log('Error in createNewMessageEntry', ex.toString());
@@ -56,7 +77,9 @@ exports.module = {
                     : process.env.ASTRA_DB_KEYSPACE_PROD
             }.chat WHERE userid = ? ALLOW FILTERING;`;
             try {
-                const result = await client.execute(query, parameters, { prepare: true });
+                const result = await client.execute(query, parameters, {
+                    prepare: true,
+                });
 
                 return result;
             } catch (ex) {
@@ -71,7 +94,9 @@ exports.module = {
                     : process.env.ASTRA_DB_KEYSPACE_PROD
             }.chat SET messages = ? WHERE userid = ? IF EXISTS;`;
             try {
-                const result = await client.execute(query, parameters, { prepare: true });
+                const result = await client.execute(query, parameters, {
+                    prepare: true,
+                });
                 //  result would be undefined but query would be executed and entery is written in the DB
                 return result;
             } catch (ex) {
@@ -79,6 +104,12 @@ exports.module = {
             }
         };
 
+        const users = await getAllNamesAndEmails();
+        if (!users?.rows?.length && !users?.rows[0]) {
+            return res.sendStatus(401);
+        }
+
+        const listOfUserData = users.rows;
         const io = req.app.get('socketio');
 
         io.once('connection', (socket) => {
@@ -131,7 +162,10 @@ exports.module = {
                     }
                 }
 
-                io.emit('new message', { message: msg, userName: socket.data.user.userName });
+                io.emit('new message', {
+                    message: msg,
+                    userName: socket.data.user.userName,
+                });
             });
 
             // when the client emits 'typing', we broadcast it to others
@@ -168,6 +202,6 @@ exports.module = {
             });
         });
 
-        return res.status(200).json({ roomId });
+        return res.status(200).json(listOfUserData);
     },
 };

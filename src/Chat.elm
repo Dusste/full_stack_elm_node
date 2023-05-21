@@ -4,23 +4,24 @@ import Credentials exposing (Session, SocketMessageData, addUserToRoom, decodeSo
 import Css
 import Css.Global
 import GlobalStyles as Gs
+import Helpers exposing (buildErrorMessage)
 import Html.Styled as Html exposing (Html, text)
 import Html.Styled.Attributes as Attr
 import Html.Styled.Events as Event
 import Http
-import Json.Decode as Decode exposing (Decoder)
+import Json.Decode as Decode exposing (Decoder, string)
 import Jwt
 import Tailwind.Breakpoints as Bp
 import Tailwind.Theme as Tw
 import Tailwind.Utilities as Tw
 import Time
-import Utils exposing (buildErrorMessage)
 
 
 type alias Model =
     { message : String
     , receivedMessages : List SocketMessageData
     , error : Maybe String
+    , users : List User
     }
 
 
@@ -29,15 +30,17 @@ type CheckErrors
     | BadRequest String
 
 
-type RoomId
-    = Int
+type alias User =
+    { firstname : String
+    , email : String
+    }
 
 
 type Msg
     = StoreMessage String
     | MessageSubmit
     | MessageReceived SocketMessageData
-    | SocketEstablished (Result Http.Error RoomId)
+    | FetchUsers (Result Http.Error (List User))
     | ChatMessages (Result Http.Error (List SocketMessageData))
 
 
@@ -52,6 +55,7 @@ initialModel =
     , receivedMessages =
         []
     , error = Nothing
+    , users = []
     }
 
 
@@ -67,10 +71,10 @@ update msg model =
         MessageReceived message ->
             ( { model | receivedMessages = model.receivedMessages ++ [ message ] }, Cmd.none )
 
-        SocketEstablished (Ok roomId) ->
-            ( model, Cmd.none )
+        FetchUsers (Ok users) ->
+            ( { model | users = users }, Cmd.none )
 
-        SocketEstablished (Err err) ->
+        FetchUsers (Err err) ->
             ( { model | error = Just <| buildErrorMessage err }, Cmd.none )
 
         ChatMessages (Ok messages) ->
@@ -88,9 +92,13 @@ init session =
                 Ok resultTokenRecord ->
                     ( initialModel
                     , Cmd.batch
-                        [ establishSocketConnection
+                        [ fetchUsers
                         , addUserToRoom
-                            { userName = takeNameOrEmail resultTokenRecord.firstname resultTokenRecord.email
+                            { userName =
+                                takeNameOrEmail
+                                    { firstname = resultTokenRecord.firstname
+                                    , email = resultTokenRecord.email
+                                    }
                             , userId = userIdToString resultTokenRecord.id
                             }
                         , fetchChatMessages
@@ -104,20 +112,32 @@ init session =
             ( initialModel, Cmd.none )
 
 
-takeNameOrEmail : String -> String -> String
-takeNameOrEmail name email =
-    if String.isEmpty name then
+takeNameOrEmail : User -> String
+takeNameOrEmail { firstname, email } =
+    if String.isEmpty firstname then
         email
 
     else
-        name
+        firstname
 
 
-establishSocketConnection : Cmd Msg
-establishSocketConnection =
+usersDecoder : Decoder (List User)
+usersDecoder =
+    Decode.list userDecoder
+
+
+userDecoder : Decoder User
+userDecoder =
+    Decode.map2 User
+        (Decode.field "firstname" string)
+        (Decode.field "email" string)
+
+
+fetchUsers : Cmd Msg
+fetchUsers =
     Http.get
         { url = "/api/socket?roomId=123"
-        , expect = Http.expectJson SocketEstablished roomIdDecoder
+        , expect = Http.expectJson FetchUsers usersDecoder
         }
 
 
@@ -129,11 +149,6 @@ fetchChatMessages =
         }
 
 
-roomIdDecoder : Decoder RoomId
-roomIdDecoder =
-    Decode.succeed Int
-
-
 view : Model -> Html Msg
 view model =
     Html.div
@@ -142,17 +157,17 @@ view model =
             [ Html.div [ Attr.css [ Tw.w_80, Tw.bg_color Tw.sky_200, Tw.p_4, Tw.rounded ] ]
                 [ Html.h3 [ Attr.css [ Tw.m_0 ] ] [ text "Participants" ]
                 , Html.div []
-                    [ Html.ul []
-                        ([ "User1", "USer2", "USer3" ]
+                    [ Html.ul [ Attr.css [ Tw.mt_4 ] ]
+                        (model.users
                             |> List.map
                                 (\user ->
-                                    Html.li [] [ text user ]
+                                    Html.li [ Attr.css [ Tw.mt_4 ] ] [ text <| takeNameOrEmail user ]
                                 )
                         )
                     ]
                 ]
             , Html.div [ Attr.css [ Tw.flex_grow ] ]
-                [ Html.div [ Attr.class "customHeight" ] [ Html.ul [] (List.map (\m -> viewMessage m) model.receivedMessages) ]
+                [ Html.div [ Attr.class "customHeight" ] [ Html.ul [] (List.map viewMessage model.receivedMessages) ]
                 , case model.error of
                     Just err ->
                         Html.div [] [ text err ]
@@ -192,6 +207,6 @@ viewMessage messageData =
                 [ Html.div [ Attr.css [ Tw.text_color Tw.black ] ] [ text <| messageData.name ++ ":" ]
                 , Html.div [] [ text <| messageData.data.message ]
                 ]
-            , Html.div [] [ text <| hour ++ ":" ++ minute ]
+            , Html.div [ Attr.css [ Tw.text_color Tw.gray_400 ] ] [ text <| hour ++ ":" ++ minute ]
             ]
         ]

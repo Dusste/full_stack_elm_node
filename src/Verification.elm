@@ -15,6 +15,7 @@ import Credentials
         )
 import Css
 import Css.Global
+import Helpers exposing (loadingElement)
 import Html.Styled as Html exposing (Html, text)
 import Html.Styled.Attributes as Attr
 import Html.Styled.Events as Event
@@ -22,7 +23,7 @@ import Http
 import Json.Encode exposing (encode)
 import Jwt
 import Process
-import Tailwind.Breakpoints as Breakpoints
+import Tailwind.Breakpoints as Bp
 import Tailwind.Theme as Tw
 import Tailwind.Utilities as Tw
 import Task
@@ -147,35 +148,37 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    case model.userState of
-        VerificationPending ->
-            Html.div []
-                [ Html.h2 [] [ text "Give us a moment to verify your account ! " ]
-                , Html.p [] [ text "Soon you will have access to a all profile features" ]
-                , Html.p [] [ text "LOADING..." ]
-                ]
+    Html.div [ Attr.css [ Tw.flex, Tw.flex_col, Tw.items_center, Tw.m_6, Bp.sm [ Tw.m_20 ] ] ]
+        [ case model.userState of
+            VerificationPending ->
+                Html.div []
+                    [ Html.h2 [] [ text "Give us a moment to verify your account ! " ]
+                    , Html.p [] [ text "Soon you will have access to a all profile features" ]
+                    , loadingElement
+                    ]
 
-        VerificationDone ->
-            Html.div []
-                [ Html.h2 [] [ text "Thanks for verifying your email ! " ]
-                , Html.p [] [ text "Now you will be redirected to your profile page and have full access to all app's features" ]
-                , Html.p [] [ text "LOADING..." ]
-                ]
+            VerificationDone ->
+                Html.div []
+                    [ Html.h2 [] [ text "Thanks for verifying your email ! " ]
+                    , Html.p [] [ text "Now you will be redirected to your profile page and have full access to all app's features" ]
+                    , loadingElement
+                    ]
 
-        VerificationFail ->
-            Html.div []
-                [ Html.h2 [] [ text "UPS seems that something is off !" ]
-                , Html.p [] [ text "Try to re-login or refresh the page" ]
-                ]
+            VerificationFail ->
+                Html.div []
+                    [ Html.h2 [] [ text "UPS seems that something is off !" ]
+                    , Html.p [] [ text "Try to re-login or refresh the page" ]
+                    ]
 
-        Verified ->
-            Html.div []
-                [ Html.h2 [] [ text "HMMm seems that you're already verified !" ]
-                , Html.p [] [ text "Please proceed to you profile" ]
-                ]
+            Verified ->
+                Html.div []
+                    [ Html.h2 [] [ text "HMMm seems that you're already verified !" ]
+                    , Html.p [] [ text "Please proceed to you profile" ]
+                    ]
 
-        Sessionless ->
-            Html.div []
-                [ Html.h2 [] [ text "You are not logged in !" ]
-                , Html.p [] [ text "Please proceed to login" ]
-                ]
+            Sessionless ->
+                Html.div []
+                    [ Html.h2 [] [ text "You are not logged in !" ]
+                    , Html.p [] [ text "Please proceed to login" ]
+                    ]
+        ]
