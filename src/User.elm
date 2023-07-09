@@ -98,8 +98,6 @@ andThenValidateConfirmPassword confirmPassword resultCredential =
 validateCredentials : { email : String, password : String } -> Result String ValidCredentials
 validateCredentials { email, password } =
     Result.map2
-        (\validEmail validPassword ->
-            { email = validEmail, password = validPassword }
-        )
+        ValidCredentials
         (fromStringToValidEmail email)
         (fromStringToValidPassword password)
