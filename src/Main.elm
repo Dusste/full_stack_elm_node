@@ -163,7 +163,7 @@ viewHeader { page, session, openDropdown, key } =
                             Html.li
                                 [ Attr.css [ Tw.cursor_pointer ] ]
                                 [ Html.div [ Attr.css [ Tw.relative ] ]
-                                    [ if String.isEmpty resultTokenRecord.firstname == False then
+                                    [ if String.length resultTokenRecord.firstname > 0 then
                                         Html.div
                                             [ Attr.css [ Tw.flex, Tw.items_center ], onClick OpenDropdown ]
                                             [ Html.div [ Attr.css [ Tw.w_10, Tw.h_10, Tw.overflow_hidden, Tw.rounded_full ] ]
@@ -461,13 +461,7 @@ update msg model =
                         Err _ ->
                             ( model, Cmd.none )
 
-                ( Nothing, Just _ ) ->
-                    ( model, Cmd.none )
-
-                ( Just _, Nothing ) ->
-                    ( model, Cmd.none )
-
-                ( Nothing, Nothing ) ->
+                _ ->
                     ( model, Cmd.none )
 
         GetLogout ->

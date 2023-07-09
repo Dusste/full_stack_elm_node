@@ -100,15 +100,13 @@ type alias DataMessage =
 
 userIdToString : UserId -> String
 userIdToString (UserId id) =
+    -- TODO need some vaildation ?
     id
-
-
-
--- TODO need some vaildation ?
 
 
 verificationToString : VerificationString -> String
 verificationToString (VerificationString verificationString) =
+    -- TODO need some vaildation ?
     verificationString
 
 
@@ -143,6 +141,7 @@ verifictionStringParser =
 
 encodeUserId : UserId -> Encode.Value
 encodeUserId (UserId id) =
+    -- TODO need some vaildation ?
     Encode.string id
 
 
@@ -277,6 +276,15 @@ decodeTokenData =
         (at [ "firstname" ] string)
         (at [ "verificationstring" ] verifyStringDecoder)
         (at [ "profilepicurl" ] imageStringDecoder)
+
+
+
+{-
+   You can run a decoder by using Json.Decode.decodeValue.
+   Then you’ll get a Result Error UnwrappedTokenData.
+   You can get rid of Result by using a case of and handling both the Ok validData and Err error cases.
+
+-}
 
 
 imageStringDecoder : Decoder ImageString

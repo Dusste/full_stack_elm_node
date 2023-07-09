@@ -7568,11 +7568,8 @@ var $author$project$Home$initialModel = {};
 var $author$project$Home$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Home$initialModel, $elm$core$Platform$Cmd$none);
 };
-var $author$project$Login$initialModel = {
-	errors: _List_Nil,
-	isLoading: false,
-	loginCredentials: {email: '', password: ''}
-};
+var $author$project$Login$Initial = {$: 'Initial'};
+var $author$project$Login$initialModel = {loginState: $author$project$Login$Initial, storeEmail: '', storePassword: ''};
 var $author$project$Login$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Login$initialModel, $elm$core$Platform$Cmd$none);
 };
@@ -7623,11 +7620,8 @@ var $author$project$Profile$init = function (session) {
 			$elm$core$Platform$Cmd$none);
 	}
 };
-var $author$project$Signup$initialModel = {
-	errors: _List_Nil,
-	isLoading: false,
-	signupCredentials: {confirmPassword: '', email: '', password: ''}
-};
+var $author$project$Signup$Initial = {$: 'Initial'};
+var $author$project$Signup$initialModel = {signupState: $author$project$Signup$Initial, storeConfirmPassword: '', storeEmail: '', storePassword: ''};
 var $author$project$Signup$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Signup$initialModel, $elm$core$Platform$Cmd$none);
 };
@@ -8438,31 +8432,11 @@ var $author$project$Home$update = F2(
 	function (msg, model) {
 		return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 	});
-var $author$project$Login$BadRequest = function (a) {
-	return {$: 'BadRequest', a: a};
+var $author$project$Login$Error = function (a) {
+	return {$: 'Error', a: a};
 };
 var $author$project$Login$HideError = {$: 'HideError'};
-var $elm$core$List$drop = F2(
-	function (n, list) {
-		drop:
-		while (true) {
-			if (n <= 0) {
-				return list;
-			} else {
-				if (!list.b) {
-					return list;
-				} else {
-					var x = list.a;
-					var xs = list.b;
-					var $temp$n = n - 1,
-						$temp$list = xs;
-					n = $temp$n;
-					list = $temp$list;
-					continue drop;
-				}
-			}
-		}
-	});
+var $author$project$Login$Loading = {$: 'Loading'};
 var $author$project$Credentials$encodeToken = function (_v0) {
 	var token = _v0.a;
 	return $elm$json$Json$Encode$object(
@@ -8473,26 +8447,31 @@ var $author$project$Credentials$encodeToken = function (_v0) {
 				$elm$json$Json$Encode$string(token))
 			]));
 };
-var $elm$core$List$isEmpty = function (xs) {
-	if (!xs.b) {
-		return true;
-	} else {
-		return false;
-	}
-};
 var $author$project$Login$LoginDone = function (a) {
 	return {$: 'LoginDone', a: a};
 };
-var $author$project$Login$credentialsEncoder = function (credentials) {
+var $author$project$User$fromEmailToString = function (_v0) {
+	var validEmail = _v0.a;
+	return validEmail;
+};
+var $author$project$User$fromPasswordToString = function (_v0) {
+	var validPassword = _v0.a;
+	return validPassword;
+};
+var $author$project$User$credentialsEncoder = function (_v0) {
+	var email = _v0.email;
+	var password = _v0.password;
 	return $elm$json$Json$Encode$object(
 		_List_fromArray(
 			[
 				_Utils_Tuple2(
 				'email',
-				$elm$json$Json$Encode$string(credentials.email)),
+				$elm$json$Json$Encode$string(
+					$author$project$User$fromEmailToString(email))),
 				_Utils_Tuple2(
 				'password',
-				$elm$json$Json$Encode$string(credentials.password))
+				$elm$json$Json$Encode$string(
+					$author$project$User$fromPasswordToString(password)))
 			]));
 };
 var $elm$http$Http$jsonBody = function (value) {
@@ -8509,22 +8488,20 @@ var $author$project$Login$submitLogin = function (credentials) {
 	return $elm$http$Http$post(
 		{
 			body: $elm$http$Http$jsonBody(
-				$author$project$Login$credentialsEncoder(credentials)),
+				$author$project$User$credentialsEncoder(credentials)),
 			expect: A2($elm$http$Http$expectJson, $author$project$Login$LoginDone, $author$project$Credentials$tokenDecoder),
 			url: '/api/login'
 		});
 };
-var $author$project$Login$BadEmail = function (a) {
-	return {$: 'BadEmail', a: a};
-};
-var $author$project$Login$BadPassword = function (a) {
-	return {$: 'BadPassword', a: a};
+var $author$project$User$Email = function (a) {
+	return {$: 'Email', a: a};
 };
 var $elm$regex$Regex$Match = F4(
 	function (match, index, number, submatches) {
 		return {index: index, match: match, number: number, submatches: submatches};
 	});
 var $elm$regex$Regex$contains = _Regex_contains;
+var $elm$core$String$trim = _String_trim;
 var $elm$regex$Regex$fromStringWith = _Regex_fromStringWith;
 var $elm$regex$Regex$never = _Regex_never;
 var $elm$core$Maybe$withDefault = F2(
@@ -8543,74 +8520,78 @@ var $author$project$Helpers$validEmail = A2(
 		$elm$regex$Regex$fromStringWith,
 		{caseInsensitive: true, multiline: false},
 		'^[a-zA-Z0-9.!#$%&\'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'));
-var $author$project$Login$sumOfErrors = function (model) {
-	var isPasswordInvalid = $elm$core$String$length(model.loginCredentials.password) < 10;
-	var isPasswordEmpty = $elm$core$String$isEmpty(model.loginCredentials.password);
-	var isEmailValid = A2($elm$regex$Regex$contains, $author$project$Helpers$validEmail, model.loginCredentials.email);
-	var isEmailEmpty = $elm$core$String$isEmpty(model.loginCredentials.email);
-	return isEmailEmpty ? A2(
-		$elm$core$List$cons,
-		$author$project$Login$BadEmail('Email can\'t be empty'),
-		model.errors) : ((!isEmailValid) ? A2(
-		$elm$core$List$cons,
-		$author$project$Login$BadEmail('Email is invalid'),
-		model.errors) : (isPasswordEmpty ? A2(
-		$elm$core$List$cons,
-		$author$project$Login$BadPassword('Password can\'t be empty'),
-		model.errors) : (isPasswordInvalid ? A2(
-		$elm$core$List$cons,
-		$author$project$Login$BadPassword('Password value is less then 10 characters'),
-		model.errors) : _List_Nil)));
+var $author$project$User$fromStringToValidEmail = function (email) {
+	var trimmedEmail = $elm$core$String$trim(email);
+	return $elm$core$String$isEmpty(trimmedEmail) ? $elm$core$Result$Err('Email can\'t be empty') : ((!A2($elm$regex$Regex$contains, $author$project$Helpers$validEmail, trimmedEmail)) ? $elm$core$Result$Err('Email is invalid') : $elm$core$Result$Ok(
+		$author$project$User$Email(trimmedEmail)));
+};
+var $author$project$User$Password = function (a) {
+	return {$: 'Password', a: a};
+};
+var $author$project$User$fromStringToValidPassword = function (password) {
+	var trimmedPassword = $elm$core$String$trim(password);
+	return $elm$core$String$isEmpty(trimmedPassword) ? $elm$core$Result$Err('Password can\'t be empty') : (($elm$core$String$length(trimmedPassword) < 10) ? $elm$core$Result$Err('Password can\'t be less then 10 characters') : $elm$core$Result$Ok(
+		$author$project$User$Password(trimmedPassword)));
+};
+var $author$project$User$validateCredentials = function (_v0) {
+	var email = _v0.email;
+	var password = _v0.password;
+	return A3(
+		$elm$core$Result$map2,
+		F2(
+			function (validEmail, validPassword) {
+				return {email: validEmail, password: validPassword};
+			}),
+		$author$project$User$fromStringToValidEmail(email),
+		$author$project$User$fromStringToValidPassword(password));
 };
 var $author$project$Login$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
 			case 'StoreEmail':
 				var email = msg.a;
-				var oldCredentials = model.loginCredentials;
-				var updateCredentials = _Utils_update(
-					oldCredentials,
-					{email: email});
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{loginCredentials: updateCredentials}),
+						{storeEmail: email}),
 					$elm$core$Platform$Cmd$none);
 			case 'StorePassword':
 				var password = msg.a;
-				var oldCredentials = model.loginCredentials;
-				var updateCredentials = _Utils_update(
-					oldCredentials,
-					{password: password});
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{loginCredentials: updateCredentials}),
+						{storePassword: password}),
 					$elm$core$Platform$Cmd$none);
 			case 'LoginSubmit':
-				var cred = msg.a;
-				var errorsList = $author$project$Login$sumOfErrors(model);
-				return $elm$core$List$isEmpty(errorsList) ? _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{errors: _List_Nil, isLoading: true}),
-					$author$project$Login$submitLogin(cred)) : _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{errors: errorsList, isLoading: false}),
-					A2(
-						$elm$core$Task$perform,
-						function (_v1) {
-							return $author$project$Login$HideError;
-						},
-						$elm$core$Process$sleep(4000)));
+				var validatedCred = $author$project$User$validateCredentials(
+					{email: model.storeEmail, password: model.storePassword});
+				if (validatedCred.$ === 'Err') {
+					var error = validatedCred.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								loginState: $author$project$Login$Error(error)
+							}),
+						A2(
+							$elm$core$Task$perform,
+							function (_v2) {
+								return $author$project$Login$HideError;
+							},
+							$elm$core$Process$sleep(4000)));
+				} else {
+					var validCredentials = validatedCred.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{loginState: $author$project$Login$Loading}),
+						$author$project$Login$submitLogin(validCredentials));
+				}
 			case 'HideError':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{
-							errors: A2($elm$core$List$drop, 1, model.errors)
-						}),
+						{loginState: $author$project$Login$Initial}),
 					$elm$core$Platform$Cmd$none);
 			default:
 				if (msg.a.$ === 'Ok') {
@@ -8619,7 +8600,7 @@ var $author$project$Login$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{errors: _List_Nil, isLoading: false}),
+							{loginState: $author$project$Login$Initial}),
 						$author$project$Credentials$storeSession(
 							$elm$core$Maybe$Just(
 								A2($elm$json$Json$Encode$encode, 0, tokenValue))));
@@ -8629,14 +8610,15 @@ var $author$project$Login$update = F2(
 						_Utils_update(
 							model,
 							{
-								errors: A2(
-									$elm$core$List$cons,
-									$author$project$Login$BadRequest(
-										$author$project$Helpers$buildErrorMessage(error)),
-									model.errors),
-								isLoading: false
+								loginState: $author$project$Login$Error(
+									$author$project$Helpers$buildErrorMessage(error))
 							}),
-						$elm$core$Platform$Cmd$none);
+						A2(
+							$elm$core$Task$perform,
+							function (_v3) {
+								return $author$project$Login$HideError;
+							},
+							$elm$core$Process$sleep(4000)));
 				}
 		}
 	});
@@ -8746,7 +8728,6 @@ var $author$project$Profile$submitProfile = F2(
 		}
 	});
 var $elm$file$File$toUrl = _File_toUrl;
-var $elm$core$String$trim = _String_trim;
 var $author$project$Profile$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -8867,148 +8848,94 @@ var $author$project$Profile$update = F2(
 				return _Utils_Tuple2(model, $author$project$Credentials$logout);
 		}
 	});
-var $author$project$Signup$BadRequest = function (a) {
-	return {$: 'BadRequest', a: a};
+var $author$project$Signup$Error = function (a) {
+	return {$: 'Error', a: a};
 };
 var $author$project$Signup$HideError = {$: 'HideError'};
+var $author$project$Signup$Loading = {$: 'Loading'};
+var $author$project$User$andThenValidateConfirmPassword = F2(
+	function (confirmPassword, resultCredential) {
+		return A2(
+			$elm$core$Result$andThen,
+			function (_v0) {
+				var email = _v0.email;
+				var password = _v0.password;
+				var validPassword = $author$project$User$fromPasswordToString(password);
+				var trimmedConfirmPassword = $elm$core$String$trim(confirmPassword);
+				return ($elm$core$String$length(trimmedConfirmPassword) < 10) ? $elm$core$Result$Err('Confirm password can\'t be less then 10 characters') : ((!_Utils_eq(validPassword, trimmedConfirmPassword)) ? $elm$core$Result$Err('Passwords doesn\'t match') : ($elm$core$String$isEmpty(trimmedConfirmPassword) ? $elm$core$Result$Err('Confirm password can\'t be empty') : $elm$core$Result$Ok(
+					{email: email, password: password})));
+			},
+			resultCredential);
+	});
 var $author$project$Signup$SignupDone = function (a) {
 	return {$: 'SignupDone', a: a};
-};
-var $author$project$Signup$credentialsEncoder = function (credentials) {
-	return $elm$json$Json$Encode$object(
-		_List_fromArray(
-			[
-				_Utils_Tuple2(
-				'email',
-				$elm$json$Json$Encode$string(credentials.email)),
-				_Utils_Tuple2(
-				'password',
-				$elm$json$Json$Encode$string(credentials.password))
-			]));
 };
 var $author$project$Signup$submitSignup = function (credentials) {
 	return $elm$http$Http$post(
 		{
 			body: $elm$http$Http$jsonBody(
-				$author$project$Signup$credentialsEncoder(credentials)),
+				$author$project$User$credentialsEncoder(credentials)),
 			expect: A2($elm$http$Http$expectJson, $author$project$Signup$SignupDone, $author$project$Credentials$tokenDecoder),
 			url: '/api/signup'
 		});
-};
-var $author$project$Signup$BadEmail = function (a) {
-	return {$: 'BadEmail', a: a};
-};
-var $author$project$Signup$BadPassword = function (a) {
-	return {$: 'BadPassword', a: a};
-};
-var $author$project$Signup$PasswordMissmatch = function (a) {
-	return {$: 'PasswordMissmatch', a: a};
-};
-var $author$project$Signup$sumOfErrors = function (model) {
-	var passwordsMissmatch = !_Utils_eq(model.signupCredentials.password, model.signupCredentials.confirmPassword);
-	var isPasswordInvalid = $elm$core$String$length(model.signupCredentials.password) < 10;
-	var isPasswordEmpty = $elm$core$String$isEmpty(model.signupCredentials.password);
-	var isEmailValid = A2($elm$regex$Regex$contains, $author$project$Helpers$validEmail, model.signupCredentials.email);
-	var isEmailEmpty = $elm$core$String$isEmpty(model.signupCredentials.email);
-	var isConfirmPasswordInvalid = $elm$core$String$length(model.signupCredentials.confirmPassword) < 10;
-	var isConfirmPasswordEmpty = $elm$core$String$isEmpty(model.signupCredentials.confirmPassword);
-	return isEmailEmpty ? _Utils_ap(
-		model.errors,
-		_List_fromArray(
-			[
-				$author$project$Signup$BadEmail('Email can\'t be empty')
-			])) : ((!isEmailValid) ? _Utils_ap(
-		model.errors,
-		_List_fromArray(
-			[
-				$author$project$Signup$BadEmail('Email is invalid')
-			])) : (isPasswordEmpty ? _Utils_ap(
-		model.errors,
-		_List_fromArray(
-			[
-				$author$project$Signup$BadPassword('Password can\'t be empty')
-			])) : (isPasswordInvalid ? _Utils_ap(
-		model.errors,
-		_List_fromArray(
-			[
-				$author$project$Signup$BadPassword('Password value is less then 10 characters')
-			])) : (isConfirmPasswordEmpty ? _Utils_ap(
-		model.errors,
-		_List_fromArray(
-			[
-				$author$project$Signup$BadPassword('Confirm Password can\'t be empty')
-			])) : (isConfirmPasswordInvalid ? _Utils_ap(
-		model.errors,
-		_List_fromArray(
-			[
-				$author$project$Signup$BadPassword('Confirm Password value is less then 10 characters')
-			])) : (passwordsMissmatch ? _Utils_ap(
-		model.errors,
-		_List_fromArray(
-			[
-				$author$project$Signup$PasswordMissmatch('YO passwords doesn\'t match')
-			])) : _List_Nil))))));
 };
 var $author$project$Signup$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
 			case 'StoreEmail':
 				var email = msg.a;
-				var oldCredentials = model.signupCredentials;
-				var updateCredentials = _Utils_update(
-					oldCredentials,
-					{email: email});
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{signupCredentials: updateCredentials}),
+						{storeEmail: email}),
 					$elm$core$Platform$Cmd$none);
 			case 'StorePassword':
 				var password = msg.a;
-				var oldCredentials = model.signupCredentials;
-				var updateCredentials = _Utils_update(
-					oldCredentials,
-					{password: password});
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{signupCredentials: updateCredentials}),
+						{storePassword: password}),
 					$elm$core$Platform$Cmd$none);
 			case 'StoreConfirmPassword':
 				var confirmPassword = msg.a;
-				var oldCredentials = model.signupCredentials;
-				var updateCredentials = _Utils_update(
-					oldCredentials,
-					{confirmPassword: confirmPassword});
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{signupCredentials: updateCredentials}),
+						{storeConfirmPassword: confirmPassword}),
 					$elm$core$Platform$Cmd$none);
 			case 'SignupSubmit':
-				var cred = msg.a;
-				var errorsList = $author$project$Signup$sumOfErrors(model);
-				return $elm$core$List$isEmpty(errorsList) ? _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{errors: _List_Nil, isLoading: true}),
-					$author$project$Signup$submitSignup(cred)) : _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{errors: errorsList, isLoading: false}),
-					A2(
-						$elm$core$Task$perform,
-						function (_v1) {
-							return $author$project$Signup$HideError;
-						},
-						$elm$core$Process$sleep(4000)));
+				var validatedCred = A2(
+					$author$project$User$andThenValidateConfirmPassword,
+					model.storeConfirmPassword,
+					$author$project$User$validateCredentials(
+						{email: model.storeEmail, password: model.storePassword}));
+				if (validatedCred.$ === 'Err') {
+					var error = validatedCred.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								signupState: $author$project$Signup$Error(error)
+							}),
+						A2(
+							$elm$core$Task$perform,
+							function (_v2) {
+								return $author$project$Signup$HideError;
+							},
+							$elm$core$Process$sleep(4000)));
+				} else {
+					var validCredentials = validatedCred.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{signupState: $author$project$Signup$Loading}),
+						$author$project$Signup$submitSignup(validCredentials));
+				}
 			case 'HideError':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{
-							errors: A2($elm$core$List$drop, 1, model.errors)
-						}),
+						{signupState: $author$project$Signup$Initial}),
 					$elm$core$Platform$Cmd$none);
 			default:
 				if (msg.a.$ === 'Ok') {
@@ -9017,7 +8944,7 @@ var $author$project$Signup$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{errors: _List_Nil, isLoading: false}),
+							{signupState: $author$project$Signup$Initial}),
 						$author$project$Credentials$storeSession(
 							$elm$core$Maybe$Just(
 								A2($elm$json$Json$Encode$encode, 0, tokenValue))));
@@ -9027,12 +8954,8 @@ var $author$project$Signup$update = F2(
 						_Utils_update(
 							model,
 							{
-								errors: A2(
-									$elm$core$List$cons,
-									$author$project$Signup$BadRequest(
-										$author$project$Helpers$buildErrorMessage(error)),
-									model.errors),
-								isLoading: false
+								signupState: $author$project$Signup$Error(
+									$author$project$Helpers$buildErrorMessage(error))
 							}),
 						$elm$core$Platform$Cmd$none);
 				}
@@ -9303,31 +9226,19 @@ var $author$project$Main$update = F2(
 				var _v19 = _Utils_Tuple2(
 					maybeTime,
 					$author$project$Credentials$fromSessionToToken(session));
-				if (_v19.a.$ === 'Just') {
-					if (_v19.b.$ === 'Just') {
-						var time = _v19.a.a;
-						var token = _v19.b.a;
-						var tokenString = $author$project$Credentials$fromTokenToString(token);
-						var _v20 = A2($simonh1000$elm_jwt$Jwt$isExpired, time, tokenString);
-						if (_v20.$ === 'Ok') {
-							var isExpired = _v20.a;
-							return isExpired ? _Utils_Tuple2(model, $author$project$Credentials$logout) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-						} else {
-							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-						}
+				if ((_v19.a.$ === 'Just') && (_v19.b.$ === 'Just')) {
+					var time = _v19.a.a;
+					var token = _v19.b.a;
+					var tokenString = $author$project$Credentials$fromTokenToString(token);
+					var _v20 = A2($simonh1000$elm_jwt$Jwt$isExpired, time, tokenString);
+					if (_v20.$ === 'Ok') {
+						var isExpired = _v20.a;
+						return isExpired ? _Utils_Tuple2(model, $author$project$Credentials$logout) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 					} else {
-						var _v22 = _v19.b;
 						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 					}
 				} else {
-					if (_v19.b.$ === 'Just') {
-						var _v21 = _v19.a;
-						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-					} else {
-						var _v23 = _v19.a;
-						var _v24 = _v19.b;
-						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-					}
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
 			case 'GetLogout':
 				return _Utils_Tuple2(model, $author$project$Credentials$logout);
@@ -9713,6 +9624,13 @@ var $elm$core$List$all = F2(
 			A2($elm$core$Basics$composeL, $elm$core$Basics$not, isOkay),
 			list);
 	});
+var $elm$core$List$isEmpty = function (xs) {
+	if (!xs.b) {
+		return true;
+	} else {
+		return false;
+	}
+};
 var $rtfeldman$elm_css$Css$Structure$compactHelp = F2(
 	function (declaration, _v0) {
 		var keyframesByName = _v0.a;
@@ -11955,21 +11873,22 @@ var $author$project$Home$view = function (model) {
 					]))
 			]));
 };
-var $author$project$Login$LoginSubmit = function (a) {
-	return {$: 'LoginSubmit', a: a};
-};
+var $author$project$Login$LoginSubmit = {$: 'LoginSubmit'};
 var $author$project$Login$StoreEmail = function (a) {
 	return {$: 'StoreEmail', a: a};
 };
 var $author$project$Login$StorePassword = function (a) {
 	return {$: 'StorePassword', a: a};
 };
+var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$absolute = A2($rtfeldman$elm_css$Css$property, 'position', 'absolute');
+var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_opacity_40 = A2($rtfeldman$elm_css$Css$property, '--tw-bg-opacity', '0.4');
 var $rtfeldman$elm_css$Html$Styled$form = $rtfeldman$elm_css$Html$Styled$node('form');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_3 = A2($rtfeldman$elm_css$Css$property, 'gap', '0.75rem');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_5 = A2($rtfeldman$elm_css$Css$property, 'gap', '1.25rem');
+var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_full = A2($rtfeldman$elm_css$Css$property, 'height', '100%');
 var $rtfeldman$elm_css$Html$Styled$input = $rtfeldman$elm_css$Html$Styled$node('input');
+var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$justify_center = A2($rtfeldman$elm_css$Css$property, 'justify-content', 'center');
 var $rtfeldman$elm_css$Html$Styled$label = $rtfeldman$elm_css$Html$Styled$node('label');
-var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$absolute = A2($rtfeldman$elm_css$Css$property, 'position', 'absolute');
 var $rtfeldman$elm_css$Css$Preprocess$WithKeyframes = function (a) {
 	return {$: 'WithKeyframes', a: a};
 };
@@ -12043,7 +11962,6 @@ var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$animate_ping = $r
 					])))
 		]));
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_5 = A2($rtfeldman$elm_css$Css$property, 'height', '1.25rem');
-var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_full = A2($rtfeldman$elm_css$Css$property, 'height', '100%');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$inline_flex = A2($rtfeldman$elm_css$Css$property, 'display', 'inline-flex');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$opacity_75 = A2($rtfeldman$elm_css$Css$property, 'opacity', '0.75');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$relative = A2($rtfeldman$elm_css$Css$property, 'position', 'relative');
@@ -12099,83 +12017,14 @@ var $author$project$Helpers$loadingElement = A2(
 var $matheus23$elm_default_tailwind_modules$Tailwind$Breakpoints$md = $rtfeldman$elm_css$Css$Media$withMediaQuery(
 	_List_fromArray(
 		['(min-width: 768px)']));
+var $matheus23$elm_default_tailwind_modules$Tailwind$Theme$red_400 = A5($matheus23$elm_tailwind_modules_base$Tailwind$Color$Color, 'rgb', '248', '113', '113', $matheus23$elm_tailwind_modules_base$Tailwind$Color$ViaVariable);
+var $matheus23$elm_default_tailwind_modules$Tailwind$Theme$sky_50 = A5($matheus23$elm_tailwind_modules_base$Tailwind$Color$Color, 'rgb', '240', '249', '255', $matheus23$elm_tailwind_modules_base$Tailwind$Color$ViaVariable);
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_3xl = $rtfeldman$elm_css$Css$batch(
 	_List_fromArray(
 		[
 			A2($rtfeldman$elm_css$Css$property, 'font-size', '1.875rem'),
 			A2($rtfeldman$elm_css$Css$property, 'line-height', '2.25rem')
 		]));
-var $matheus23$elm_default_tailwind_modules$Tailwind$Theme$red_400 = A5($matheus23$elm_tailwind_modules_base$Tailwind$Color$Color, 'rgb', '248', '113', '113', $matheus23$elm_tailwind_modules_base$Tailwind$Color$ViaVariable);
-var $author$project$Login$viewError = function (checkErrors) {
-	switch (checkErrors.$) {
-		case 'BadEmail':
-			var err = checkErrors.a;
-			return A2(
-				$rtfeldman$elm_css$Html$Styled$li,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$Attributes$css(
-						_List_fromArray(
-							[
-								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$red_400)
-							]))
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text(err)
-							]))
-					]));
-		case 'BadPassword':
-			var err = checkErrors.a;
-			return A2(
-				$rtfeldman$elm_css$Html$Styled$li,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$Attributes$css(
-						_List_fromArray(
-							[
-								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$red_400)
-							]))
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text(err)
-							]))
-					]));
-		default:
-			var err = checkErrors.a;
-			return A2(
-				$rtfeldman$elm_css$Html$Styled$li,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$Attributes$css(
-						_List_fromArray(
-							[
-								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$red_400)
-							]))
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text(err)
-							]))
-					]));
-	}
-};
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_60 = A2($rtfeldman$elm_css$Css$property, 'width', '15rem');
 var $author$project$Login$view = function (model) {
 	return A2(
@@ -12189,6 +12038,7 @@ var $author$project$Login$view = function (model) {
 						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex_col,
 						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center,
 						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_6,
+						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$relative,
 						$matheus23$elm_default_tailwind_modules$Tailwind$Breakpoints$md(
 						_List_fromArray(
 							[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_20]))
@@ -12208,6 +12058,49 @@ var $author$project$Login$view = function (model) {
 					[
 						$rtfeldman$elm_css$Html$Styled$text('Login')
 					])),
+				function () {
+				var _v0 = model.loginState;
+				switch (_v0.$) {
+					case 'Loading':
+						return A2(
+							$rtfeldman$elm_css$Html$Styled$div,
+							_List_fromArray(
+								[
+									$rtfeldman$elm_css$Html$Styled$Attributes$css(
+									_List_fromArray(
+										[
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$absolute,
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_full,
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_full,
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex,
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$justify_center,
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center,
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$sky_50),
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_opacity_40
+										]))
+								]),
+							_List_fromArray(
+								[$author$project$Helpers$loadingElement]));
+					case 'Error':
+						var error = _v0.a;
+						return A2(
+							$rtfeldman$elm_css$Html$Styled$p,
+							_List_fromArray(
+								[
+									$rtfeldman$elm_css$Html$Styled$Attributes$css(
+									_List_fromArray(
+										[
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$red_400)
+										]))
+								]),
+							_List_fromArray(
+								[
+									$rtfeldman$elm_css$Html$Styled$text(error)
+								]));
+					default:
+						return $rtfeldman$elm_css$Html$Styled$text('');
+				}
+			}(),
 				A2(
 				$rtfeldman$elm_css$Html$Styled$form,
 				_List_fromArray(
@@ -12251,7 +12144,7 @@ var $author$project$Login$view = function (model) {
 										$rtfeldman$elm_css$Html$Styled$Attributes$css($author$project$GlobalStyles$inputStyle),
 										$rtfeldman$elm_css$Html$Styled$Attributes$type_('text'),
 										$rtfeldman$elm_css$Html$Styled$Events$onInput($author$project$Login$StoreEmail),
-										$rtfeldman$elm_css$Html$Styled$Attributes$value(model.loginCredentials.email)
+										$rtfeldman$elm_css$Html$Styled$Attributes$value(model.storeEmail)
 									]),
 								_List_Nil)
 							])),
@@ -12282,40 +12175,23 @@ var $author$project$Login$view = function (model) {
 										$rtfeldman$elm_css$Html$Styled$Attributes$css($author$project$GlobalStyles$inputStyle),
 										$rtfeldman$elm_css$Html$Styled$Attributes$type_('password'),
 										$rtfeldman$elm_css$Html$Styled$Events$onInput($author$project$Login$StorePassword),
-										$rtfeldman$elm_css$Html$Styled$Attributes$value(model.loginCredentials.password)
+										$rtfeldman$elm_css$Html$Styled$Attributes$value(model.storePassword)
 									]),
 								_List_Nil)
 							])),
 						A2(
-						$rtfeldman$elm_css$Html$Styled$div,
+						$rtfeldman$elm_css$Html$Styled$button,
 						_List_fromArray(
 							[
-								$rtfeldman$elm_css$Html$Styled$Attributes$css(
-								_List_fromArray(
-									[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_3, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center]))
+								$rtfeldman$elm_css$Html$Styled$Attributes$css($author$project$GlobalStyles$buttonStyle),
+								$rtfeldman$elm_css$Html$Styled$Attributes$type_('button'),
+								$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$Login$LoginSubmit)
 							]),
 						_List_fromArray(
 							[
-								A2(
-								$rtfeldman$elm_css$Html$Styled$button,
-								_List_fromArray(
-									[
-										$rtfeldman$elm_css$Html$Styled$Attributes$css($author$project$GlobalStyles$buttonStyle),
-										$rtfeldman$elm_css$Html$Styled$Attributes$type_('button'),
-										$rtfeldman$elm_css$Html$Styled$Events$onClick(
-										$author$project$Login$LoginSubmit(model.loginCredentials))
-									]),
-								_List_fromArray(
-									[
-										$rtfeldman$elm_css$Html$Styled$text('Sign in')
-									])),
-								model.isLoading ? $author$project$Helpers$loadingElement : $rtfeldman$elm_css$Html$Styled$text('')
+								$rtfeldman$elm_css$Html$Styled$text('Sign in')
 							]))
-					])),
-				A2(
-				$rtfeldman$elm_css$Html$Styled$ul,
-				_List_Nil,
-				A2($elm$core$List$map, $author$project$Login$viewError, model.errors))
+					]))
 			]));
 };
 var $author$project$Profile$FileRequest = {$: 'FileRequest'};
@@ -12705,9 +12581,7 @@ var $author$project$Profile$view = function (model) {
 					]));
 	}
 };
-var $author$project$Signup$SignupSubmit = function (a) {
-	return {$: 'SignupSubmit', a: a};
-};
+var $author$project$Signup$SignupSubmit = {$: 'SignupSubmit'};
 var $author$project$Signup$StoreConfirmPassword = function (a) {
 	return {$: 'StoreConfirmPassword', a: a};
 };
@@ -12716,120 +12590,6 @@ var $author$project$Signup$StoreEmail = function (a) {
 };
 var $author$project$Signup$StorePassword = function (a) {
 	return {$: 'StorePassword', a: a};
-};
-var $author$project$Signup$viewError = function (checkErrors) {
-	switch (checkErrors.$) {
-		case 'BadEmail':
-			var err = checkErrors.a;
-			return A2(
-				$rtfeldman$elm_css$Html$Styled$li,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$Attributes$css(
-						_List_fromArray(
-							[
-								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$red_400)
-							]))
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text(err)
-							]))
-					]));
-		case 'BadPassword':
-			var err = checkErrors.a;
-			return A2(
-				$rtfeldman$elm_css$Html$Styled$li,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$Attributes$css(
-						_List_fromArray(
-							[
-								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$red_400)
-							]))
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text(err)
-							]))
-					]));
-		case 'BadConfirmPassword':
-			var err = checkErrors.a;
-			return A2(
-				$rtfeldman$elm_css$Html$Styled$li,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$Attributes$css(
-						_List_fromArray(
-							[
-								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$red_400)
-							]))
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text(err)
-							]))
-					]));
-		case 'PasswordMissmatch':
-			var err = checkErrors.a;
-			return A2(
-				$rtfeldman$elm_css$Html$Styled$li,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$Attributes$css(
-						_List_fromArray(
-							[
-								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$red_400)
-							]))
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text(err)
-							]))
-					]));
-		default:
-			var err = checkErrors.a;
-			return A2(
-				$rtfeldman$elm_css$Html$Styled$li,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$Attributes$css(
-						_List_fromArray(
-							[
-								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$red_400)
-							]))
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$rtfeldman$elm_css$Html$Styled$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$text(err)
-							]))
-					]));
-	}
 };
 var $author$project$Signup$view = function (model) {
 	return A2(
@@ -12843,6 +12603,7 @@ var $author$project$Signup$view = function (model) {
 						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex_col,
 						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center,
 						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_6,
+						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$relative,
 						$matheus23$elm_default_tailwind_modules$Tailwind$Breakpoints$md(
 						_List_fromArray(
 							[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_20]))
@@ -12862,6 +12623,49 @@ var $author$project$Signup$view = function (model) {
 					[
 						$rtfeldman$elm_css$Html$Styled$text('Signup')
 					])),
+				function () {
+				var _v0 = model.signupState;
+				switch (_v0.$) {
+					case 'Loading':
+						return A2(
+							$rtfeldman$elm_css$Html$Styled$div,
+							_List_fromArray(
+								[
+									$rtfeldman$elm_css$Html$Styled$Attributes$css(
+									_List_fromArray(
+										[
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$absolute,
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_full,
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_full,
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex,
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$justify_center,
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center,
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$sky_50),
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_opacity_40
+										]))
+								]),
+							_List_fromArray(
+								[$author$project$Helpers$loadingElement]));
+					case 'Error':
+						var error = _v0.a;
+						return A2(
+							$rtfeldman$elm_css$Html$Styled$p,
+							_List_fromArray(
+								[
+									$rtfeldman$elm_css$Html$Styled$Attributes$css(
+									_List_fromArray(
+										[
+											$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$red_400)
+										]))
+								]),
+							_List_fromArray(
+								[
+									$rtfeldman$elm_css$Html$Styled$text(error)
+								]));
+					default:
+						return $rtfeldman$elm_css$Html$Styled$text('');
+				}
+			}(),
 				A2(
 				$rtfeldman$elm_css$Html$Styled$form,
 				_List_fromArray(
@@ -12899,7 +12703,7 @@ var $author$project$Signup$view = function (model) {
 										$rtfeldman$elm_css$Html$Styled$Attributes$css($author$project$GlobalStyles$inputStyle),
 										$rtfeldman$elm_css$Html$Styled$Attributes$type_('text'),
 										$rtfeldman$elm_css$Html$Styled$Events$onInput($author$project$Signup$StoreEmail),
-										$rtfeldman$elm_css$Html$Styled$Attributes$value(model.signupCredentials.email)
+										$rtfeldman$elm_css$Html$Styled$Attributes$value(model.storeEmail)
 									]),
 								_List_Nil)
 							])),
@@ -12921,7 +12725,7 @@ var $author$project$Signup$view = function (model) {
 										$rtfeldman$elm_css$Html$Styled$Attributes$css($author$project$GlobalStyles$inputStyle),
 										$rtfeldman$elm_css$Html$Styled$Attributes$type_('password'),
 										$rtfeldman$elm_css$Html$Styled$Events$onInput($author$project$Signup$StorePassword),
-										$rtfeldman$elm_css$Html$Styled$Attributes$value(model.signupCredentials.password)
+										$rtfeldman$elm_css$Html$Styled$Attributes$value(model.storePassword)
 									]),
 								_List_Nil)
 							])),
@@ -12943,40 +12747,23 @@ var $author$project$Signup$view = function (model) {
 										$rtfeldman$elm_css$Html$Styled$Attributes$css($author$project$GlobalStyles$inputStyle),
 										$rtfeldman$elm_css$Html$Styled$Attributes$type_('password'),
 										$rtfeldman$elm_css$Html$Styled$Events$onInput($author$project$Signup$StoreConfirmPassword),
-										$rtfeldman$elm_css$Html$Styled$Attributes$value(model.signupCredentials.confirmPassword)
+										$rtfeldman$elm_css$Html$Styled$Attributes$value(model.storeConfirmPassword)
 									]),
 								_List_Nil)
 							])),
 						A2(
-						$rtfeldman$elm_css$Html$Styled$div,
+						$rtfeldman$elm_css$Html$Styled$button,
 						_List_fromArray(
 							[
-								$rtfeldman$elm_css$Html$Styled$Attributes$css(
-								_List_fromArray(
-									[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_3, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center]))
+								$rtfeldman$elm_css$Html$Styled$Attributes$css($author$project$GlobalStyles$buttonStyle),
+								$rtfeldman$elm_css$Html$Styled$Attributes$type_('button'),
+								$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$Signup$SignupSubmit)
 							]),
 						_List_fromArray(
 							[
-								A2(
-								$rtfeldman$elm_css$Html$Styled$button,
-								_List_fromArray(
-									[
-										$rtfeldman$elm_css$Html$Styled$Attributes$css($author$project$GlobalStyles$buttonStyle),
-										$rtfeldman$elm_css$Html$Styled$Attributes$type_('button'),
-										$rtfeldman$elm_css$Html$Styled$Events$onClick(
-										$author$project$Signup$SignupSubmit(model.signupCredentials))
-									]),
-								_List_fromArray(
-									[
-										$rtfeldman$elm_css$Html$Styled$text('Sign up')
-									])),
-								model.isLoading ? $author$project$Helpers$loadingElement : $rtfeldman$elm_css$Html$Styled$text('')
+								$rtfeldman$elm_css$Html$Styled$text('Sign up')
 							]))
-					])),
-				A2(
-				$rtfeldman$elm_css$Html$Styled$ul,
-				_List_Nil,
-				A2($elm$core$List$map, $author$project$Signup$viewError, model.errors))
+					]))
 			]));
 };
 var $author$project$Verification$view = function (model) {
@@ -13354,7 +13141,7 @@ var $author$project$Main$viewHeader = function (_v0) {
 													]),
 												_List_fromArray(
 													[
-														(!$elm$core$String$isEmpty(resultTokenRecord.firstname)) ? A2(
+														($elm$core$String$length(resultTokenRecord.firstname) > 0) ? A2(
 														$rtfeldman$elm_css$Html$Styled$div,
 														_List_fromArray(
 															[
