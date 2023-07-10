@@ -6603,7 +6603,7 @@ var $simonh1000$elm_jwt$Jwt$decodeToken = F2(
 				$elm$core$Tuple$second,
 				$simonh1000$elm_jwt$Jwt$getTokenParts(token)));
 	});
-var $author$project$Credentials$UnwrappedTokenData = F6(
+var $author$project$Credentials$UserDataFromToken = F6(
 	function (id, isverified, email, firstname, verificationstring, profilepicurl) {
 		return {email: email, firstname: firstname, id: id, isverified: isverified, profilepicurl: profilepicurl, verificationstring: verificationstring};
 	});
@@ -6616,24 +6616,6 @@ var $author$project$Credentials$UserId = function (a) {
 	return {$: 'UserId', a: a};
 };
 var $author$project$Credentials$idDecoder = A2($elm$json$Json$Decode$map, $author$project$Credentials$UserId, $elm$json$Json$Decode$string);
-var $author$project$Credentials$ImageString = function (a) {
-	return {$: 'ImageString', a: a};
-};
-var $elm$json$Json$Decode$oneOf = _Json_oneOf;
-var $elm$json$Json$Decode$maybe = function (decoder) {
-	return $elm$json$Json$Decode$oneOf(
-		_List_fromArray(
-			[
-				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder),
-				$elm$json$Json$Decode$succeed($elm$core$Maybe$Nothing)
-			]));
-};
-var $author$project$Credentials$imageStringDecoder = A2(
-	$elm$json$Json$Decode$map,
-	function (maybeImageString) {
-		return $author$project$Credentials$ImageString(maybeImageString);
-	},
-	$elm$json$Json$Decode$maybe($elm$json$Json$Decode$string));
 var $elm$json$Json$Decode$map6 = _Json_map6;
 var $author$project$Credentials$VerificationString = function (a) {
 	return {$: 'VerificationString', a: a};
@@ -6641,7 +6623,7 @@ var $author$project$Credentials$VerificationString = function (a) {
 var $author$project$Credentials$verifyStringDecoder = A2($elm$json$Json$Decode$map, $author$project$Credentials$VerificationString, $elm$json$Json$Decode$string);
 var $author$project$Credentials$decodeTokenData = A7(
 	$elm$json$Json$Decode$map6,
-	$author$project$Credentials$UnwrappedTokenData,
+	$author$project$Credentials$UserDataFromToken,
 	A2(
 		$elm$json$Json$Decode$at,
 		_List_fromArray(
@@ -6671,7 +6653,7 @@ var $author$project$Credentials$decodeTokenData = A7(
 		$elm$json$Json$Decode$at,
 		_List_fromArray(
 			['profilepicurl']),
-		$author$project$Credentials$imageStringDecoder));
+		$elm$json$Json$Decode$string));
 var $author$project$Chat$ChatMessages = function (a) {
 	return {$: 'ChatMessages', a: a};
 };
@@ -7569,7 +7551,7 @@ var $author$project$Home$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Home$initialModel, $elm$core$Platform$Cmd$none);
 };
 var $author$project$Login$Initial = {$: 'Initial'};
-var $author$project$Login$initialModel = {loginState: $author$project$Login$Initial, storeEmail: '', storePassword: ''};
+var $author$project$Login$initialModel = {formState: $author$project$Login$Initial, storeEmail: '', storePassword: ''};
 var $author$project$Login$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Login$initialModel, $elm$core$Platform$Cmd$none);
 };
@@ -7578,15 +7560,8 @@ var $author$project$Profile$NotVerified = {$: 'NotVerified'};
 var $author$project$Profile$Verified = function (a) {
 	return {$: 'Verified', a: a};
 };
-var $author$project$Credentials$emptyImageString = $author$project$Credentials$ImageString($elm$core$Maybe$Nothing);
-var $author$project$Credentials$emptyUserId = $author$project$Credentials$UserId('');
-var $author$project$Credentials$emptyVerificationString = $author$project$Credentials$VerificationString('');
-var $author$project$Profile$initialModel = {
-	errors: _List_Nil,
-	imageFile: $author$project$Credentials$emptyImageString,
-	profile: {email: '', firstname: '', id: $author$project$Credentials$emptyUserId, isverified: false, profilepicurl: $author$project$Credentials$emptyImageString, verificationstring: $author$project$Credentials$emptyVerificationString},
-	userState: $author$project$Profile$NotVerified
-};
+var $author$project$Profile$Initial = {$: 'Initial'};
+var $author$project$Profile$initialModel = {formState: $author$project$Profile$Initial, profilePic: $elm$core$Maybe$Nothing, storeName: '', userState: $author$project$Profile$NotVerified};
 var $author$project$Profile$init = function (session) {
 	var _v0 = $author$project$Credentials$fromSessionToToken(session);
 	if (_v0.$ === 'Just') {
@@ -7596,13 +7571,13 @@ var $author$project$Profile$init = function (session) {
 			$author$project$Credentials$decodeTokenData,
 			$author$project$Credentials$fromTokenToString(token));
 		if (_v1.$ === 'Ok') {
-			var profileData = _v1.a;
+			var userDataFromToken = _v1.a;
 			return _Utils_Tuple2(
 				_Utils_update(
 					$author$project$Profile$initialModel,
 					{
-						profile: profileData,
-						userState: profileData.isverified ? $author$project$Profile$Verified(session) : $author$project$Profile$NotVerified
+						storeName: userDataFromToken.firstname,
+						userState: userDataFromToken.isverified ? $author$project$Profile$Verified(session) : $author$project$Profile$NotVerified
 					}),
 				$elm$core$Platform$Cmd$none);
 		} else {
@@ -7621,7 +7596,7 @@ var $author$project$Profile$init = function (session) {
 	}
 };
 var $author$project$Signup$Initial = {$: 'Initial'};
-var $author$project$Signup$initialModel = {signupState: $author$project$Signup$Initial, storeConfirmPassword: '', storeEmail: '', storePassword: ''};
+var $author$project$Signup$initialModel = {formState: $author$project$Signup$Initial, storeConfirmPassword: '', storeEmail: '', storePassword: ''};
 var $author$project$Signup$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Signup$initialModel, $elm$core$Platform$Cmd$none);
 };
@@ -8237,6 +8212,7 @@ var $author$project$Main$subscriptions = function (model) {
 			]));
 };
 var $elm$json$Json$Decode$float = _Json_decodeFloat;
+var $elm$json$Json$Decode$oneOf = _Json_oneOf;
 var $elm$core$Basics$round = _Basics_round;
 var $simonh1000$elm_jwt$Jwt$getTokenExpirationMillis = function (token) {
 	var decodeExp = $elm$json$Json$Decode$oneOf(
@@ -8493,6 +8469,10 @@ var $author$project$Login$submitLogin = function (credentials) {
 			url: '/api/login'
 		});
 };
+var $author$project$User$ValidCredentials = F2(
+	function (email, password) {
+		return {email: email, password: password};
+	});
 var $author$project$User$Email = function (a) {
 	return {$: 'Email', a: a};
 };
@@ -8538,10 +8518,7 @@ var $author$project$User$validateCredentials = function (_v0) {
 	var password = _v0.password;
 	return A3(
 		$elm$core$Result$map2,
-		F2(
-			function (validEmail, validPassword) {
-				return {email: validEmail, password: validPassword};
-			}),
+		$author$project$User$ValidCredentials,
 		$author$project$User$fromStringToValidEmail(email),
 		$author$project$User$fromStringToValidPassword(password));
 };
@@ -8571,7 +8548,7 @@ var $author$project$Login$update = F2(
 						_Utils_update(
 							model,
 							{
-								loginState: $author$project$Login$Error(error)
+								formState: $author$project$Login$Error(error)
 							}),
 						A2(
 							$elm$core$Task$perform,
@@ -8584,14 +8561,14 @@ var $author$project$Login$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{loginState: $author$project$Login$Loading}),
+							{formState: $author$project$Login$Loading}),
 						$author$project$Login$submitLogin(validCredentials));
 				}
 			case 'HideError':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{loginState: $author$project$Login$Initial}),
+						{formState: $author$project$Login$Initial}),
 					$elm$core$Platform$Cmd$none);
 			default:
 				if (msg.a.$ === 'Ok') {
@@ -8600,7 +8577,7 @@ var $author$project$Login$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{loginState: $author$project$Login$Initial}),
+							{formState: $author$project$Login$Initial}),
 						$author$project$Credentials$storeSession(
 							$elm$core$Maybe$Just(
 								A2($elm$json$Json$Encode$encode, 0, tokenValue))));
@@ -8610,7 +8587,7 @@ var $author$project$Login$update = F2(
 						_Utils_update(
 							model,
 							{
-								loginState: $author$project$Login$Error(
+								formState: $author$project$Login$Error(
 									$author$project$Helpers$buildErrorMessage(error))
 							}),
 						A2(
@@ -8622,8 +8599,8 @@ var $author$project$Login$update = F2(
 				}
 		}
 	});
-var $author$project$Profile$BadRequest = function (a) {
-	return {$: 'BadRequest', a: a};
+var $author$project$Profile$Error = function (a) {
+	return {$: 'Error', a: a};
 };
 var $author$project$Profile$FileRead = function (a) {
 	return {$: 'FileRead', a: a};
@@ -8631,6 +8608,7 @@ var $author$project$Profile$FileRead = function (a) {
 var $author$project$Profile$FileRequestProceed = function (a) {
 	return {$: 'FileRequestProceed', a: a};
 };
+var $author$project$Profile$Loading = {$: 'Loading'};
 var $elm$core$Basics$composeL = F3(
 	function (g, f, x) {
 		return g(
@@ -8662,10 +8640,6 @@ var $elm$file$File$Select$file = F2(
 			toMsg,
 			_File_uploadOne(mimes));
 	});
-var $author$project$Credentials$stringToImageString = function (str) {
-	return $elm$core$String$isEmpty(str) ? $author$project$Credentials$ImageString($elm$core$Maybe$Nothing) : $author$project$Credentials$ImageString(
-		$elm$core$Maybe$Just(str));
-};
 var $author$project$Profile$ProfileDone = function (a) {
 	return {$: 'ProfileDone', a: a};
 };
@@ -8678,30 +8652,21 @@ var $author$project$Credentials$addHeader = function (_v0) {
 	var tokenString = _v0.a;
 	return A2($elm$http$Http$header, 'authorization', 'Token ' + tokenString);
 };
-var $author$project$Credentials$encodeImageString = function (_v0) {
-	var maybeImageString = _v0.a;
-	var _v1 = $author$project$Credentials$ImageString(maybeImageString);
-	if (_v1.a.$ === 'Just') {
-		var imageString = _v1.a.a;
-		return $elm$json$Json$Encode$string(imageString);
-	} else {
-		var _v2 = _v1.a;
-		return $elm$json$Json$Encode$string('');
-	}
+var $author$project$Credentials$encodeImageString = function (imageString) {
+	return $elm$json$Json$Encode$string(imageString);
 };
-var $author$project$Profile$profileSubmitDataEncoder = function (profileData) {
+var $author$project$Profile$profileSubmitDataEncoder = function (_v0) {
+	var name = _v0.name;
+	var profilePic = _v0.profilePic;
 	return $elm$json$Json$Encode$object(
 		_List_fromArray(
 			[
 				_Utils_Tuple2(
-				'email',
-				$elm$json$Json$Encode$string(profileData.email)),
-				_Utils_Tuple2(
 				'firstname',
-				$elm$json$Json$Encode$string(profileData.firstname)),
+				$elm$json$Json$Encode$string(name)),
 				_Utils_Tuple2(
 				'imagefile',
-				$author$project$Credentials$encodeImageString(profileData.imagefile))
+				$author$project$Credentials$encodeImageString(profilePic))
 			]));
 };
 var $author$project$Profile$submitProfile = F2(
@@ -8733,50 +8698,44 @@ var $author$project$Profile$update = F2(
 		switch (msg.$) {
 			case 'StoreFirstName':
 				var firstName = msg.a;
-				var oldProfile = model.profile;
-				var updateProfile = _Utils_update(
-					oldProfile,
-					{firstname: firstName});
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{profile: updateProfile}),
-					$elm$core$Platform$Cmd$none);
-			case 'StoreVerified':
-				var isVerified = msg.a;
-				var oldProfile = model.profile;
-				var updateProfile = _Utils_update(
-					oldProfile,
-					{isverified: isVerified});
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{profile: updateProfile}),
+						{storeName: firstName}),
 					$elm$core$Platform$Cmd$none);
 			case 'ProfileSubmit':
 				var session = msg.a;
-				var cred = msg.b;
-				var validateFirstName = A2(
-					$elm$core$String$join,
-					'',
-					A2(
-						$elm$core$String$split,
-						' ',
-						$elm$core$String$trim(cred.firstname)));
-				return _Utils_Tuple2(
-					model,
+				var imageOrNot = function () {
+					var _v1 = model.profilePic;
+					if (_v1.$ === 'Nothing') {
+						return '';
+					} else {
+						var imageUrl = _v1.a;
+						return imageUrl;
+					}
+				}();
+				return $elm$core$String$isEmpty(model.storeName) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							formState: $author$project$Profile$Error('Name can\'t be empty')
+						}),
+					$elm$core$Platform$Cmd$none) : _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{formState: $author$project$Profile$Loading}),
 					A2(
 						$author$project$Profile$submitProfile,
 						session,
-						_Utils_update(
-							cred,
-							{firstname: validateFirstName})));
+						{name: model.storeName, profilePic: imageOrNot}));
 			case 'ProfileDone':
 				if (msg.a.$ === 'Ok') {
 					var token = msg.a.a;
 					var tokenValue = $author$project$Credentials$encodeToken(token);
 					return _Utils_Tuple2(
-						model,
+						_Utils_update(
+							model,
+							{formState: $author$project$Profile$Initial}),
 						$author$project$Credentials$storeSession(
 							$elm$core$Maybe$Just(
 								A2($elm$json$Json$Encode$encode, 0, tokenValue))));
@@ -8786,10 +8745,8 @@ var $author$project$Profile$update = F2(
 						_Utils_update(
 							model,
 							{
-								errors: _List_fromArray(
-									[
-										$author$project$Profile$BadRequest('Something went wrong !')
-									])
+								formState: $author$project$Profile$Error(
+									$author$project$Helpers$buildErrorMessage(error))
 							}),
 						function () {
 							if (error.$ === 'BadStatus') {
@@ -8816,19 +8773,15 @@ var $author$project$Profile$update = F2(
 						$elm$core$Task$attempt,
 						$author$project$Profile$FileRead,
 						$elm$file$File$toUrl(file)));
-			case 'FileRead':
+			default:
 				if (msg.a.$ === 'Ok') {
 					var imageFileString = msg.a.a;
-					var trimImageString = $elm$core$String$trim(imageFileString);
-					var oldProfile = model.profile;
-					var imageString = $author$project$Credentials$stringToImageString(trimImageString);
-					var updateProfile = _Utils_update(
-						oldProfile,
-						{profilepicurl: imageString});
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{imageFile: imageString, profile: updateProfile}),
+							{
+								profilePic: $elm$core$Maybe$Just(imageFileString)
+							}),
 						$elm$core$Platform$Cmd$none);
 				} else {
 					var error = msg.a.a;
@@ -8836,16 +8789,11 @@ var $author$project$Profile$update = F2(
 						_Utils_update(
 							model,
 							{
-								errors: A2(
-									$elm$core$List$cons,
-									$author$project$Profile$BadRequest(
-										$author$project$Helpers$buildErrorMessage(error)),
-									model.errors)
+								formState: $author$project$Profile$Error(
+									$author$project$Helpers$buildErrorMessage(error))
 							}),
 						$elm$core$Platform$Cmd$none);
 				}
-			default:
-				return _Utils_Tuple2(model, $author$project$Credentials$logout);
 		}
 	});
 var $author$project$Signup$Error = function (a) {
@@ -8915,7 +8863,7 @@ var $author$project$Signup$update = F2(
 						_Utils_update(
 							model,
 							{
-								signupState: $author$project$Signup$Error(error)
+								formState: $author$project$Signup$Error(error)
 							}),
 						A2(
 							$elm$core$Task$perform,
@@ -8928,14 +8876,14 @@ var $author$project$Signup$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{signupState: $author$project$Signup$Loading}),
+							{formState: $author$project$Signup$Loading}),
 						$author$project$Signup$submitSignup(validCredentials));
 				}
 			case 'HideError':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{signupState: $author$project$Signup$Initial}),
+						{formState: $author$project$Signup$Initial}),
 					$elm$core$Platform$Cmd$none);
 			default:
 				if (msg.a.$ === 'Ok') {
@@ -8944,7 +8892,7 @@ var $author$project$Signup$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{signupState: $author$project$Signup$Initial}),
+							{formState: $author$project$Signup$Initial}),
 						$author$project$Credentials$storeSession(
 							$elm$core$Maybe$Just(
 								A2($elm$json$Json$Encode$encode, 0, tokenValue))));
@@ -8954,7 +8902,7 @@ var $author$project$Signup$update = F2(
 						_Utils_update(
 							model,
 							{
-								signupState: $author$project$Signup$Error(
+								formState: $author$project$Signup$Error(
 									$author$project$Helpers$buildErrorMessage(error))
 							}),
 						$elm$core$Platform$Cmd$none);
@@ -11838,41 +11786,39 @@ var $rtfeldman$elm_css$Css$Media$withMediaQuery = function (queries) {
 var $matheus23$elm_default_tailwind_modules$Tailwind$Breakpoints$sm = $rtfeldman$elm_css$Css$Media$withMediaQuery(
 	_List_fromArray(
 		['(min-width: 640px)']));
-var $author$project$Home$view = function (model) {
-	return A2(
-		$rtfeldman$elm_css$Html$Styled$div,
-		_List_fromArray(
-			[
-				$rtfeldman$elm_css$Html$Styled$Attributes$css(
-				_List_fromArray(
-					[
-						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex,
-						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex_col,
-						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center,
-						$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_6,
-						$matheus23$elm_default_tailwind_modules$Tailwind$Breakpoints$sm(
-						_List_fromArray(
-							[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_20]))
-					]))
-			]),
-		_List_fromArray(
-			[
-				A2(
-				$rtfeldman$elm_css$Html$Styled$h2,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$text('Hello and welcome to our awesome website !')
-					])),
-				A2(
-				$rtfeldman$elm_css$Html$Styled$p,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$text('which is still under construction')
-					]))
-			]));
-};
+var $author$project$Home$view = A2(
+	$rtfeldman$elm_css$Html$Styled$div,
+	_List_fromArray(
+		[
+			$rtfeldman$elm_css$Html$Styled$Attributes$css(
+			_List_fromArray(
+				[
+					$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex,
+					$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex_col,
+					$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center,
+					$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_6,
+					$matheus23$elm_default_tailwind_modules$Tailwind$Breakpoints$sm(
+					_List_fromArray(
+						[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_20]))
+				]))
+		]),
+	_List_fromArray(
+		[
+			A2(
+			$rtfeldman$elm_css$Html$Styled$h2,
+			_List_Nil,
+			_List_fromArray(
+				[
+					$rtfeldman$elm_css$Html$Styled$text('Hello and welcome to our awesome website !')
+				])),
+			A2(
+			$rtfeldman$elm_css$Html$Styled$p,
+			_List_Nil,
+			_List_fromArray(
+				[
+					$rtfeldman$elm_css$Html$Styled$text('which is still under construction')
+				]))
+		]));
 var $author$project$Login$LoginSubmit = {$: 'LoginSubmit'};
 var $author$project$Login$StoreEmail = function (a) {
 	return {$: 'StoreEmail', a: a};
@@ -12059,7 +12005,7 @@ var $author$project$Login$view = function (model) {
 						$rtfeldman$elm_css$Html$Styled$text('Login')
 					])),
 				function () {
-				var _v0 = model.loginState;
+				var _v0 = model.formState;
 				switch (_v0.$) {
 					case 'Loading':
 						return A2(
@@ -12195,27 +12141,15 @@ var $author$project$Login$view = function (model) {
 			]));
 };
 var $author$project$Profile$FileRequest = {$: 'FileRequest'};
-var $author$project$Profile$ProfileSubmit = F2(
-	function (a, b) {
-		return {$: 'ProfileSubmit', a: a, b: b};
-	});
+var $author$project$Profile$ProfileSubmit = function (a) {
+	return {$: 'ProfileSubmit', a: a};
+};
 var $author$project$Profile$StoreFirstName = function (a) {
 	return {$: 'StoreFirstName', a: a};
 };
 var $rtfeldman$elm_css$Html$Styled$Attributes$for = $rtfeldman$elm_css$Html$Styled$Attributes$stringProperty('htmlFor');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_1 = A2($rtfeldman$elm_css$Css$property, 'height', '0.25rem');
 var $rtfeldman$elm_css$Html$Styled$Attributes$id = $rtfeldman$elm_css$Html$Styled$Attributes$stringProperty('id');
-var $author$project$Credentials$imageStringToMaybeString = function (_v0) {
-	var maybeImageString = _v0.a;
-	var _v1 = $author$project$Credentials$ImageString(maybeImageString);
-	if (_v1.a.$ === 'Just') {
-		var imageString = _v1.a.a;
-		return $elm$core$String$isEmpty(imageString) ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(imageString);
-	} else {
-		var _v2 = _v1.a;
-		return $elm$core$Maybe$Nothing;
-	}
-};
 var $rtfeldman$elm_css$Html$Styled$img = $rtfeldman$elm_css$Html$Styled$node('img');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$opacity_0 = A2($rtfeldman$elm_css$Css$property, 'opacity', '0');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$overflow_hidden = A2($rtfeldman$elm_css$Css$property, 'overflow', 'hidden');
@@ -12228,30 +12162,6 @@ var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_sm = $rtfeld
 			A2($rtfeldman$elm_css$Css$property, 'font-size', '0.875rem'),
 			A2($rtfeldman$elm_css$Css$property, 'line-height', '1.25rem')
 		]));
-var $author$project$Profile$viewError = function (checkErrors) {
-	return A2(
-		$rtfeldman$elm_css$Html$Styled$li,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				$rtfeldman$elm_css$Html$Styled$p,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$text(
-						function () {
-							if (checkErrors.$ === 'BadInput') {
-								var err = checkErrors.a;
-								return err;
-							} else {
-								var err = checkErrors.a;
-								return err;
-							}
-						}())
-					]))
-			]));
-};
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_1 = A2($rtfeldman$elm_css$Css$property, 'width', '0.25rem');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$z_0 = A2($rtfeldman$elm_css$Css$property, 'z-index', '0');
 var $author$project$Profile$view = function (model) {
@@ -12270,6 +12180,7 @@ var $author$project$Profile$view = function (model) {
 								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex_col,
 								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center,
 								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_6,
+								$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$relative,
 								$matheus23$elm_default_tailwind_modules$Tailwind$Breakpoints$sm(
 								_List_fromArray(
 									[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$m_20]))
@@ -12289,6 +12200,49 @@ var $author$project$Profile$view = function (model) {
 							[
 								$rtfeldman$elm_css$Html$Styled$text('Hello')
 							])),
+						function () {
+						var _v1 = model.formState;
+						switch (_v1.$) {
+							case 'Loading':
+								return A2(
+									$rtfeldman$elm_css$Html$Styled$div,
+									_List_fromArray(
+										[
+											$rtfeldman$elm_css$Html$Styled$Attributes$css(
+											_List_fromArray(
+												[
+													$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$absolute,
+													$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_full,
+													$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_full,
+													$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex,
+													$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$justify_center,
+													$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center,
+													$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$sky_50),
+													$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_opacity_40
+												]))
+										]),
+									_List_fromArray(
+										[$author$project$Helpers$loadingElement]));
+							case 'Error':
+								var error = _v1.a;
+								return A2(
+									$rtfeldman$elm_css$Html$Styled$p,
+									_List_fromArray(
+										[
+											$rtfeldman$elm_css$Html$Styled$Attributes$css(
+											_List_fromArray(
+												[
+													$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$red_400)
+												]))
+										]),
+									_List_fromArray(
+										[
+											$rtfeldman$elm_css$Html$Styled$text(error)
+										]));
+							default:
+								return $rtfeldman$elm_css$Html$Styled$text('');
+						}
+					}(),
 						A2(
 						$rtfeldman$elm_css$Html$Styled$form,
 						_List_fromArray(
@@ -12326,7 +12280,7 @@ var $author$project$Profile$view = function (model) {
 												$rtfeldman$elm_css$Html$Styled$Attributes$css($author$project$GlobalStyles$inputStyle),
 												$rtfeldman$elm_css$Html$Styled$Attributes$type_('text'),
 												$rtfeldman$elm_css$Html$Styled$Events$onInput($author$project$Profile$StoreFirstName),
-												$rtfeldman$elm_css$Html$Styled$Attributes$value(model.profile.firstname)
+												$rtfeldman$elm_css$Html$Styled$Attributes$value(model.storeName)
 											]),
 										_List_Nil)
 									])),
@@ -12408,9 +12362,9 @@ var $author$project$Profile$view = function (model) {
 											]))
 									])),
 								function () {
-								var _v1 = $author$project$Credentials$imageStringToMaybeString(model.imageFile);
-								if (_v1.$ === 'Just') {
-									var imageString = _v1.a;
+								var _v2 = model.profilePic;
+								if (_v2.$ === 'Just') {
+									var imageString = _v2.a;
 									return A2(
 										$rtfeldman$elm_css$Html$Styled$div,
 										_List_fromArray(
@@ -12447,34 +12401,20 @@ var $author$project$Profile$view = function (model) {
 									]),
 								_List_fromArray(
 									[
-										function () {
-										var _v2 = model;
-										var imageFile = _v2.imageFile;
-										var _v3 = model.profile;
-										var firstname = _v3.firstname;
-										var email = _v3.email;
-										return A2(
-											$rtfeldman$elm_css$Html$Styled$button,
-											_List_fromArray(
-												[
-													$rtfeldman$elm_css$Html$Styled$Attributes$css($author$project$GlobalStyles$buttonStyle),
-													$rtfeldman$elm_css$Html$Styled$Attributes$type_('button'),
-													$rtfeldman$elm_css$Html$Styled$Events$onClick(
-													A2(
-														$author$project$Profile$ProfileSubmit,
-														session,
-														{email: email, firstname: firstname, imagefile: imageFile}))
-												]),
-											_List_fromArray(
-												[
-													$rtfeldman$elm_css$Html$Styled$text('Submit')
-												]));
-									}()
-									])),
-								A2(
-								$rtfeldman$elm_css$Html$Styled$ul,
-								_List_Nil,
-								A2($elm$core$List$map, $author$project$Profile$viewError, model.errors))
+										A2(
+										$rtfeldman$elm_css$Html$Styled$button,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Attributes$css($author$project$GlobalStyles$buttonStyle),
+												$rtfeldman$elm_css$Html$Styled$Attributes$type_('button'),
+												$rtfeldman$elm_css$Html$Styled$Events$onClick(
+												$author$project$Profile$ProfileSubmit(session))
+											]),
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$text('Submit')
+											]))
+									]))
 							]))
 					]));
 		case 'NotVerified':
@@ -12624,7 +12564,7 @@ var $author$project$Signup$view = function (model) {
 						$rtfeldman$elm_css$Html$Styled$text('Signup')
 					])),
 				function () {
-				var _v0 = model.signupState;
+				var _v0 = model.formState;
 				switch (_v0.$) {
 					case 'Loading':
 						return A2(
@@ -12927,11 +12867,7 @@ var $author$project$Main$content = function (model) {
 							$author$project$Main$GotProfileMsg,
 							$author$project$Profile$view(profileModel));
 					case 'HomePage':
-						var homeModel = _v0.a;
-						return A2(
-							$rtfeldman$elm_css$Html$Styled$map,
-							$author$project$Main$GotHomeMsg,
-							$author$project$Home$view(homeModel));
+						return A2($rtfeldman$elm_css$Html$Styled$map, $author$project$Main$GotHomeMsg, $author$project$Home$view);
 					case 'ChatPage':
 						var chatModel = _v0.a;
 						return A2(
@@ -13162,24 +13098,16 @@ var $author$project$Main$viewHeader = function (_v0) {
 																	]),
 																_List_fromArray(
 																	[
-																		function () {
-																		var _v3 = $author$project$Credentials$imageStringToMaybeString(resultTokenRecord.profilepicurl);
-																		if (_v3.$ === 'Just') {
-																			var imageString = _v3.a;
-																			return A2(
-																				$rtfeldman$elm_css$Html$Styled$img,
+																		$elm$core$String$isEmpty(resultTokenRecord.profilepicurl) ? $rtfeldman$elm_css$Html$Styled$text('') : A2(
+																		$rtfeldman$elm_css$Html$Styled$img,
+																		_List_fromArray(
+																			[
+																				$rtfeldman$elm_css$Html$Styled$Attributes$css(
 																				_List_fromArray(
-																					[
-																						$rtfeldman$elm_css$Html$Styled$Attributes$css(
-																						_List_fromArray(
-																							[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_10])),
-																						$rtfeldman$elm_css$Html$Styled$Attributes$src(imageString)
-																					]),
-																				_List_Nil);
-																		} else {
-																			return $rtfeldman$elm_css$Html$Styled$text('');
-																		}
-																	}()
+																					[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_10])),
+																				$rtfeldman$elm_css$Html$Styled$Attributes$src(resultTokenRecord.profilepicurl)
+																			]),
+																		_List_Nil)
 																	])),
 																A2(
 																$rtfeldman$elm_css$Html$Styled$span,
@@ -13242,22 +13170,14 @@ var $author$project$Main$viewHeader = function (_v0) {
 																_List_Nil,
 																_List_fromArray(
 																	[
-																		function () {
-																		var _v4 = $author$project$Credentials$imageStringToMaybeString(resultTokenRecord.profilepicurl);
-																		if (_v4.$ === 'Just') {
-																			var imageString = _v4.a;
-																			return A2(
-																				$rtfeldman$elm_css$Html$Styled$img,
-																				_List_fromArray(
-																					[
-																						$rtfeldman$elm_css$Html$Styled$Attributes$src(imageString),
-																						$rtfeldman$elm_css$Html$Styled$Attributes$width(60)
-																					]),
-																				_List_Nil);
-																		} else {
-																			return $rtfeldman$elm_css$Html$Styled$text('');
-																		}
-																	}()
+																		$elm$core$String$isEmpty(resultTokenRecord.profilepicurl) ? $rtfeldman$elm_css$Html$Styled$text('') : A2(
+																		$rtfeldman$elm_css$Html$Styled$img,
+																		_List_fromArray(
+																			[
+																				$rtfeldman$elm_css$Html$Styled$Attributes$src(resultTokenRecord.profilepicurl),
+																				$rtfeldman$elm_css$Html$Styled$Attributes$width(60)
+																			]),
+																		_List_Nil)
 																	]))
 															])),
 														A2(

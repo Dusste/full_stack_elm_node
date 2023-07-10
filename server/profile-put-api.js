@@ -19,7 +19,7 @@ exports.module = {
     method: 'put',
     handler: async (req, res) => {
         const { body } = req;
-        const { email, firstname, imagefile } = body;
+        const { firstname, imagefile } = body;
         const { authorization } = req.headers;
         const client = await clientPromise;
 
@@ -30,7 +30,6 @@ exports.module = {
             return res.status(401).json('No authorization header sent');
         }
         const token = authorization.split(' ')[1];
-        // const user = await usersCollection.findOne({ email: { $eq: email } });
 
         let decodedToken;
 
@@ -39,6 +38,9 @@ exports.module = {
         } catch (err) {
             return res.sendStatus(401);
         }
+
+        const { id, email, isverified } = decodedToken;
+        if (!isverified && !firstname.length) return res.sendStatus(403);
 
         const firebaseConfig = {
             apiKey: process.env.FIREBASE_API_KEY,
@@ -52,8 +54,6 @@ exports.module = {
 
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
-
-        const { id } = decodedToken;
 
         let photoUrl = '';
 
@@ -75,6 +75,8 @@ exports.module = {
                       }/o/${querystring(`images/profile-pic-${id}.jpeg`)}?alt=media`
                     : '';
         } catch (err) {
+            console.log('DUSAN', err);
+
             return res.sendStatus(403);
         }
 
@@ -117,6 +119,7 @@ exports.module = {
             }
         };
         const user = await findUser([email]);
+
         const {
             id: decodedId,
             isverified: isVerified,

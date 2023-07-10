@@ -13,7 +13,6 @@ import Credentials
         , decodeTokenData
         , fromSessionToToken
         , fromTokenToString
-        , imageStringToMaybeString
         , logout
         , socketMessageChanges
         , subscriptionChanges
@@ -109,8 +108,8 @@ content model =
                 Profile.view profileModel
                     |> Html.map GotProfileMsg
 
-            HomePage homeModel ->
-                Home.view homeModel
+            HomePage _ ->
+                Home.view
                     |> Html.map GotHomeMsg
 
             ChatPage chatModel ->
@@ -167,13 +166,12 @@ viewHeader { page, session, openDropdown, key } =
                                         Html.div
                                             [ Attr.css [ Tw.flex, Tw.items_center ], onClick OpenDropdown ]
                                             [ Html.div [ Attr.css [ Tw.w_10, Tw.h_10, Tw.overflow_hidden, Tw.rounded_full ] ]
-                                                [ case imageStringToMaybeString resultTokenRecord.profilepicurl of
-                                                    Just imageString ->
-                                                        Html.img [ Attr.css [ Tw.w_10 ], src imageString ] []
+                                                [ if String.isEmpty resultTokenRecord.profilepicurl then
+                                                    -- identicon 50 50 resultTokenRecord.firstname
+                                                    text ""
 
-                                                    Nothing ->
-                                                        -- identicon 50 50 resultTokenRecord.firstname
-                                                        text ""
+                                                  else
+                                                    Html.img [ Attr.css [ Tw.w_10 ], src resultTokenRecord.profilepicurl ] []
                                                 ]
                                             , Html.span [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl ] ] [ text resultTokenRecord.firstname, Html.sup [ Attr.css [ Tw.ml_1 ] ] [ text "⌄" ] ]
                                             ]
@@ -187,13 +185,12 @@ viewHeader { page, session, openDropdown, key } =
                                                 , Html.sup [ Attr.css [ Tw.ml_1 ] ] [ text "⌄" ]
                                                 ]
                                             , Html.div []
-                                                [ case imageStringToMaybeString resultTokenRecord.profilepicurl of
-                                                    Just imageString ->
-                                                        Html.img [ src imageString, width 60 ] []
+                                                [ if String.isEmpty resultTokenRecord.profilepicurl then
+                                                    -- identicon 50 50 resultTokenRecord.email
+                                                    text ""
 
-                                                    Nothing ->
-                                                        -- identicon 50 50 resultTokenRecord.email
-                                                        text ""
+                                                  else
+                                                    Html.img [ src resultTokenRecord.profilepicurl, width 60 ] []
                                                 ]
                                             ]
                                     , Html.ul

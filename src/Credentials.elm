@@ -3,7 +3,7 @@ port module Credentials exposing
     , Session
     , SocketMessageData
     , Token
-    , UnwrappedTokenData
+    , UserDataFromToken
     , UserId
     , VerificationString
     , addHeader
@@ -12,7 +12,6 @@ port module Credentials exposing
     , decodeToSession
     , decodeTokenData
     , emitTyping
-    , emptyImageString
     , emptyUserId
     , emptyVerificationString
     , encodeImageString
@@ -20,14 +19,12 @@ port module Credentials exposing
     , fromSessionToToken
     , fromTokenToString
     , guest
-    , imageStringToMaybeString
     , initiateSocketChannel
     , logout
     , onSessionChange
     , sendMessageToSocket
     , socketMessageChanges
     , storeSession
-    , stringToImageString
     , subscriptionChanges
     , tokenDecoder
     , userIdParser
@@ -146,13 +143,8 @@ encodeUserId (UserId id) =
 
 
 encodeImageString : ImageString -> Encode.Value
-encodeImageString (ImageString maybeImageString) =
-    case ImageString maybeImageString of
-        ImageString (Just imageString) ->
-            Encode.string imageString
-
-        ImageString Nothing ->
-            Encode.string ""
+encodeImageString imageString =
+    Encode.string imageString
 
 
 idDecoder : Decoder UserId
@@ -165,11 +157,11 @@ verifyStringDecoder =
     Decode.map VerificationString string
 
 
-type ImageString
-    = ImageString (Maybe String)
+type alias ImageString =
+    String
 
 
-type alias UnwrappedTokenData =
+type alias UserDataFromToken =
     { id : UserId
     , isverified : Bool
     , email : String
@@ -177,34 +169,6 @@ type alias UnwrappedTokenData =
     , verificationstring : VerificationString
     , profilepicurl : ImageString
     }
-
-
-stringToImageString : String -> ImageString
-stringToImageString str =
-    if String.isEmpty str then
-        ImageString Nothing
-
-    else
-        ImageString (Just str)
-
-
-imageStringToMaybeString : ImageString -> Maybe String
-imageStringToMaybeString (ImageString maybeImageString) =
-    case ImageString maybeImageString of
-        ImageString (Just imageString) ->
-            if String.isEmpty imageString then
-                Nothing
-
-            else
-                Just imageString
-
-        ImageString Nothing ->
-            Nothing
-
-
-emptyImageString : ImageString
-emptyImageString =
-    ImageString Nothing
 
 
 fromSessionToToken : Session -> Maybe Token
@@ -267,29 +231,24 @@ logout =
     storeSession Nothing
 
 
-decodeTokenData : Decoder UnwrappedTokenData
+decodeTokenData : Decoder UserDataFromToken
 decodeTokenData =
-    map6 UnwrappedTokenData
+    map6 UserDataFromToken
         (at [ "id" ] idDecoder)
         (at [ "isverified" ] bool)
         (at [ "email" ] string)
         (at [ "firstname" ] string)
         (at [ "verificationstring" ] verifyStringDecoder)
-        (at [ "profilepicurl" ] imageStringDecoder)
+        (at [ "profilepicurl" ] string)
 
 
 
 {-
    You can run a decoder by using Json.Decode.decodeValue.
-   Then you’ll get a Result Error UnwrappedTokenData.
+   Then you’ll get a Result Error UserDataFromToken.
    You can get rid of Result by using a case of and handling both the Ok validData and Err error cases.
 
 -}
-
-
-imageStringDecoder : Decoder ImageString
-imageStringDecoder =
-    Decode.map (\maybeImageString -> ImageString maybeImageString) (Decode.maybe string)
 
 
 decodeToSession : Nav.Key -> Value -> Session
@@ -363,9 +322,9 @@ decodeToSocket key value =
 
 
 
--- decodeTokenData : Decoder UnwrappedTokenData
+-- decodeTokenData : Decoder UserDataFromToken
 -- decodeTokenData =
---     map6 UnwrappedTokenData
+--     map6 UserDataFromToken
 --         (at [ "id" ] idDecoder)
 --         (at [ "isverified" ] bool)
 --         (at [ "email" ] string)

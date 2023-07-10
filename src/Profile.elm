@@ -2,31 +2,22 @@ module Profile exposing (..)
 
 import Credentials
     exposing
-        ( ImageString
-        , Session
+        ( Session
         , Token
-        , UnwrappedTokenData
         , addHeader
         , decodeTokenData
-        , emptyImageString
-        , emptyUserId
-        , emptyVerificationString
         , encodeImageString
         , encodeToken
         , fromSessionToToken
         , fromTokenToString
-        , imageStringToMaybeString
         , logout
         , storeSession
-        , stringToImageString
         , tokenDecoder
         )
-import Css
-import Css.Global
 import File exposing (File)
 import File.Select as Select
 import GlobalStyles as Gs
-import Helpers exposing (buildErrorMessage)
+import Helpers exposing (buildErrorMessage, loadingElement)
 import Html.Styled as Html exposing (Html, text)
 import Html.Styled.Attributes as Attr exposing (src, type_, value)
 import Html.Styled.Events exposing (onClick, onInput)
@@ -40,23 +31,17 @@ import Task
 
 
 type alias Model =
-    { profile : UnwrappedTokenData
-    , errors : List CheckErrors
-    , imageFile : ImageString
+    { storeName : String
+    , profilePic : Maybe String
     , userState : UserState
+    , formState : FormState
     }
 
 
-type alias ProfileSubmitData =
-    { email : String
-    , firstname : String
-    , imagefile : ImageString
-    }
-
-
-type CheckErrors
-    = BadInput String
-    | BadRequest String
+type FormState
+    = Initial
+    | Loading
+    | Error String
 
 
 type UserState
@@ -68,38 +53,26 @@ type UserState
 
 type Msg
     = StoreFirstName String
-      -- | StoreLastName String
-    | StoreVerified Bool
-      -- | StoreAdmin Bool
-    | ProfileSubmit Session ProfileSubmitData
+    | ProfileSubmit Session
     | ProfileDone (Result Http.Error Token)
     | FileRequest
     | FileRequestProceed File
     | FileRead (Result Http.Error String)
-    | LogoutUser
 
 
-profileSubmitDataEncoder : ProfileSubmitData -> Encode.Value
-profileSubmitDataEncoder profileData =
+profileSubmitDataEncoder : { name : String, profilePic : String } -> Encode.Value
+profileSubmitDataEncoder { name, profilePic } =
     Encode.object
-        [ ( "email", Encode.string profileData.email )
-        , ( "firstname", Encode.string profileData.firstname )
-        , ( "imagefile", encodeImageString profileData.imagefile )
+        [ ( "firstname", Encode.string name )
+        , ( "imagefile", encodeImageString profilePic )
         ]
 
 
 initialModel : Model
 initialModel =
-    { profile =
-        { firstname = ""
-        , email = ""
-        , id = emptyUserId
-        , isverified = False
-        , verificationstring = emptyVerificationString
-        , profilepicurl = emptyImageString
-        }
-    , errors = []
-    , imageFile = emptyImageString
+    { storeName = ""
+    , profilePic = Nothing
+    , formState = Initial
     , userState = NotVerified
     }
 
@@ -109,11 +82,11 @@ init session =
     case fromSessionToToken session of
         Just token ->
             case Jwt.decodeToken decodeTokenData <| fromTokenToString token of
-                Ok profileData ->
+                Ok userDataFromToken ->
                     ( { initialModel
-                        | profile = profileData
+                        | storeName = userDataFromToken.firstname
                         , userState =
-                            if profileData.isverified then
+                            if userDataFromToken.isverified then
                                 Verified session
 
                             else
@@ -138,8 +111,17 @@ view model =
     case model.userState of
         Verified session ->
             Html.div
-                [ Attr.css [ Tw.flex, Tw.flex_col, Tw.items_center, Tw.m_6, Bp.sm [ Tw.m_20 ] ] ]
+                [ Attr.css [ Tw.flex, Tw.flex_col, Tw.items_center, Tw.m_6, Tw.relative, Bp.sm [ Tw.m_20 ] ] ]
                 [ Html.h2 [ Attr.css [ Tw.text_3xl ] ] [ text "Hello" ]
+                , case model.formState of
+                    Loading ->
+                        Html.div [ Attr.css [ Tw.absolute, Tw.w_full, Tw.h_full, Tw.flex, Tw.justify_center, Tw.items_center, Tw.bg_color Tw.sky_50, Tw.bg_opacity_40 ] ] [ loadingElement ]
+
+                    Error error ->
+                        Html.p [ Attr.css [ Tw.text_color Tw.red_400 ] ] [ text error ]
+
+                    Initial ->
+                        text ""
                 , Html.form [ Attr.css [ Tw.flex, Tw.flex_col, Tw.gap_5, Tw.text_xl, Tw.w_full, Bp.md [ Tw.w_60 ] ] ]
                     [ Html.div [ Attr.css [ Tw.flex, Tw.flex_col, Tw.gap_3 ] ]
                         [ text "First Name"
@@ -147,22 +129,10 @@ view model =
                             [ Attr.css Gs.inputStyle
                             , type_ "text"
                             , onInput StoreFirstName
-                            , value model.profile.firstname
+                            , value model.storeName
                             ]
                             []
                         ]
-
-                    -- , div []
-                    --     [ text "Email"
-                    --     , br [] []
-                    --     , input
-                    --         [ type_ "text"
-                    --         , onInput StoreLastName
-                    --         , value model.profile.email
-                    --         ]
-                    --         []
-                    --     ]
-                    -- , br [] []
                     , Html.div [ Attr.css [ Tw.flex, Tw.gap_3 ] ]
                         [ Html.div [ Attr.css [ Tw.flex, Tw.flex_col ] ]
                             [ Html.p [ Attr.css [ Tw.m_0 ] ] [ text "Upload an avatar" ]
@@ -179,7 +149,7 @@ view model =
                                 []
                             ]
                         ]
-                    , case imageStringToMaybeString model.imageFile of
+                    , case model.profilePic of
                         Just imageString ->
                             Html.div [ Attr.css [ Tw.flex, Tw.flex_col, Tw.gap_3 ] ]
                                 [ text "Your avatar preview"
@@ -190,33 +160,14 @@ view model =
 
                         Nothing ->
                             text ""
-
-                    -- , div []
-                    --     [ text "Admin"
-                    --     , br [] []
-                    --     , input
-                    --         [ type_ "checkbox"
-                    --         , onClick (StoreAdmin (not model.profile.isadmin))
-                    --         ]
-                    --         []
-                    --     ]
                     , Html.div [ Attr.css [ Tw.flex, Tw.flex_col, Tw.gap_3 ] ]
-                        [ let
-                            { firstname, email } =
-                                model.profile
-
-                            { imageFile } =
-                                model
-                          in
-                          Html.button
+                        [ Html.button
                             [ Attr.css Gs.buttonStyle
                             , type_ "button"
-                            , onClick (ProfileSubmit session { firstname = firstname, email = email, imagefile = imageFile })
+                            , onClick (ProfileSubmit session)
                             ]
                             [ text "Submit" ]
                         ]
-                    , Html.ul []
-                        (List.map viewError model.errors)
                     ]
                 ]
 
@@ -242,80 +193,38 @@ view model =
                 ]
 
 
-viewError : CheckErrors -> Html Msg
-viewError checkErrors =
-    Html.li []
-        [ Html.p []
-            [ text
-                (case checkErrors of
-                    BadInput err ->
-                        err
-
-                    BadRequest err ->
-                        err
-                )
-            ]
-        ]
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         StoreFirstName firstName ->
+            ( { model | storeName = firstName }, Cmd.none )
+
+        ProfileSubmit session ->
             let
-                oldProfile =
-                    model.profile
+                imageOrNot =
+                    -- Allow user to send a form without new profile pic (but with new name only) - then BE won't proceed with changing it !
+                    case model.profilePic of
+                        Nothing ->
+                            ""
 
-                updateProfile =
-                    { oldProfile | firstname = firstName }
+                        Just imageUrl ->
+                            imageUrl
             in
-            ( { model | profile = updateProfile }, Cmd.none )
+            if String.isEmpty model.storeName then
+                ( { model | formState = Error "Name can't be empty" }, Cmd.none )
 
-        -- StoreLastName lastName ->
-        --     let
-        --         oldProfile =
-        --             model.profile
-        --         updateProfile =
-        --             { oldProfile | lastname = lastName }
-        --     in
-        --     ( { model | profile = updateProfile }, Cmd.none )
-        StoreVerified isVerified ->
-            let
-                oldProfile =
-                    model.profile
-
-                updateProfile =
-                    { oldProfile | isverified = isVerified }
-            in
-            ( { model | profile = updateProfile }, Cmd.none )
-
-        -- StoreAdmin isAdmin ->
-        --     let
-        --         oldProfile =
-        --             model.profile
-        --         updateProfile =
-        --             { oldProfile | isadmin = isAdmin }
-        --     in
-        --     ( { model | profile = updateProfile }, Cmd.none )
-        ProfileSubmit session cred ->
-            let
-                validateFirstName =
-                    cred.firstname
-                        |> String.trim
-                        |> String.split " "
-                        |> String.join ""
-            in
-            ( model, submitProfile session { cred | firstname = validateFirstName } )
+            else
+                ( { model | formState = Loading }, submitProfile session { name = model.storeName, profilePic = imageOrNot } )
 
         ProfileDone (Ok token) ->
             let
                 tokenValue =
                     encodeToken token
             in
-            ( model, storeSession <| Just <| encode 0 tokenValue )
+            ( { model | formState = Initial }, storeSession <| Just <| encode 0 tokenValue )
 
         ProfileDone (Err error) ->
-            ( { model | errors = [ BadRequest "Something went wrong !" ] }
+            ( { model | formState = Error <| buildErrorMessage error }
             , case error of
                 Http.BadStatus statusCode ->
                     if statusCode == 401 then
@@ -335,29 +244,13 @@ update msg model =
             ( model, Task.attempt FileRead (File.toUrl file) )
 
         FileRead (Ok imageFileString) ->
-            let
-                trimImageString =
-                    String.trim imageFileString
-
-                oldProfile =
-                    model.profile
-
-                imageString =
-                    stringToImageString trimImageString
-
-                updateProfile =
-                    { oldProfile | profilepicurl = imageString }
-            in
-            ( { model | profile = updateProfile, imageFile = imageString }, Cmd.none )
+            ( { model | profilePic = Just imageFileString }, Cmd.none )
 
         FileRead (Err error) ->
-            ( { model | errors = BadRequest (buildErrorMessage error) :: model.errors }, Cmd.none )
-
-        LogoutUser ->
-            ( model, logout )
+            ( { model | formState = Error <| buildErrorMessage error }, Cmd.none )
 
 
-submitProfile : Session -> ProfileSubmitData -> Cmd Msg
+submitProfile : Session -> { profilePic : String, name : String } -> Cmd Msg
 submitProfile session data =
     case fromSessionToToken session of
         Just token ->

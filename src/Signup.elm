@@ -20,7 +20,7 @@ type alias Model =
     { storeEmail : String
     , storePassword : String
     , storeConfirmPassword : String
-    , signupState : FormState
+    , formState : FormState
     }
 
 
@@ -29,7 +29,7 @@ initialModel =
     { storeEmail = ""
     , storePassword = ""
     , storeConfirmPassword = ""
-    , signupState = Initial
+    , formState = Initial
     }
 
 
@@ -69,23 +69,23 @@ update msg model =
             in
             case validatedCred of
                 Err error ->
-                    ( { model | signupState = Error error }, Process.sleep 4000 |> Task.perform (\_ -> HideError) )
+                    ( { model | formState = Error error }, Process.sleep 4000 |> Task.perform (\_ -> HideError) )
 
                 Ok validCredentials ->
-                    ( { model | signupState = Loading }, submitSignup validCredentials )
+                    ( { model | formState = Loading }, submitSignup validCredentials )
 
         HideError ->
-            ( { model | signupState = Initial }, Cmd.none )
+            ( { model | formState = Initial }, Cmd.none )
 
         SignupDone (Ok token) ->
             let
                 tokenValue =
                     encodeToken token
             in
-            ( { model | signupState = Initial }, storeSession <| Just <| encode 0 tokenValue )
+            ( { model | formState = Initial }, storeSession <| Just <| encode 0 tokenValue )
 
         SignupDone (Err error) ->
-            ( { model | signupState = Error <| buildErrorMessage error }, Cmd.none )
+            ( { model | formState = Error <| buildErrorMessage error }, Cmd.none )
 
 
 submitSignup : User.ValidCredentials -> Cmd Msg
@@ -102,7 +102,7 @@ view model =
     Html.div
         [ Attr.css [ Tw.flex, Tw.flex_col, Tw.items_center, Tw.m_6, Tw.relative, Bp.md [ Tw.m_20 ] ] ]
         [ Html.h2 [ Attr.css [ Tw.text_3xl ] ] [ text "Signup" ]
-        , case model.signupState of
+        , case model.formState of
             Loading ->
                 Html.div [ Attr.css [ Tw.absolute, Tw.w_full, Tw.h_full, Tw.flex, Tw.justify_center, Tw.items_center, Tw.bg_color Tw.sky_50, Tw.bg_opacity_40 ] ] [ loadingElement ]
 

@@ -13,12 +13,9 @@ import Credentials
         , tokenDecoder
         , verificationToString
         )
-import Css
-import Css.Global
 import Helpers exposing (loadingElement)
 import Html.Styled as Html exposing (Html, text)
 import Html.Styled.Attributes as Attr
-import Html.Styled.Events as Event
 import Http
 import Json.Encode exposing (encode)
 import Jwt
@@ -60,28 +57,18 @@ init session verificationParam =
             case Jwt.decodeToken decodeTokenData <| fromTokenToString token of
                 Ok resultTokenRecord ->
                     if verificationParam /= ("/verify-email/" ++ verificationToString resultTokenRecord.verificationstring) then
-                        ( { userState = VerificationFail
-                          }
-                        , Cmd.none
-                        )
+                        ( { userState = VerificationFail }, Cmd.none )
 
                     else if not resultTokenRecord.isverified then
-                        ( { userState = VerificationPending
-                          }
+                        ( { userState = VerificationPending }
                         , apiCallAfterSomeTime session VerifyApiCallStart
                         )
 
                     else
-                        ( { userState = Verified
-                          }
-                        , Cmd.none
-                        )
+                        ( { userState = Verified }, Cmd.none )
 
                 Err _ ->
-                    ( { userState = Sessionless
-                      }
-                    , Cmd.none
-                    )
+                    ( { userState = Sessionless }, Cmd.none )
 
         Nothing ->
             ( { userState = Sessionless
@@ -139,11 +126,7 @@ update msg model =
                 tokenValue =
                     encodeToken token
             in
-            ( model
-            , storeSession <|
-                Just <|
-                    encode 0 tokenValue
-            )
+            ( model, storeSession <| Just <| encode 0 tokenValue )
 
 
 view : Model -> Html Msg

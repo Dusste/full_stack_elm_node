@@ -19,7 +19,7 @@ import User
 type alias Model =
     { storeEmail : String
     , storePassword : String
-    , loginState : FormState
+    , formState : FormState
     }
 
 
@@ -27,7 +27,7 @@ initialModel : Model
 initialModel =
     { storeEmail = ""
     , storePassword = ""
-    , loginState = Initial
+    , formState = Initial
     }
 
 
@@ -62,23 +62,23 @@ update msg model =
             in
             case validatedCred of
                 Err error ->
-                    ( { model | loginState = Error error }, Process.sleep 4000 |> Task.perform (\_ -> HideError) )
+                    ( { model | formState = Error error }, Process.sleep 4000 |> Task.perform (\_ -> HideError) )
 
                 Ok validCredentials ->
-                    ( { model | loginState = Loading }, submitLogin validCredentials )
+                    ( { model | formState = Loading }, submitLogin validCredentials )
 
         HideError ->
-            ( { model | loginState = Initial }, Cmd.none )
+            ( { model | formState = Initial }, Cmd.none )
 
         LoginDone (Ok token) ->
             let
                 tokenValue =
                     encodeToken token
             in
-            ( { model | loginState = Initial }, storeSession <| Just <| encode 0 tokenValue )
+            ( { model | formState = Initial }, storeSession <| Just <| encode 0 tokenValue )
 
         LoginDone (Err error) ->
-            ( { model | loginState = Error <| buildErrorMessage error }, Process.sleep 4000 |> Task.perform (\_ -> HideError) )
+            ( { model | formState = Error <| buildErrorMessage error }, Process.sleep 4000 |> Task.perform (\_ -> HideError) )
 
 
 submitLogin : User.ValidCredentials -> Cmd Msg
@@ -95,7 +95,7 @@ view model =
     Html.div
         [ Attr.css [ Tw.flex, Tw.flex_col, Tw.items_center, Tw.m_6, Tw.relative, Bp.md [ Tw.m_20 ] ] ]
         [ Html.h2 [ Attr.css [ Tw.text_3xl ] ] [ text "Login" ]
-        , case model.loginState of
+        , case model.formState of
             Loading ->
                 Html.div [ Attr.css [ Tw.absolute, Tw.w_full, Tw.h_full, Tw.flex, Tw.justify_center, Tw.items_center, Tw.bg_color Tw.sky_50, Tw.bg_opacity_40 ] ] [ loadingElement ]
 

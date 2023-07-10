@@ -1,7 +1,5 @@
 module Home exposing (..)
 
-import Css
-import Css.Global
 import Html.Styled as Html exposing (Html, text)
 import Html.Styled.Attributes as Attr
 import Tailwind.Breakpoints as Bp
@@ -11,11 +9,6 @@ import Tailwind.Utilities as Tw
 
 type alias Model =
     {}
-
-
-type CheckErrors
-    = BadInput String
-    | BadRequest String
 
 
 initialModel : Model
@@ -34,8 +27,8 @@ type Msg
     = NoOp
 
 
-view : Model -> Html Msg
-view model =
+view : Html Msg
+view =
     Html.div
         [ Attr.css [ Tw.flex, Tw.flex_col, Tw.items_center, Tw.m_6, Bp.sm [ Tw.m_20 ] ] ]
         [ Html.h2 []
