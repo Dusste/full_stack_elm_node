@@ -20,8 +20,6 @@ import Credentials
         , userIdToString
         , verifictionStringParser
         )
-import Css
-import Css.Global
 import Home
 import Html.Lazy exposing (lazy)
 import Html.Styled as Html exposing (Html, text)
@@ -151,87 +149,12 @@ viewFooter =
 
 
 viewHeader : Model -> Html Msg
-viewHeader { page, session, openDropdown, key } =
+viewHeader { page, session, openDropdown } =
     Html.nav [ Attr.css [ Tw.flex, Tw.p_5, Tw.justify_between, Tw.items_center ] ]
         [ Html.h1 [] [ Html.a [ href "/" ] [ text "My elm app" ] ]
         , case fromSessionToToken session of
             Just token ->
-                Html.ul [ Attr.css [ Tw.flex, Tw.justify_between, Tw.gap_4, Tw.items_end ] ]
-                    [ case Jwt.decodeToken decodeTokenData <| fromTokenToString token of
-                        Ok resultTokenRecord ->
-                            Html.li
-                                [ Attr.css [ Tw.cursor_pointer ] ]
-                                [ Html.div [ Attr.css [ Tw.relative ] ]
-                                    [ if String.length resultTokenRecord.firstname > 0 then
-                                        Html.div
-                                            [ Attr.css [ Tw.flex, Tw.items_center ], onClick OpenDropdown ]
-                                            [ Html.div [ Attr.css [ Tw.w_10, Tw.h_10, Tw.overflow_hidden, Tw.rounded_full ] ]
-                                                [ if String.isEmpty resultTokenRecord.profilepicurl then
-                                                    -- identicon 50 50 resultTokenRecord.firstname
-                                                    text ""
-
-                                                  else
-                                                    Html.img [ Attr.css [ Tw.w_10 ], src resultTokenRecord.profilepicurl ] []
-                                                ]
-                                            , Html.span [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl ] ] [ text resultTokenRecord.firstname, Html.sup [ Attr.css [ Tw.ml_1 ] ] [ text "⌄" ] ]
-                                            ]
-
-                                      else
-                                        Html.div
-                                            [ onClick OpenDropdown ]
-                                            [ Html.span [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl ] ]
-                                                [ text
-                                                    resultTokenRecord.email
-                                                , Html.sup [ Attr.css [ Tw.ml_1 ] ] [ text "⌄" ]
-                                                ]
-                                            , Html.div []
-                                                [ if String.isEmpty resultTokenRecord.profilepicurl then
-                                                    -- identicon 50 50 resultTokenRecord.email
-                                                    text ""
-
-                                                  else
-                                                    Html.img [ src resultTokenRecord.profilepicurl, width 60 ] []
-                                                ]
-                                            ]
-                                    , Html.ul
-                                        [ Attr.css [ Tw.flex, Tw.absolute, Tw.mt_3, Tw.flex_col, Tw.gap_1, Tw.overflow_hidden, Tw.transition_all, Tw.duration_500, Tw.bg_color Tw.white ]
-                                        , style "height"
-                                            (if openDropdown then
-                                                "90px"
-
-                                             else
-                                                "0"
-                                            )
-                                        ]
-                                        [ Html.li
-                                            [ classList
-                                                [ ( "active"
-                                                  , isActive { link = Profile resultTokenRecord.id, page = page }
-                                                  )
-                                                ]
-                                            , onClick OpenDropdown
-                                            ]
-                                            [ Html.a [ Attr.css [ Tw.flex, Tw.py_1, Tw.px_4, Tw.rounded ], href <| "/profile/" ++ userIdToString resultTokenRecord.id ] [ text "My profile" ] ]
-                                        , Html.li [ onClick OpenDropdown ] [ Html.a [ Attr.css [ Tw.flex, Tw.py_1, Tw.px_4, Tw.rounded ] ] [ text "option2" ] ]
-                                        , Html.li [ onClick OpenDropdown ] [ Html.a [ Attr.css [ Tw.flex, Tw.py_1, Tw.px_4, Tw.rounded ] ] [ text "option3" ] ]
-                                        ]
-                                    ]
-                                ]
-
-                        Err err ->
-                            Html.li [] [ text (Debug.toString err) ]
-                    , Html.li
-                        [ classList
-                            [ ( "active"
-                              , isActive { link = Chat, page = page }
-                              )
-                            ]
-                        ]
-                        [ Html.a [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl, Tw.rounded, Tw.flex ], href "/chat" ] [ text "Chat" ] ]
-                    , Html.li
-                        []
-                        [ Html.a [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl, Tw.rounded, Tw.flex ], href "/", onClick GetLogout ] [ text "logout" ] ]
-                    ]
+                viewLoggedInHeader { page = page, token = token, openDropdown = openDropdown }
 
             Nothing ->
                 Html.ul [ Attr.css [ Tw.flex, Tw.justify_between, Tw.gap_4 ] ]
@@ -260,6 +183,83 @@ viewHeader { page, session, openDropdown, key } =
                         ]
                         [ Html.a [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl, Tw.rounded, Tw.flex ], href "/signup" ] [ text "sign up" ] ]
                     ]
+        ]
+
+
+viewLoggedInHeader : { page : Page, token : Credentials.Token, openDropdown : Bool } -> Html Msg
+viewLoggedInHeader { page, token, openDropdown } =
+    Html.ul [ Attr.css [ Tw.flex, Tw.justify_between, Tw.gap_4, Tw.items_end ] ]
+        [ case Jwt.decodeToken decodeTokenData <| fromTokenToString token of
+            Ok resultTokenRecord ->
+                Html.li
+                    [ Attr.css [ Tw.cursor_pointer ] ]
+                    [ Html.div [ Attr.css [ Tw.relative ] ]
+                        [ if String.length resultTokenRecord.firstname > 0 then
+                            Html.div
+                                [ Attr.css [ Tw.flex, Tw.items_center ], onClick OpenDropdown ]
+                                [ Html.div [ Attr.css [ Tw.w_10, Tw.h_10, Tw.overflow_hidden, Tw.rounded_full ] ]
+                                    [ if String.isEmpty resultTokenRecord.profilepicurl then
+                                        -- identicon 50 50 resultTokenRecord.firstname
+                                        text ""
+
+                                      else
+                                        Html.img [ Attr.css [ Tw.w_10 ], src resultTokenRecord.profilepicurl ] []
+                                    ]
+                                , Html.span [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl ] ] [ text resultTokenRecord.firstname, Html.sup [ Attr.css [ Tw.ml_1 ] ] [ text "⌄" ] ]
+                                ]
+
+                          else
+                            Html.div
+                                [ onClick OpenDropdown ]
+                                [ Html.span [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl ] ]
+                                    [ text resultTokenRecord.email, Html.sup [ Attr.css [ Tw.ml_1 ] ] [ text "⌄" ] ]
+                                , Html.div []
+                                    [ if String.isEmpty resultTokenRecord.profilepicurl then
+                                        -- identicon 50 50 resultTokenRecord.email
+                                        text ""
+
+                                      else
+                                        Html.img [ src resultTokenRecord.profilepicurl, width 60 ] []
+                                    ]
+                                ]
+                        , Html.ul
+                            [ Attr.css [ Tw.flex, Tw.absolute, Tw.mt_3, Tw.flex_col, Tw.gap_1, Tw.overflow_hidden, Tw.transition_all, Tw.duration_500, Tw.bg_color Tw.white ]
+                            , style "height"
+                                (if openDropdown then
+                                    "90px"
+
+                                 else
+                                    "0"
+                                )
+                            ]
+                            [ Html.li
+                                [ classList
+                                    [ ( "active"
+                                      , isActive { link = Profile resultTokenRecord.id, page = page }
+                                      )
+                                    ]
+                                , onClick OpenDropdown
+                                ]
+                                [ Html.a [ Attr.css [ Tw.flex, Tw.py_1, Tw.px_4, Tw.rounded ], href <| "/profile/" ++ userIdToString resultTokenRecord.id ] [ text "My profile" ] ]
+                            , Html.li [ onClick OpenDropdown ] [ Html.a [ Attr.css [ Tw.flex, Tw.py_1, Tw.px_4, Tw.rounded ] ] [ text "option2" ] ]
+                            , Html.li [ onClick OpenDropdown ] [ Html.a [ Attr.css [ Tw.flex, Tw.py_1, Tw.px_4, Tw.rounded ] ] [ text "option3" ] ]
+                            ]
+                        ]
+                    ]
+
+            Err err ->
+                Html.li [] [ text (Debug.toString err) ]
+        , Html.li
+            [ classList
+                [ ( "active"
+                  , isActive { link = Chat, page = page }
+                  )
+                ]
+            ]
+            [ Html.a [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl, Tw.rounded, Tw.flex ], href "/chat" ] [ text "Chat" ] ]
+        , Html.li
+            []
+            [ Html.a [ Attr.css [ Tw.py_1, Tw.px_4, Tw.text_xl, Tw.rounded, Tw.flex ], href "/", onClick GetLogout ] [ text "logout" ] ]
         ]
 
 
@@ -490,44 +490,39 @@ urlToPage : Url -> Session -> Page
 urlToPage url session =
     case Parser.parse matchRoute url of
         Just Login ->
-            case fromSessionToToken session of
-                Just _ ->
-                    NotFoundPage
+            if fromSessionToToken session == Nothing then
+                LoginPage (Tuple.first (Login.init ()))
 
-                Nothing ->
-                    LoginPage (Tuple.first (Login.init ()))
+            else
+                NotFoundPage
 
         Just Signup ->
-            case fromSessionToToken session of
-                Just _ ->
-                    NotFoundPage
+            if fromSessionToToken session == Nothing then
+                SignupPage (Tuple.first (Signup.init ()))
 
-                Nothing ->
-                    SignupPage (Tuple.first (Signup.init ()))
+            else
+                NotFoundPage
 
         Just (Profile _) ->
-            case fromSessionToToken session of
-                Just _ ->
-                    ProfilePage (Tuple.first (Profile.init session))
+            if fromSessionToToken session == Nothing then
+                NotFoundPage
 
-                Nothing ->
-                    NotFoundPage
+            else
+                ProfilePage (Tuple.first (Profile.init session))
 
         Just (Verification _) ->
-            case fromSessionToToken session of
-                Just _ ->
-                    VerificationPage (Tuple.first (Verification.init session url.path))
+            if fromSessionToToken session == Nothing then
+                NotFoundPage
 
-                Nothing ->
-                    NotFoundPage
+            else
+                VerificationPage (Tuple.first (Verification.init session url.path))
 
         Just Chat ->
-            case fromSessionToToken session of
-                Just _ ->
-                    ChatPage (Tuple.first (Chat.init session))
+            if fromSessionToToken session == Nothing then
+                NotFoundPage
 
-                Nothing ->
-                    NotFoundPage
+            else
+                ChatPage (Tuple.first (Chat.init session))
 
         Just Home ->
             HomePage (Tuple.first (Home.init ()))
@@ -537,24 +532,6 @@ urlToPage url session =
 
         Nothing ->
             NotFoundPage
-
-
-
--- pageToRoute : Page -> Route
--- pageToRoute page =
---     case page of
---         SignupPage _ ->
---             Signup
---         LoginPage _ ->
---             Login
---         ProfilePage _ ->
---             Profile Nothing
---         HomePage _ ->
---             Home
---         VerificationPage _ ->
---             Verification (s "verify-email" </> verifictionStringParser)
---         NotFoundPage ->
---             NotFound
 
 
 initCurrentPage : ( Url, Model, Cmd Msg ) -> ( Model, Cmd Msg )

@@ -8090,53 +8090,38 @@ var $author$project$Main$urlToPage = F2(
 			switch (_v0.a.$) {
 				case 'Login':
 					var _v1 = _v0.a;
-					var _v2 = $author$project$Credentials$fromSessionToToken(session);
-					if (_v2.$ === 'Just') {
-						return $author$project$Main$NotFoundPage;
-					} else {
-						return $author$project$Main$LoginPage(
-							$author$project$Login$init(_Utils_Tuple0).a);
-					}
+					return _Utils_eq(
+						$author$project$Credentials$fromSessionToToken(session),
+						$elm$core$Maybe$Nothing) ? $author$project$Main$LoginPage(
+						$author$project$Login$init(_Utils_Tuple0).a) : $author$project$Main$NotFoundPage;
 				case 'Signup':
-					var _v3 = _v0.a;
-					var _v4 = $author$project$Credentials$fromSessionToToken(session);
-					if (_v4.$ === 'Just') {
-						return $author$project$Main$NotFoundPage;
-					} else {
-						return $author$project$Main$SignupPage(
-							$author$project$Signup$init(_Utils_Tuple0).a);
-					}
+					var _v2 = _v0.a;
+					return _Utils_eq(
+						$author$project$Credentials$fromSessionToToken(session),
+						$elm$core$Maybe$Nothing) ? $author$project$Main$SignupPage(
+						$author$project$Signup$init(_Utils_Tuple0).a) : $author$project$Main$NotFoundPage;
 				case 'Profile':
-					var _v5 = $author$project$Credentials$fromSessionToToken(session);
-					if (_v5.$ === 'Just') {
-						return $author$project$Main$ProfilePage(
-							$author$project$Profile$init(session).a);
-					} else {
-						return $author$project$Main$NotFoundPage;
-					}
+					return _Utils_eq(
+						$author$project$Credentials$fromSessionToToken(session),
+						$elm$core$Maybe$Nothing) ? $author$project$Main$NotFoundPage : $author$project$Main$ProfilePage(
+						$author$project$Profile$init(session).a);
 				case 'Verification':
-					var _v6 = $author$project$Credentials$fromSessionToToken(session);
-					if (_v6.$ === 'Just') {
-						return $author$project$Main$VerificationPage(
-							A2($author$project$Verification$init, session, url.path).a);
-					} else {
-						return $author$project$Main$NotFoundPage;
-					}
+					return _Utils_eq(
+						$author$project$Credentials$fromSessionToToken(session),
+						$elm$core$Maybe$Nothing) ? $author$project$Main$NotFoundPage : $author$project$Main$VerificationPage(
+						A2($author$project$Verification$init, session, url.path).a);
 				case 'Chat':
-					var _v7 = _v0.a;
-					var _v8 = $author$project$Credentials$fromSessionToToken(session);
-					if (_v8.$ === 'Just') {
-						return $author$project$Main$ChatPage(
-							$author$project$Chat$init(session).a);
-					} else {
-						return $author$project$Main$NotFoundPage;
-					}
+					var _v3 = _v0.a;
+					return _Utils_eq(
+						$author$project$Credentials$fromSessionToToken(session),
+						$elm$core$Maybe$Nothing) ? $author$project$Main$NotFoundPage : $author$project$Main$ChatPage(
+						$author$project$Chat$init(session).a);
 				case 'Home':
-					var _v9 = _v0.a;
+					var _v4 = _v0.a;
 					return $author$project$Main$HomePage(
 						$author$project$Home$init(_Utils_Tuple0).a);
 				default:
-					var _v10 = _v0.a;
+					var _v5 = _v0.a;
 					return $author$project$Main$NotFoundPage;
 			}
 		} else {
@@ -12892,8 +12877,6 @@ var $author$project$Main$content = function (model) {
 			}()
 			]));
 };
-var $author$project$Main$GetLogout = {$: 'GetLogout'};
-var $author$project$Main$OpenDropdown = {$: 'OpenDropdown'};
 var $rtfeldman$elm_css$Html$Styled$a = $rtfeldman$elm_css$Html$Styled$node('a');
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
@@ -12914,9 +12897,7 @@ var $rtfeldman$elm_css$Html$Styled$Attributes$classList = function (classes) {
 			' ',
 			A2($elm$core$List$filter, $elm$core$Tuple$second, classes)));
 };
-var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$duration_500 = A2($rtfeldman$elm_css$Css$property, 'transition-duration', '500ms');
 var $rtfeldman$elm_css$Html$Styled$h1 = $rtfeldman$elm_css$Html$Styled$node('h1');
-var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_10 = A2($rtfeldman$elm_css$Css$property, 'height', '2.5rem');
 var $rtfeldman$elm_css$Html$Styled$Attributes$href = function (url) {
 	return A2($rtfeldman$elm_css$Html$Styled$Attributes$stringProperty, 'href', url);
 };
@@ -12974,11 +12955,15 @@ var $author$project$Main$isActive = function (_v0) {
 			return false;
 	}
 };
+var $rtfeldman$elm_css$Html$Styled$nav = $rtfeldman$elm_css$Html$Styled$node('nav');
+var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$p_5 = A2($rtfeldman$elm_css$Css$property, 'padding', '1.25rem');
+var $author$project$Main$GetLogout = {$: 'GetLogout'};
+var $author$project$Main$OpenDropdown = {$: 'OpenDropdown'};
+var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$duration_500 = A2($rtfeldman$elm_css$Css$property, 'transition-duration', '500ms');
+var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_10 = A2($rtfeldman$elm_css$Css$property, 'height', '2.5rem');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_end = A2($rtfeldman$elm_css$Css$property, 'align-items', 'flex-end');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$ml_1 = A2($rtfeldman$elm_css$Css$property, 'margin-left', '0.25rem');
 var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$mt_3 = A2($rtfeldman$elm_css$Css$property, 'margin-top', '0.75rem');
-var $rtfeldman$elm_css$Html$Styled$nav = $rtfeldman$elm_css$Html$Styled$node('nav');
-var $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$p_5 = A2($rtfeldman$elm_css$Css$property, 'padding', '1.25rem');
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $rtfeldman$elm_css$VirtualDom$Styled$style = F2(
 	function (key, val) {
@@ -13005,11 +12990,320 @@ var $rtfeldman$elm_css$Html$Styled$Attributes$width = function (n) {
 		'width',
 		$elm$core$String$fromInt(n));
 };
+var $author$project$Main$viewLoggedInHeader = function (_v0) {
+	var page = _v0.page;
+	var token = _v0.token;
+	var openDropdown = _v0.openDropdown;
+	return A2(
+		$rtfeldman$elm_css$Html$Styled$ul,
+		_List_fromArray(
+			[
+				$rtfeldman$elm_css$Html$Styled$Attributes$css(
+				_List_fromArray(
+					[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$justify_between, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_end]))
+			]),
+		_List_fromArray(
+			[
+				function () {
+				var _v1 = A2(
+					$simonh1000$elm_jwt$Jwt$decodeToken,
+					$author$project$Credentials$decodeTokenData,
+					$author$project$Credentials$fromTokenToString(token));
+				if (_v1.$ === 'Ok') {
+					var resultTokenRecord = _v1.a;
+					return A2(
+						$rtfeldman$elm_css$Html$Styled$li,
+						_List_fromArray(
+							[
+								$rtfeldman$elm_css$Html$Styled$Attributes$css(
+								_List_fromArray(
+									[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$cursor_pointer]))
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$rtfeldman$elm_css$Html$Styled$div,
+								_List_fromArray(
+									[
+										$rtfeldman$elm_css$Html$Styled$Attributes$css(
+										_List_fromArray(
+											[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$relative]))
+									]),
+								_List_fromArray(
+									[
+										($elm$core$String$length(resultTokenRecord.firstname) > 0) ? A2(
+										$rtfeldman$elm_css$Html$Styled$div,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Attributes$css(
+												_List_fromArray(
+													[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center])),
+												$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$Main$OpenDropdown)
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$rtfeldman$elm_css$Html$Styled$div,
+												_List_fromArray(
+													[
+														$rtfeldman$elm_css$Html$Styled$Attributes$css(
+														_List_fromArray(
+															[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_10, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_10, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$overflow_hidden, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded_full]))
+													]),
+												_List_fromArray(
+													[
+														$elm$core$String$isEmpty(resultTokenRecord.profilepicurl) ? $rtfeldman$elm_css$Html$Styled$text('') : A2(
+														$rtfeldman$elm_css$Html$Styled$img,
+														_List_fromArray(
+															[
+																$rtfeldman$elm_css$Html$Styled$Attributes$css(
+																_List_fromArray(
+																	[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_10])),
+																$rtfeldman$elm_css$Html$Styled$Attributes$src(resultTokenRecord.profilepicurl)
+															]),
+														_List_Nil)
+													])),
+												A2(
+												$rtfeldman$elm_css$Html$Styled$span,
+												_List_fromArray(
+													[
+														$rtfeldman$elm_css$Html$Styled$Attributes$css(
+														_List_fromArray(
+															[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_xl]))
+													]),
+												_List_fromArray(
+													[
+														$rtfeldman$elm_css$Html$Styled$text(resultTokenRecord.firstname),
+														A2(
+														$rtfeldman$elm_css$Html$Styled$sup,
+														_List_fromArray(
+															[
+																$rtfeldman$elm_css$Html$Styled$Attributes$css(
+																_List_fromArray(
+																	[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$ml_1]))
+															]),
+														_List_fromArray(
+															[
+																$rtfeldman$elm_css$Html$Styled$text('⌄')
+															]))
+													]))
+											])) : A2(
+										$rtfeldman$elm_css$Html$Styled$div,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$Main$OpenDropdown)
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$rtfeldman$elm_css$Html$Styled$span,
+												_List_fromArray(
+													[
+														$rtfeldman$elm_css$Html$Styled$Attributes$css(
+														_List_fromArray(
+															[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_xl]))
+													]),
+												_List_fromArray(
+													[
+														$rtfeldman$elm_css$Html$Styled$text(resultTokenRecord.email),
+														A2(
+														$rtfeldman$elm_css$Html$Styled$sup,
+														_List_fromArray(
+															[
+																$rtfeldman$elm_css$Html$Styled$Attributes$css(
+																_List_fromArray(
+																	[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$ml_1]))
+															]),
+														_List_fromArray(
+															[
+																$rtfeldman$elm_css$Html$Styled$text('⌄')
+															]))
+													])),
+												A2(
+												$rtfeldman$elm_css$Html$Styled$div,
+												_List_Nil,
+												_List_fromArray(
+													[
+														$elm$core$String$isEmpty(resultTokenRecord.profilepicurl) ? $rtfeldman$elm_css$Html$Styled$text('') : A2(
+														$rtfeldman$elm_css$Html$Styled$img,
+														_List_fromArray(
+															[
+																$rtfeldman$elm_css$Html$Styled$Attributes$src(resultTokenRecord.profilepicurl),
+																$rtfeldman$elm_css$Html$Styled$Attributes$width(60)
+															]),
+														_List_Nil)
+													]))
+											])),
+										A2(
+										$rtfeldman$elm_css$Html$Styled$ul,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Attributes$css(
+												_List_fromArray(
+													[
+														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex,
+														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$absolute,
+														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$mt_3,
+														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex_col,
+														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_1,
+														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$overflow_hidden,
+														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$transition_all,
+														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$duration_500,
+														$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$white)
+													])),
+												A2(
+												$rtfeldman$elm_css$Html$Styled$Attributes$style,
+												'height',
+												openDropdown ? '90px' : '0')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$rtfeldman$elm_css$Html$Styled$li,
+												_List_fromArray(
+													[
+														$rtfeldman$elm_css$Html$Styled$Attributes$classList(
+														_List_fromArray(
+															[
+																_Utils_Tuple2(
+																'active',
+																$author$project$Main$isActive(
+																	{
+																		link: $author$project$Main$Profile(resultTokenRecord.id),
+																		page: page
+																	}))
+															])),
+														$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$Main$OpenDropdown)
+													]),
+												_List_fromArray(
+													[
+														A2(
+														$rtfeldman$elm_css$Html$Styled$a,
+														_List_fromArray(
+															[
+																$rtfeldman$elm_css$Html$Styled$Attributes$css(
+																_List_fromArray(
+																	[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded])),
+																$rtfeldman$elm_css$Html$Styled$Attributes$href(
+																'/profile/' + $author$project$Credentials$userIdToString(resultTokenRecord.id))
+															]),
+														_List_fromArray(
+															[
+																$rtfeldman$elm_css$Html$Styled$text('My profile')
+															]))
+													])),
+												A2(
+												$rtfeldman$elm_css$Html$Styled$li,
+												_List_fromArray(
+													[
+														$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$Main$OpenDropdown)
+													]),
+												_List_fromArray(
+													[
+														A2(
+														$rtfeldman$elm_css$Html$Styled$a,
+														_List_fromArray(
+															[
+																$rtfeldman$elm_css$Html$Styled$Attributes$css(
+																_List_fromArray(
+																	[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded]))
+															]),
+														_List_fromArray(
+															[
+																$rtfeldman$elm_css$Html$Styled$text('option2')
+															]))
+													])),
+												A2(
+												$rtfeldman$elm_css$Html$Styled$li,
+												_List_fromArray(
+													[
+														$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$Main$OpenDropdown)
+													]),
+												_List_fromArray(
+													[
+														A2(
+														$rtfeldman$elm_css$Html$Styled$a,
+														_List_fromArray(
+															[
+																$rtfeldman$elm_css$Html$Styled$Attributes$css(
+																_List_fromArray(
+																	[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded]))
+															]),
+														_List_fromArray(
+															[
+																$rtfeldman$elm_css$Html$Styled$text('option3')
+															]))
+													]))
+											]))
+									]))
+							]));
+				} else {
+					var err = _v1.a;
+					return A2(
+						$rtfeldman$elm_css$Html$Styled$li,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$rtfeldman$elm_css$Html$Styled$text(
+								$elm$core$Debug$toString(err))
+							]));
+				}
+			}(),
+				A2(
+				$rtfeldman$elm_css$Html$Styled$li,
+				_List_fromArray(
+					[
+						$rtfeldman$elm_css$Html$Styled$Attributes$classList(
+						_List_fromArray(
+							[
+								_Utils_Tuple2(
+								'active',
+								$author$project$Main$isActive(
+									{link: $author$project$Main$Chat, page: page}))
+							]))
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$rtfeldman$elm_css$Html$Styled$a,
+						_List_fromArray(
+							[
+								$rtfeldman$elm_css$Html$Styled$Attributes$css(
+								_List_fromArray(
+									[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_xl, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex])),
+								$rtfeldman$elm_css$Html$Styled$Attributes$href('/chat')
+							]),
+						_List_fromArray(
+							[
+								$rtfeldman$elm_css$Html$Styled$text('Chat')
+							]))
+					])),
+				A2(
+				$rtfeldman$elm_css$Html$Styled$li,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$rtfeldman$elm_css$Html$Styled$a,
+						_List_fromArray(
+							[
+								$rtfeldman$elm_css$Html$Styled$Attributes$css(
+								_List_fromArray(
+									[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_xl, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex])),
+								$rtfeldman$elm_css$Html$Styled$Attributes$href('/'),
+								$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$Main$GetLogout)
+							]),
+						_List_fromArray(
+							[
+								$rtfeldman$elm_css$Html$Styled$text('logout')
+							]))
+					]))
+			]));
+};
 var $author$project$Main$viewHeader = function (_v0) {
 	var page = _v0.page;
 	var session = _v0.session;
 	var openDropdown = _v0.openDropdown;
-	var key = _v0.key;
 	return A2(
 		$rtfeldman$elm_css$Html$Styled$nav,
 		_List_fromArray(
@@ -13040,311 +13334,8 @@ var $author$project$Main$viewHeader = function (_v0) {
 				var _v1 = $author$project$Credentials$fromSessionToToken(session);
 				if (_v1.$ === 'Just') {
 					var token = _v1.a;
-					return A2(
-						$rtfeldman$elm_css$Html$Styled$ul,
-						_List_fromArray(
-							[
-								$rtfeldman$elm_css$Html$Styled$Attributes$css(
-								_List_fromArray(
-									[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$justify_between, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_end]))
-							]),
-						_List_fromArray(
-							[
-								function () {
-								var _v2 = A2(
-									$simonh1000$elm_jwt$Jwt$decodeToken,
-									$author$project$Credentials$decodeTokenData,
-									$author$project$Credentials$fromTokenToString(token));
-								if (_v2.$ === 'Ok') {
-									var resultTokenRecord = _v2.a;
-									return A2(
-										$rtfeldman$elm_css$Html$Styled$li,
-										_List_fromArray(
-											[
-												$rtfeldman$elm_css$Html$Styled$Attributes$css(
-												_List_fromArray(
-													[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$cursor_pointer]))
-											]),
-										_List_fromArray(
-											[
-												A2(
-												$rtfeldman$elm_css$Html$Styled$div,
-												_List_fromArray(
-													[
-														$rtfeldman$elm_css$Html$Styled$Attributes$css(
-														_List_fromArray(
-															[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$relative]))
-													]),
-												_List_fromArray(
-													[
-														($elm$core$String$length(resultTokenRecord.firstname) > 0) ? A2(
-														$rtfeldman$elm_css$Html$Styled$div,
-														_List_fromArray(
-															[
-																$rtfeldman$elm_css$Html$Styled$Attributes$css(
-																_List_fromArray(
-																	[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$items_center])),
-																$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$Main$OpenDropdown)
-															]),
-														_List_fromArray(
-															[
-																A2(
-																$rtfeldman$elm_css$Html$Styled$div,
-																_List_fromArray(
-																	[
-																		$rtfeldman$elm_css$Html$Styled$Attributes$css(
-																		_List_fromArray(
-																			[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_10, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$h_10, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$overflow_hidden, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded_full]))
-																	]),
-																_List_fromArray(
-																	[
-																		$elm$core$String$isEmpty(resultTokenRecord.profilepicurl) ? $rtfeldman$elm_css$Html$Styled$text('') : A2(
-																		$rtfeldman$elm_css$Html$Styled$img,
-																		_List_fromArray(
-																			[
-																				$rtfeldman$elm_css$Html$Styled$Attributes$css(
-																				_List_fromArray(
-																					[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$w_10])),
-																				$rtfeldman$elm_css$Html$Styled$Attributes$src(resultTokenRecord.profilepicurl)
-																			]),
-																		_List_Nil)
-																	])),
-																A2(
-																$rtfeldman$elm_css$Html$Styled$span,
-																_List_fromArray(
-																	[
-																		$rtfeldman$elm_css$Html$Styled$Attributes$css(
-																		_List_fromArray(
-																			[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_xl]))
-																	]),
-																_List_fromArray(
-																	[
-																		$rtfeldman$elm_css$Html$Styled$text(resultTokenRecord.firstname),
-																		A2(
-																		$rtfeldman$elm_css$Html$Styled$sup,
-																		_List_fromArray(
-																			[
-																				$rtfeldman$elm_css$Html$Styled$Attributes$css(
-																				_List_fromArray(
-																					[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$ml_1]))
-																			]),
-																		_List_fromArray(
-																			[
-																				$rtfeldman$elm_css$Html$Styled$text('⌄')
-																			]))
-																	]))
-															])) : A2(
-														$rtfeldman$elm_css$Html$Styled$div,
-														_List_fromArray(
-															[
-																$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$Main$OpenDropdown)
-															]),
-														_List_fromArray(
-															[
-																A2(
-																$rtfeldman$elm_css$Html$Styled$span,
-																_List_fromArray(
-																	[
-																		$rtfeldman$elm_css$Html$Styled$Attributes$css(
-																		_List_fromArray(
-																			[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_xl]))
-																	]),
-																_List_fromArray(
-																	[
-																		$rtfeldman$elm_css$Html$Styled$text(resultTokenRecord.email),
-																		A2(
-																		$rtfeldman$elm_css$Html$Styled$sup,
-																		_List_fromArray(
-																			[
-																				$rtfeldman$elm_css$Html$Styled$Attributes$css(
-																				_List_fromArray(
-																					[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$ml_1]))
-																			]),
-																		_List_fromArray(
-																			[
-																				$rtfeldman$elm_css$Html$Styled$text('⌄')
-																			]))
-																	])),
-																A2(
-																$rtfeldman$elm_css$Html$Styled$div,
-																_List_Nil,
-																_List_fromArray(
-																	[
-																		$elm$core$String$isEmpty(resultTokenRecord.profilepicurl) ? $rtfeldman$elm_css$Html$Styled$text('') : A2(
-																		$rtfeldman$elm_css$Html$Styled$img,
-																		_List_fromArray(
-																			[
-																				$rtfeldman$elm_css$Html$Styled$Attributes$src(resultTokenRecord.profilepicurl),
-																				$rtfeldman$elm_css$Html$Styled$Attributes$width(60)
-																			]),
-																		_List_Nil)
-																	]))
-															])),
-														A2(
-														$rtfeldman$elm_css$Html$Styled$ul,
-														_List_fromArray(
-															[
-																$rtfeldman$elm_css$Html$Styled$Attributes$css(
-																_List_fromArray(
-																	[
-																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex,
-																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$absolute,
-																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$mt_3,
-																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex_col,
-																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$gap_1,
-																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$overflow_hidden,
-																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$transition_all,
-																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$duration_500,
-																		$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$bg_color($matheus23$elm_default_tailwind_modules$Tailwind$Theme$white)
-																	])),
-																A2(
-																$rtfeldman$elm_css$Html$Styled$Attributes$style,
-																'height',
-																openDropdown ? '90px' : '0')
-															]),
-														_List_fromArray(
-															[
-																A2(
-																$rtfeldman$elm_css$Html$Styled$li,
-																_List_fromArray(
-																	[
-																		$rtfeldman$elm_css$Html$Styled$Attributes$classList(
-																		_List_fromArray(
-																			[
-																				_Utils_Tuple2(
-																				'active',
-																				$author$project$Main$isActive(
-																					{
-																						link: $author$project$Main$Profile(resultTokenRecord.id),
-																						page: page
-																					}))
-																			])),
-																		$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$Main$OpenDropdown)
-																	]),
-																_List_fromArray(
-																	[
-																		A2(
-																		$rtfeldman$elm_css$Html$Styled$a,
-																		_List_fromArray(
-																			[
-																				$rtfeldman$elm_css$Html$Styled$Attributes$css(
-																				_List_fromArray(
-																					[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded])),
-																				$rtfeldman$elm_css$Html$Styled$Attributes$href(
-																				'/profile/' + $author$project$Credentials$userIdToString(resultTokenRecord.id))
-																			]),
-																		_List_fromArray(
-																			[
-																				$rtfeldman$elm_css$Html$Styled$text('My profile')
-																			]))
-																	])),
-																A2(
-																$rtfeldman$elm_css$Html$Styled$li,
-																_List_fromArray(
-																	[
-																		$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$Main$OpenDropdown)
-																	]),
-																_List_fromArray(
-																	[
-																		A2(
-																		$rtfeldman$elm_css$Html$Styled$a,
-																		_List_fromArray(
-																			[
-																				$rtfeldman$elm_css$Html$Styled$Attributes$css(
-																				_List_fromArray(
-																					[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded]))
-																			]),
-																		_List_fromArray(
-																			[
-																				$rtfeldman$elm_css$Html$Styled$text('option2')
-																			]))
-																	])),
-																A2(
-																$rtfeldman$elm_css$Html$Styled$li,
-																_List_fromArray(
-																	[
-																		$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$Main$OpenDropdown)
-																	]),
-																_List_fromArray(
-																	[
-																		A2(
-																		$rtfeldman$elm_css$Html$Styled$a,
-																		_List_fromArray(
-																			[
-																				$rtfeldman$elm_css$Html$Styled$Attributes$css(
-																				_List_fromArray(
-																					[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded]))
-																			]),
-																		_List_fromArray(
-																			[
-																				$rtfeldman$elm_css$Html$Styled$text('option3')
-																			]))
-																	]))
-															]))
-													]))
-											]));
-								} else {
-									var err = _v2.a;
-									return A2(
-										$rtfeldman$elm_css$Html$Styled$li,
-										_List_Nil,
-										_List_fromArray(
-											[
-												$rtfeldman$elm_css$Html$Styled$text(
-												$elm$core$Debug$toString(err))
-											]));
-								}
-							}(),
-								A2(
-								$rtfeldman$elm_css$Html$Styled$li,
-								_List_fromArray(
-									[
-										$rtfeldman$elm_css$Html$Styled$Attributes$classList(
-										_List_fromArray(
-											[
-												_Utils_Tuple2(
-												'active',
-												$author$project$Main$isActive(
-													{link: $author$project$Main$Chat, page: page}))
-											]))
-									]),
-								_List_fromArray(
-									[
-										A2(
-										$rtfeldman$elm_css$Html$Styled$a,
-										_List_fromArray(
-											[
-												$rtfeldman$elm_css$Html$Styled$Attributes$css(
-												_List_fromArray(
-													[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_xl, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex])),
-												$rtfeldman$elm_css$Html$Styled$Attributes$href('/chat')
-											]),
-										_List_fromArray(
-											[
-												$rtfeldman$elm_css$Html$Styled$text('Chat')
-											]))
-									])),
-								A2(
-								$rtfeldman$elm_css$Html$Styled$li,
-								_List_Nil,
-								_List_fromArray(
-									[
-										A2(
-										$rtfeldman$elm_css$Html$Styled$a,
-										_List_fromArray(
-											[
-												$rtfeldman$elm_css$Html$Styled$Attributes$css(
-												_List_fromArray(
-													[$matheus23$elm_default_tailwind_modules$Tailwind$Utilities$py_1, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$px_4, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$text_xl, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$rounded, $matheus23$elm_default_tailwind_modules$Tailwind$Utilities$flex])),
-												$rtfeldman$elm_css$Html$Styled$Attributes$href('/'),
-												$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$Main$GetLogout)
-											]),
-										_List_fromArray(
-											[
-												$rtfeldman$elm_css$Html$Styled$text('logout')
-											]))
-									]))
-							]));
+					return $author$project$Main$viewLoggedInHeader(
+						{openDropdown: openDropdown, page: page, token: token});
 				} else {
 					return A2(
 						$rtfeldman$elm_css$Html$Styled$ul,
