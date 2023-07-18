@@ -5,7 +5,8 @@ import Browser.Navigation as Nav
 import Chat exposing (unfoldMessageReceived)
 import Credentials
     exposing
-        ( Session
+        ( ResetCodeParam
+        , Session
         , SocketMessageData
         , UserId
         , VerificationString
@@ -14,12 +15,14 @@ import Credentials
         , fromSessionToToken
         , fromTokenToString
         , logout
+        , passwordCodeStringParser
         , socketMessageChanges
         , subscriptionChanges
         , userIdParser
         , userIdToString
         , verifictionStringParser
         )
+import ForgotPassword
 import Home
 import Html.Lazy exposing (lazy)
 import Html.Styled as Html exposing (Html, text)
@@ -30,6 +33,7 @@ import Jwt
 import Login
 import Minidenticons exposing (identicon)
 import Profile
+import ResetPassword
 import Signup
 import Svg exposing (svg)
 import Svg.Attributes as SvgAttr exposing (path)
@@ -56,6 +60,8 @@ type Page
     = LoginPage Login.Model
     | SignupPage Signup.Model
     | ProfilePage Profile.Model
+    | ForgotPasswordPage ForgotPassword.Model
+    | ResetPasswordPage ResetPassword.Model
     | HomePage Home.Model
     | ChatPage Chat.Model
     | VerificationPage Verification.Model
@@ -67,6 +73,8 @@ type Route
     | Signup
     | Profile UserId
     | Home
+    | ForgotPassword
+    | ResetPassword ResetCodeParam
     | Chat
     | Verification VerificationString
     | NotFound
@@ -78,6 +86,8 @@ type Msg
     | GotSignupMsg Signup.Msg
     | GotLoginMsg Login.Msg
     | GotProfileMsg Profile.Msg
+    | GotFpMsg ForgotPassword.Msg
+    | GotRpMsg ResetPassword.Msg
     | GotHomeMsg Home.Msg
     | GotChatMsg Chat.Msg
     | GotVerificationMsg Verification.Msg
@@ -101,6 +111,14 @@ content model =
             SignupPage signupModel ->
                 Signup.view signupModel
                     |> Html.map GotSignupMsg
+
+            ForgotPasswordPage fpModal ->
+                ForgotPassword.view fpModal
+                    |> Html.map GotFpMsg
+
+            ResetPasswordPage rPasswordModel ->
+                ResetPassword.view rPasswordModel
+                    |> Html.map GotRpMsg
 
             ProfilePage profileModel ->
                 Profile.view profileModel
@@ -284,6 +302,18 @@ isActive { link, page } =
         ( Profile _, _ ) ->
             False
 
+        ( ForgotPassword, ForgotPasswordPage _ ) ->
+            True
+
+        ( ForgotPassword, _ ) ->
+            False
+
+        ( ResetPassword _, ResetPasswordPage _ ) ->
+            True
+
+        ( ResetPassword _, _ ) ->
+            False
+
         ( Home, HomePage _ ) ->
             True
 
@@ -378,6 +408,30 @@ update msg model =
                             Verification.update verificationMsg verificationModel
                     in
                     ( { model | page = VerificationPage verificationModelFromVerification }, Cmd.map GotVerificationMsg verificationMsgFromVerification )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotRpMsg rpMsg ->
+            case model.page of
+                ResetPasswordPage rpModel ->
+                    let
+                        ( rpModelFromRp, rpMsgFromRp ) =
+                            ResetPassword.update rpMsg rpModel
+                    in
+                    ( { model | page = ResetPasswordPage rpModelFromRp }, Cmd.map GotRpMsg rpMsgFromRp )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotFpMsg fpMsg ->
+            case model.page of
+                ForgotPasswordPage fpModel ->
+                    let
+                        ( modelFromFp, msgFromFp ) =
+                            ForgotPassword.update fpMsg fpModel
+                    in
+                    ( { model | page = ForgotPasswordPage modelFromFp }, Cmd.map GotFpMsg msgFromFp )
 
                 _ ->
                     ( model, Cmd.none )
@@ -478,11 +532,13 @@ matchRoute : Parser (Route -> a) a
 matchRoute =
     Parser.oneOf
         [ Parser.map Home Parser.top
+        , Parser.map ForgotPassword (s "forgot-password")
         , Parser.map Login (s "login")
         , Parser.map Profile (s "profile" </> userIdParser)
         , Parser.map Signup (s "signup")
         , Parser.map Chat (s "chat")
         , Parser.map Verification (s "verify-email" </> verifictionStringParser)
+        , Parser.map ResetPassword (s "password-reset" </> passwordCodeStringParser)
         ]
 
 
@@ -516,6 +572,20 @@ urlToPage url session =
 
             else
                 VerificationPage (Tuple.first (Verification.init session url.path))
+
+        Just (ResetPassword _) ->
+            if fromSessionToToken session == Nothing then
+                ResetPasswordPage (Tuple.first (ResetPassword.init url.path))
+
+            else
+                NotFoundPage
+
+        Just ForgotPassword ->
+            if fromSessionToToken session == Nothing then
+                ForgotPasswordPage (Tuple.first (ForgotPassword.init ()))
+
+            else
+                NotFoundPage
 
         Just Chat ->
             if fromSessionToToken session == Nothing then
@@ -576,6 +646,20 @@ initCurrentPage ( url, model, existingCmds ) =
                     Verification.init model.session url.path
             in
             ( { model | page = VerificationPage pageModel }, Cmd.map GotVerificationMsg pageCmds )
+
+        ForgotPasswordPage _ ->
+            let
+                ( pageModel, pageCmds ) =
+                    ForgotPassword.init ()
+            in
+            ( { model | page = ForgotPasswordPage pageModel }, Cmd.batch [ Cmd.map GotFpMsg pageCmds, existingCmds ] )
+
+        ResetPasswordPage _ ->
+            let
+                ( pageModel, pageCmds ) =
+                    ResetPassword.init url.path
+            in
+            ( { model | page = ResetPasswordPage pageModel }, Cmd.map GotRpMsg pageCmds )
 
         ProfilePage _ ->
             let

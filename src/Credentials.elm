@@ -1,5 +1,6 @@
 port module Credentials exposing
     ( ImageString
+    , ResetCodeParam
     , Session
     , SocketMessageData
     , Token
@@ -22,6 +23,7 @@ port module Credentials exposing
     , initiateSocketChannel
     , logout
     , onSessionChange
+    , passwordCodeStringParser
     , sendMessageToSocket
     , socketMessageChanges
     , storeSession
@@ -52,6 +54,10 @@ type Session
 
 type VerificationString
     = VerificationString String
+
+
+type ResetCodeParam
+    = ResetCodeParam String
 
 
 type UserId
@@ -134,6 +140,13 @@ verifictionStringParser =
     custom "VERIFICATIONSTRING" <|
         \verificationString ->
             Maybe.map VerificationString (Just verificationString)
+
+
+passwordCodeStringParser : Parser (ResetCodeParam -> a) a
+passwordCodeStringParser =
+    custom "RESETCODEPARAM" <|
+        \resetPassword ->
+            Maybe.map ResetCodeParam (Just resetPassword)
 
 
 encodeUserId : UserId -> Encode.Value
